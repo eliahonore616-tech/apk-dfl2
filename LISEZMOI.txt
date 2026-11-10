@@ -1,0 +1,6 @@
+MISE A JOUR DE L'APK (version 2)
+
+Dans votre depot GitHub (apk-dfl), envoyez ces 4 fichiers (Add file > Upload files) :
+  index.html, package.json, prepare.js, debug.keystore
+Les 2 premiers remplacent les anciens. Validez avec "Commit changes".
+La construction demarre toute seule (onglet Actions). Telechargez ensuite l'APK dans "Artifacts".

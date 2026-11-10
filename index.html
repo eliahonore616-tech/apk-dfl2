@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0A2342">
+<title>Gestion des agents – Direction des Finances Locales</title>
+<style>
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/montserrat-latin-wght-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/montserrat-latin-ext-wght-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+:root{
+  --font:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --navy:#0A2342;--bg:#F3F5FA;--card:#FFFFFF;--line:#E1E7F1;--ink:#0F1E36;--muted:#5B6B83;
+  --blue:#0B63CE;--btn:#0B5CC0;--soft:#E7F0FC;--yellow:#F6C500;--red:#CE1126;--green:#14865A;
+  --gsoft:#E2F5EC;--rsoft:#FCE9EB;--asoft:#FFF2C7;--aink:#6B4E00;
+  --shadow:0 1px 2px rgba(10,35,66,.06),0 8px 24px rgba(10,35,66,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{--navy:#061427;--bg:#08111F;--card:#101C32;--line:#21304C;--ink:#E8EEF8;--muted:#92A3BE;--blue:#5AA5F7;--btn:#2B7BE4;
+  --soft:#12284A;--green:#44C48C;--gsoft:#0E2F25;--rsoft:#3A1519;--asoft:#3A3000;--aink:#FFE08A;--shadow:none}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+h2{font-size:24px}h3{font-size:17px}
+p{margin:0}
+a{color:var(--blue)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.muted{color:var(--muted)}
+.sub{color:var(--muted);font-size:14px;margin-top:4px}
+
+/* ---------- Structure ---------- */
+.top{position:sticky;top:0;z-index:25;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;
+  padding-top:max(10px,env(safe-area-inset-top));background:var(--navy);color:#fff}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:#fff}
+.brand svg{width:36px;height:36px;flex:none}
+.brand span{display:flex;flex-direction:column;line-height:1.15}
+.brand b{font-size:16px;font-weight:800}
+.brand small{font-size:11.5px;opacity:.75;font-weight:500}
+.side{display:none}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -6px 20px rgba(10,35,66,.06)}
+.bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;color:var(--muted);text-decoration:none;font-size:10.5px;font-weight:600}
+.bnav a[aria-current="page"]{color:var(--blue)}
+.bnav a[aria-current="page"]:not(.fab){box-shadow:inset 0 3px 0 var(--yellow)}
+.bnav .fab span{display:grid;place-items:center;width:52px;height:52px;margin-top:-24px;border-radius:50%;background:var(--btn);color:#fff;
+  box-shadow:0 6px 16px rgba(11,92,192,.45);border:4px solid var(--card)}
+.bnav .fab small{margin-top:2px}
+.ava{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--yellow);color:#10243F;font-weight:800;flex:none}
+.top .ava{width:32px;height:32px;text-decoration:none;font-size:14px}
+main{padding:16px 14px 104px;max-width:1120px;margin:0 auto}
+@media (min-width:900px){
+  .top,.bnav{display:none}
+  .side{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:272px;padding:22px 14px;background:var(--navy);color:#fff;overflow:auto}
+  .side .brand{padding:0 8px 18px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:10px}
+  .side nav{display:flex;flex-direction:column;gap:2px}
+  .side nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#C4D3EA;text-decoration:none;font-weight:600;font-size:14px}
+  .side nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+  .side nav a[aria-current="page"]{background:rgba(255,255,255,.12);color:#fff;box-shadow:inset 3px 0 0 var(--yellow)}
+  .side .gl{margin:16px 12px 4px;font-size:12px;font-weight:600;color:#7F96B8}
+  .side .who{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.12)}
+  .side .who div{display:flex;flex-direction:column;line-height:1.2;min-width:0;flex:1}
+  .side .who small{opacity:.7;font-size:12px}
+  .side .who b{overflow:hidden;text-overflow:ellipsis}
+  .side .ib{background:rgba(255,255,255,.1);border:0;color:#fff;border-radius:10px;width:38px;height:38px;display:grid;place-items:center}
+  main{margin-left:272px;max-width:none;padding:30px 34px 56px}
+  main>*{max-width:1080px}
+}
+
+/* ---------- Composants ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.ph{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);text-decoration:none;color:var(--ink);font-weight:600;font-size:14px}
+.btn svg{width:18px;height:18px}
+.btn.primary{background:var(--btn);border-color:var(--btn);color:#fff}
+.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.btn.sm{min-height:36px;padding:0 13px;font-size:13px;border-radius:10px}
+.btn:hover{filter:brightness(.97)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+label{display:block;font-size:13px;color:var(--muted);font-weight:600}
+input,select,textarea{width:100%;min-height:46px;margin-top:5px;padding:9px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:16px;color:var(--ink)}
+input[type=file]{padding:9px}
+input[type=radio],input[type=checkbox]{width:20px;height:20px;min-height:0;margin:0;accent-color:var(--btn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.radios{display:flex;gap:10px;flex-wrap:wrap;margin-top:5px}
+label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-weight:500;cursor:pointer}
+.empty{padding:34px 16px;text-align:center;color:var(--muted);border:1.5px dashed var(--line);border-radius:16px;background:var(--card)}
+.warn{display:flex;gap:10px;align-items:flex-start;background:var(--asoft);color:var(--aink);padding:12px 14px;border-radius:12px;margin-bottom:14px;font-size:14px}
+.warn a{color:inherit;font-weight:700}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--soft);color:var(--blue);white-space:nowrap}
+.badge.ok{background:var(--gsoft);color:var(--green)}.badge.warn{background:var(--asoft);color:var(--aink)}.badge.bad{background:var(--rsoft);color:var(--red)}
+.narrow{max-width:430px;margin:20px auto}
+.narrow form{display:grid;gap:14px;margin-top:16px}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:100;max-width:92vw;padding:13px 18px;border-radius:12px;background:var(--navy);color:#fff;
+  font-size:14px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.3);display:none}
+#toast.err{background:var(--red)}
+@media (min-width:900px){#toast{bottom:28px}}
+.seg{display:flex;gap:4px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;margin-bottom:14px}
+.seg a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;padding:10px 14px;border-radius:10px;text-decoration:none;color:var(--muted);font-weight:700;font-size:13px}
+.seg a svg{width:17px;height:17px}
+.seg a[aria-current="page"]{background:var(--btn);color:#fff}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.tools input,.tools select{margin-top:0}
+.tools .wide{grid-column:1/-1}
+@media (min-width:700px){.tools .wide{grid-column:span 2}}
+.printhead{display:none;text-align:center;margin-bottom:14px}
+
+/* ---------- Accueil ---------- */
+.hero{position:relative;overflow:hidden;border-radius:22px;color:#fff;padding:26px 22px 104px;background:linear-gradient(135deg,#0A2342 0%,#0B4AA0 60%,#0B63CE 100%);margin-bottom:16px}
+.hero::before{content:"";position:absolute;right:-50px;top:-50px;width:320px;height:320px;opacity:.12;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon fill='%23F6C500' points='50,5 61,38 96,38 68,58 79,92 50,71 21,92 32,58 4,38 39,38'/%3E%3C/svg%3E") center/contain no-repeat}
+.hero .band{position:absolute;left:-12%;right:-12%;bottom:-34px;height:86px;transform:rotate(-5deg);background:linear-gradient(var(--yellow) 0 12%,var(--red) 12% 88%,var(--yellow) 88% 100%)}
+.hero>*:not(.band){position:relative}
+.pill{display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:600;margin-bottom:14px}
+.hero h1{font-size:clamp(22px,4.8vw,36px);font-weight:800;max-width:19em}
+.hero .hdir{margin-top:12px;font-size:17px;font-weight:700;color:var(--yellow)}
+.hero .cta{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+.hero .btn{background:#fff;color:#0A3F7A;border-color:#fff}
+.hero .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.65)}
+@media (min-width:760px){.hero{padding:40px 38px 70px}.hero .band{width:42%;left:auto;right:-60px;bottom:-20px;height:76px;transform:rotate(-24deg)}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.stat .ic{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--soft);color:var(--blue);flex:none}
+.stat .ic.y{background:var(--asoft);color:var(--aink)}.stat .ic.g{background:var(--gsoft);color:var(--green)}.stat .ic.r{background:var(--rsoft);color:var(--red)}
+.stat b{display:block;font-size:24px;font-weight:800;line-height:1.1}
+.stat span{font-size:12.5px;color:var(--muted);font-weight:500}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.tile{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-decoration:none;color:var(--ink);box-shadow:var(--shadow)}
+.tile:hover{border-color:var(--blue)}
+.tile .ic{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--soft);color:var(--blue);flex:none}
+.tile b{display:block;font-size:15px}.tile span{color:var(--muted);font-size:13px}
+.note{margin-top:18px;color:var(--muted);font-size:13px}
+
+/* ---------- Agents ---------- */
+#list{display:grid;gap:8px}
+.arow{display:grid;grid-template-columns:50px 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.arow:hover{border-color:var(--blue)}
+.an{display:flex;flex-direction:column;min-width:0}
+.an b{overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.an small{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis}
+.am{color:var(--muted);font-size:12px;font-weight:600;text-align:right}
+.av{width:50px;height:50px;border-radius:50%;overflow:hidden;background:var(--soft);display:grid;place-items:center;font-weight:800;color:var(--blue);border:2px solid var(--card);box-shadow:0 0 0 1.5px var(--line)}
+.av img{width:100%;height:100%;object-fit:cover}
+
+/* ---------- Fiche / modale ---------- */
+.mb{position:fixed;inset:0;z-index:60;background:rgba(6,16,32,.62);display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--card);width:100%;max-width:660px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px}
+@media (min-width:700px){.mb{align-items:center;padding:20px}.modal{border-radius:22px}}
+.fiche-top{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+.fiche-top .av{width:92px;height:92px;border-radius:18px;font-size:28px}
+.fiche-top h3{font-size:20px}
+.fiche-top .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+dl.f{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin:16px 0}
+dl.f dt{font-size:12px;color:var(--muted);font-weight:600}dl.f dd{margin:0;font-weight:600;word-break:break-word;font-size:14px}
+.placed{display:grid;gap:6px;margin:6px 0 14px}
+.placed a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--soft);color:var(--ink);text-decoration:none;font-size:13.5px}
+.placed a svg{width:20px;height:20px;color:var(--blue);flex:none}
+.placed a b{display:block}
+.okhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.okhead .ic{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--gsoft);color:var(--green)}
+
+/* ---------- Formulaire ---------- */
+.fsec{margin-bottom:14px}
+.fsec h3{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:15px}
+.fsec h3 i{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--btn);color:#fff;font-style:normal;font-size:13px}
+.photo-box{display:flex;gap:14px;align-items:center}
+.photo-box .av{width:88px;height:88px;border-radius:18px;flex:none;font-size:26px}
+.formbar{position:sticky;bottom:70px;display:flex;gap:10px;padding:12px 0}
+@media (min-width:900px){.formbar{bottom:0}}
+
+/* ---------- Tableaux ---------- */
+.tw{overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);max-height:72vh}
+table.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+.tbl th{position:sticky;top:0;z-index:2;background:var(--navy);color:#fff;text-align:left;padding:11px 12px;font-weight:700;white-space:nowrap;font-size:12.5px}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl tbody tr{cursor:pointer}.tbl tbody tr:hover td{background:var(--soft)}
+.tbl .s1,.tbl .s2{position:sticky;background:var(--card);z-index:1}
+.tbl th.s1,.tbl th.s2{background:var(--navy);z-index:3}
+.tbl .s1{left:0;min-width:46px}.tbl .s2{left:46px;min-width:210px;font-weight:700}
+.tbl tfoot td{font-weight:800;background:var(--soft);border-bottom:0}
+.tbl td.c,.tbl th.c{text-align:center}
+.tbl input.num{width:76px;min-height:38px;margin:0;text-align:center;padding:4px}
+
+/* ---------- Mise en place / cadre ---------- */
+.dv{margin-bottom:12px}
+.dv>header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.dv>header small{color:var(--muted);font-size:12.5px;display:block}
+.dv .cnt{text-align:right}.dv .cnt b{font-size:22px;font-weight:800;display:block;line-height:1.1}
+.alist{display:grid;gap:6px}
+.alist .arow{border-radius:12px;padding:8px 10px;box-shadow:none}
+.alist .av{width:42px;height:42px;font-size:13px}
+.alist .arow{grid-template-columns:42px 1fr auto}
+.meter{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:2px 0 12px}
+.meter i{display:block;height:100%;border-radius:99px;background:var(--green)}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);font-weight:800;text-decoration:underline;font-size:13px}
+.addpost{display:flex;gap:8px;margin-top:12px}.addpost input{margin-top:0}
+
+/* ---------- Tableau de bord ---------- */
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.chart h3{margin-bottom:12px;font-size:15px}
+.bar{display:grid;grid-template-columns:minmax(80px,38%) 1fr 62px;gap:8px;align-items:center;margin:8px 0;font-size:13px}
+.bar .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.bar .t{height:11px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar .t i{display:block;height:100%;border-radius:6px;background:var(--blue)}
+.bar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.dn{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.dn ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px}
+.dn li i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px}
+
+/* ---------- Administration / import ---------- */
+.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.list li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.list em{color:var(--muted);font-style:normal;font-size:13px;margin-left:6px}
+.dir{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.dh{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px}
+.chips{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.chips li{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.chips .chip{border:0;background:none;padding:6px 12px;font-size:13px}
+.chips .x{border:0;border-left:1px solid var(--line);background:none;padding:0 11px;color:var(--red);font-size:18px}
+.inline{display:flex;gap:8px}.inline input{margin-top:0}.inline .btn{flex:none}
+.sec2{margin-top:14px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px;border:2px dashed var(--line);border-radius:16px;text-align:center;cursor:pointer;color:var(--muted)}
+.drop svg{width:34px;height:34px;color:var(--blue)}
+.drop b{color:var(--ink)}
+details.map{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+details.map summary{cursor:pointer;font-weight:700;font-size:13.5px}
+details.map .grid{margin-top:12px}
+.kv{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+@media print{
+  .top,.bnav,.side,#toast,.noprint,.tools,.seg{display:none!important}
+  main{margin:0;padding:0;max-width:none}
+  body{background:#fff;color:#000}
+  .printhead{display:block}
+  .card,.tw{box-shadow:none;max-height:none;overflow:visible}
+  .tbl th{background:#e6ebf3!important;color:#000!important}
+  .tbl .s1,.tbl .s2{position:static}
+  body.printing #app,body.printing #toast{display:none!important}
+  body.printing .mb{position:static;background:none;display:block;padding:0}
+  body.printing .modal{box-shadow:none;max-height:none;max-width:none;padding:0;border-radius:0;background:#fff;color:#000}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/*PURE-START*/
+/* ================= Utilitaires et logique pure ================= */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const hash = s => {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57; const str = 'dfl|' + s;
+  for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+};
+const SEX = { M: 'Masculin', F: 'Féminin' };
+const ETATS = ['Célibataire', 'Fiancé(e)', 'Marié(e)', 'Divorcé(e)', 'Veuf/Veuve'];
+const PRISE = ['Suivi', 'Financé', 'Suivi et financé', 'Aucune'];
+const SITU = ['Actif', 'Détaché', 'Suspendu', 'Retraité', 'Décédé'];
+const GRADES = ['Secrétaire Général', 'Directeur', 'Chef de Division', 'Chef de Bureau', 'Attaché de Bureau de 1ère classe', 'Attaché de Bureau de 2ème classe', 'Agent de Bureau de 1ère classe', 'Agent de Bureau de 2ème classe', 'Huissier'];
+const DIPLOMES = ['Diplôme d’État (D6)', 'Graduat', 'Licence', 'Master', 'Doctorat', 'Brevet'];
+const gradeRank = g => { const n = norm(g); const i = GRADES.findIndex(x => norm(x) === n); return i < 0 ? 50 : i; };
+const fullName = a => `${(a.nom || '').toUpperCase()} ${(a.postnom || '').toUpperCase()} ${a.prenom || ''}`.replace(/\s+/g, ' ').trim();
+
+const isoOK = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+const fmtDate = iso => isoOK(iso) ? iso.split('-').reverse().join('/') : '';
+const age = iso => {
+  if (!isoOK(iso)) return null;
+  const d = new Date(iso), n = new Date(); let a = n.getFullYear() - d.getFullYear();
+  if (n.getMonth() < d.getMonth() || (n.getMonth() === d.getMonth() && n.getDate() < d.getDate())) a--;
+  return a >= 0 && a < 120 ? a : null;
+};
+const toISO = s => {
+  s = String(s ?? '').trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  if ((m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/))) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return '';
+};
+const dateFrom = v => {
+  if (v == null || v === '') return '';
+  const n = typeof v === 'number' ? v : (/^\d{5}$/.test(String(v).trim()) ? +v : NaN);
+  if (!isNaN(n) && n > 2000 && n < 80000) return new Date(Math.round((n - 25569) * 864e5)).toISOString().slice(0, 10);
+  return toISO(v);
+};
+const normEtat = s => {
+  const n = norm(s); if (!n) return '';
+  if (n.startsWith('celib')) return 'Célibataire'; if (n.startsWith('fianc')) return 'Fiancé(e)';
+  if (n.startsWith('mari')) return 'Marié(e)'; if (n.startsWith('divorc')) return 'Divorcé(e)'; if (n.startsWith('veu')) return 'Veuf/Veuve';
+  return String(s).trim();
+};
+
+/* ---- Lecture des fichiers : reconnaissance des colonnes ---- */
+const FIELDS = [['noms', 'Noms complets (nom + postnom + prénom)'], ['nom', 'Nom'], ['postnom', 'Postnom'], ['prenom', 'Prénom'], ['sexe', 'Sexe'],
+  ['naissance', 'Date de naissance'], ['etat_civil', 'État civil'], ['diplome', 'Diplôme'], ['matricule', 'Matricule'], ['acte', 'N° acte d’engagement'],
+  ['engagement', 'Date d’engagement'], ['grade', 'Grade'], ['fonction', 'Fonction'], ['direction', 'Direction'], ['division', 'Division'],
+  ['salaire', 'Salaire (oui/non)'], ['prime', 'Prime (oui/non)'], ['prise_en_charge', 'Prise en charge'], ['situation', 'Situation']];
+const CFIELDS = [['direction', 'Direction'], ['division', 'Division'], ['grade', 'Grade / poste'], ['prevu', 'Effectif prévu'], ['note', 'Remarque']];
+const AKEYS = FIELDS.map(f => f[0]), CKEYS = CFIELDS.map(f => f[0]);
+const ALIAS = {
+  noms: ['noms', 'nomcomplet', 'nomscomplets', 'nomsetpostnoms', 'nometpostnom', 'nomsetpostnom', 'nomspostnomsetprenoms', 'nomsetprenoms', 'nomprenom', 'nometprenom', 'nomsdesagents', 'nomsagents', 'agent', 'identite', 'nomsprenomsetpostnoms', 'nompostnomprenom', 'nompostnometprenom', 'nomdelagent', 'nomsdelagent'],
+  nom: ['nom'], postnom: ['postnom'], prenom: ['prenom'],
+  naissance: ['datedenaissance', 'datenaissance', 'naissance', 'datenaiss', 'nele'],
+  sexe: ['sexe', 'genre', 'sx'],
+  etat_civil: ['etatcivil', 'ec', 'situationmatrimoniale', 'etatmatrimonial'],
+  diplome: ['diplome', 'niveaudetudes', 'niveauetude', 'niveaudetude', 'qualification'],
+  matricule: ['matricule', 'matr', 'nmatricule', 'matriculeagent', 'numeromatricule', 'nomatricule'],
+  acte: ['nactedengagement', 'acteengagement', 'actedengagement', 'acte', 'nacte', 'numeroacte', 'referenceacte'],
+  engagement: ['datedengagement', 'dateengagement', 'engagement', 'datedentreeenservice', 'dateentree', 'datedeprisedeservice', 'datedeprise', 'datedenomination'],
+  grade: ['grade', 'gradeactuel'], fonction: ['fonction', 'poste', 'emploi', 'fonctionexercee'],
+  direction: ['direction'], division: ['division', 'service', 'bureau', 'affectation', 'divisiondaffectation'],
+  salaire: ['salaire', 'paie'], prime: ['prime'], prise_en_charge: ['priseencharge'],
+  situation: ['situation', 'statut', 'situationadministrative'],
+  prevu: ['effectifprevu', 'effectifsprevus', 'prevu', 'prevus', 'postesprevus', 'effectifcadre', 'effectifs', 'nombredepostes', 'nbpostes', 'cadre'],
+  note: ['remarque', 'remarques', 'observation', 'observations', 'note']
+};
+function bestField(h, keys) {
+  let best = null;
+  for (const k of keys) for (const a of ALIAS[k]) {
+    let s = 0; if (h === a) s = 1000 + a.length; else if (a.length >= 6 && h.includes(a)) s = a.length;
+    if (s && (!best || s > best.s)) best = { k, s };
+  }
+  return best;
+}
+function autoMap(row, keys) {
+  const m = {};
+  row.forEach((c, ci) => { const h = norm(c); if (!h) return; const b = bestField(h, keys); if (b && (!m[b.k] || b.s > m[b.k].s)) m[b.k] = { ci, s: b.s }; });
+  const o = {}; for (const k in m) o[k] = m[k].ci; return o;
+}
+function pickTable(aoa, keys) {
+  let best = null; const cadre = keys === CKEYS;
+  for (let i = 0; i < Math.min(aoa.length, 30); i++) {
+    const m = autoMap(aoa[i] || [], keys), n = Object.keys(m).length;
+    const ok = cadre ? (n >= 2 && 'prevu' in m && ('grade' in m || 'division' in m)) : (n >= 2 && ('nom' in m || 'noms' in m));
+    if (ok && (!best || n > best.n)) best = { hi: i, map: m, n };
+  }
+  return best;
+}
+const looksLikeHeader = (r, keys) => Object.keys(autoMap(r, keys)).length >= 3;
+const isTotalRow = r => /^(sous[- ]?)?total/i.test(String(r.find(c => String(c ?? '').trim() !== '') ?? '').trim());
+function rowToAgent(r, map, opt, sheet) {
+  const g = k => map[k] != null ? String(r[map[k]] ?? '').replace(/\s+/g, ' ').trim() : '';
+  let nom = g('nom'), postnom = g('postnom'), prenom = g('prenom');
+  if (!nom && map.noms != null) { const t = g('noms').split(' ').filter(Boolean); nom = t[0] || ''; postnom = t[1] || postnom; prenom = t.slice(2).join(' ') || prenom; }
+  if (!nom) return null;
+  const sx = g('sexe').toLowerCase();
+  const yn = v => { v = String(v).trim().toLowerCase(); return !v ? '' : ['oui', 'o', 'yes', 'y', '1', 'x', 'true', 'vrai'].includes(v) ? 'Oui' : 'Non'; };
+  return {
+    nom, postnom, prenom, naissance: dateFrom(map.naissance != null ? r[map.naissance] : ''), sexe: sx.startsWith('f') ? 'F' : sx.startsWith('m') ? 'M' : '',
+    etat_civil: normEtat(g('etat_civil')), diplome: g('diplome'), matricule: g('matricule'), acte: g('acte'),
+    engagement: dateFrom(map.engagement != null ? r[map.engagement] : ''), grade: g('grade'), fonction: g('fonction'),
+    direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''),
+    salaire: yn(g('salaire')), prime: yn(g('prime')), prise_en_charge: g('prise_en_charge'), situation: g('situation')
+  };
+}
+function rowToPost(r, map, opt, sheet) {
+  const g = k => map[k] != null ? String(r[map[k]] ?? '').replace(/\s+/g, ' ').trim() : '';
+  const grade = g('grade') || g('note'); if (!grade) return null;
+  const prevu = parseInt(g('prevu').replace(/[^\d]/g, ''), 10); if (isNaN(prevu)) return null;
+  return { direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''), grade, prevu, note: g('grade') ? g('note') : '' };
+}
+function parseCSV(t) {
+  t = t.replace(/^\uFEFF/, '');
+  const first = t.split(/\r?\n/)[0] || '', cnt = c => first.split(c).length;
+  const d = cnt(';') >= cnt(',') && cnt(';') >= cnt('\t') ? ';' : cnt('\t') > cnt(',') ? '\t' : ',';
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === d) { row.push(f); f = ''; }
+    else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+    else if (c !== '\r') f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim() !== ''));
+}
+const csvCell = v => { v = String(v ?? ''); return /[;"\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+const matchDivision = (name, list) => { const n = norm(name); return list.find(x => norm(x) === n) || name; };
+const agentKey = a => a.matricule ? 'm:' + norm(a.matricule) : 'n:' + norm(a.nom + a.postnom + (a.naissance || ''));
+
+/* ---- Calculs utilisés par les onglets (dépendent de la base) ---- */
+let DB = null;
+function divOrder(d) {
+  const set = [...d.divisions], add = x => { if (x && !set.includes(x)) set.push(x); };
+  DB.agents.filter(a => a.direction === d.name).forEach(a => add(a.division));
+  DB.cadre.filter(c => c.direction === d.name).forEach(c => add(c.division));
+  return set;
+}
+function sortAgents(list, mode) {
+  const di = a => DB.directions.findIndex(d => d.name === a.direction);
+  const vi = a => { const d = DB.directions[di(a)]; if (!d) return 999; const i = divOrder(d).indexOf(a.division || ''); return i < 0 ? 998 : i; };
+  const nm = a => (a.nom + ' ' + a.postnom + ' ' + a.prenom);
+  const c = {
+    hier: (a, b) => di(a) - di(b) || vi(a) - vi(b) || gradeRank(a.grade) - gradeRank(b.grade) || nm(a).localeCompare(nm(b), 'fr'),
+    alpha: (a, b) => nm(a).localeCompare(nm(b), 'fr'),
+    mat: (a, b) => String(a.matricule || '~').localeCompare(String(b.matricule || '~'), 'fr', { numeric: true })
+  }[mode || 'hier'];
+  return [...list].sort(c);
+}
+function cadreRows(dirName, div) {
+  const rows = new Map();
+  DB.cadre.filter(c => c.direction === dirName && c.division === div).forEach(c => rows.set(norm(c.grade), { grade: c.grade, prevu: c.prevu, enplace: 0, id: c.id, note: c.note || '' }));
+  DB.agents.filter(a => a.direction === dirName && (a.division || '') === div).forEach(a => {
+    const g = a.grade || 'Grade non renseigné', k = norm(g);
+    if (!rows.has(k)) rows.set(k, { grade: g, prevu: 0, enplace: 0, id: null, note: '' });
+    rows.get(k).enplace++;
+  });
+  return [...rows.values()].sort((a, b) => gradeRank(a.grade) - gradeRank(b.grade) || a.grade.localeCompare(b.grade, 'fr'));
+}
+const incomplete = a => !a.matricule || !a.acte || !a.naissance || !a.grade || !a.fonction || !a.diplome || !a.engagement;
+const group = (list, fn, order) => {
+  const m = {}; list.forEach(a => { const k = fn(a) || 'Non renseigné'; m[k] = (m[k] || 0) + 1; });
+  const e = Object.entries(m);
+  if (order) e.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0])); else e.sort((a, b) => b[1] - a[1]);
+  return e;
+};
+const migrate = d => {
+  d.users = d.users || []; d.directions = d.directions || []; d.agents = d.agents || [];
+  d.cadre = d.cadre || []; d.meta = d.meta || {}; if (!d.meta.annee) d.meta.annee = new Date().getFullYear();
+  if (!d.directions.length) d.directions.push({ name: 'Direction des Finances Locales', divisions: [] });
+  d.agents.forEach(a => { if (!a.direction) a.direction = d.directions[0].name; });
+  d.version = 2; return d;
+};
+/*PURE-END*/
+
+/* ================= Environnement ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const isNative = () => !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+const FS = () => window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Filesystem;
+let toastTimer;
+const toast = (msg, err) => {
+  const t = $('#toast'); t.textContent = msg; t.className = err ? 'err' : ''; t.style.display = 'block';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = 'none', 4200);
+};
+const LIBS = { xlsx: ['lib/xlsx.full.min.js', 'XLSX'], mammoth: ['lib/mammoth.browser.min.js', 'mammoth'], pdf: ['lib/pdf.min.js', 'pdfjsLib'] };
+const loadLib = name => new Promise((res, rej) => {
+  const [src, g] = LIBS[name]; if (window[g]) return res();
+  const s = document.createElement('script'); s.src = src; s.onload = () => window[g] ? res() : rej(new Error('lib')); s.onerror = () => rej(new Error('lib'));
+  document.head.appendChild(s);
+});
+async function saveFile(name, data, type, isB64) {
+  if (isNative()) {
+    try {
+      const P = Capacitor.Plugins, b64 = isB64 ? data : btoa(unescape(encodeURIComponent(data)));
+      const r = await P.Filesystem.writeFile({ path: name, data: b64, directory: 'CACHE' });
+      await P.Share.share({ title: name, url: r.uri, dialogTitle: 'Enregistrer ou envoyer le fichier' });
+    } catch (e) { if (!/cancel/i.test(String((e && e.message) || ''))) toast('Impossible de partager le fichier', true); }
+    return;
+  }
+  const blob = isB64 ? new Blob([Uint8Array.from(atob(data), c => c.charCodeAt(0))], { type }) : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+async function exportTable(base, header, rows) {
+  try {
+    await loadLib('xlsx');
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    ws['!cols'] = header.map((h, i) => ({ wch: Math.min(40, Math.max(String(h).length, ...rows.slice(0, 200).map(r => String(r[i] ?? '').length)) + 2) }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Feuille1');
+    await saveFile(base + '.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'base64' }), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', true);
+  } catch (e) {
+    await saveFile(base + '.csv', '\uFEFF' + [header, ...rows].map(r => r.map(csvCell).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
+  }
+}
+const today = () => new Date().toISOString().slice(0, 10);
+
+/* ================= Stockage : fichier dans l'application ================= */
+const DBFILE = 'base_agents.json', AUXFILE = 'base_agents.auto.json';
+const Store = {
+  kind: 'mem', db: null, mem: null, timer: null, busy: false,
+  async open() {
+    if (window.dflDesktop) { this.kind = 'desktop'; return; }
+    if (isNative() && FS()) {
+      try {
+        await FS().writeFile({ path: 'dfl/.test', data: 'ok', directory: 'DATA', encoding: 'utf8', recursive: true });
+        const r = await FS().readFile({ path: 'dfl/.test', directory: 'DATA', encoding: 'utf8' });
+        if (r.data === 'ok') { this.kind = 'native'; return; }
+      } catch (e) { toast('Stockage fichier indisponible : utilisation de la mémoire interne de l’application', true); }
+    }
+    await new Promise(res => {
+      try { const r = indexedDB.open('dfl_agents', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { this.db = r.result; this.kind = 'idb'; res(); }; r.onerror = () => res(); }
+      catch (e) { res(); }
+    });
+  },
+  async readRaw(name) {
+    try {
+      if (this.kind === 'desktop') return await window.dflDesktop.read(name);
+      if (this.kind === 'native') return (await FS().readFile({ path: 'dfl/' + name, directory: 'DATA', encoding: 'utf8' })).data;
+    } catch (e) {}
+    return null;
+  },
+  async writeRaw(name, txt) {
+    if (this.kind === 'desktop') return window.dflDesktop.write(name, txt);
+    if (this.kind === 'native') return FS().writeFile({ path: 'dfl/' + name, data: txt, directory: 'DATA', encoding: 'utf8', recursive: true });
+  },
+  async get() {
+    if (this.kind === 'idb') {
+      return new Promise(res => { try { const q = this.db.transaction('kv').objectStore('kv').get('data'); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } });
+    }
+    if (this.kind === 'mem') return this.mem;
+    for (const n of [DBFILE, AUXFILE]) {
+      const t = await this.readRaw(n);
+      if (t) { try { const d = JSON.parse(t); if (d && Array.isArray(d.agents)) { if (n === AUXFILE) toast('Base principale illisible : copie automatique restaurée'); return d; } } catch (e) {} }
+    }
+    // reprise éventuelle de l'ancienne version (stockage du navigateur intégré)
+    try {
+      const old = await new Promise(res => { const r = indexedDB.open('dfl_agents', 1); r.onupgradeneeded = () => { r.result.createObjectStore('kv'); }; r.onsuccess = () => { try { const q = r.result.transaction('kv').objectStore('kv').get('data'); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } }; r.onerror = () => res(null); });
+      if (old && Array.isArray(old.agents) && old.agents.length) return old;
+    } catch (e) {}
+    return null;
+  },
+  set(v) { this.mem = v; clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 350); },
+  async flush() {
+    clearTimeout(this.timer);
+    if (this.busy) { this.timer = setTimeout(() => this.flush(), 300); return; }
+    this.busy = true;
+    try {
+      if (this.kind === 'idb') this.db.transaction('kv', 'readwrite').objectStore('kv').put(this.mem, 'data');
+      else if (this.kind !== 'mem') await this.writeRaw(DBFILE, JSON.stringify(this.mem));
+    } catch (e) { toast('Erreur d’enregistrement de la base de données', true); }
+    this.busy = false;
+  },
+  where() {
+    if (this.kind === 'desktop') return window.dflDesktop.where();
+    if (this.kind === 'native') return Promise.resolve('Stockage interne de l’application (dossier dfl, fichier ' + DBFILE + ')');
+    return Promise.resolve(this.kind === 'idb' ? 'Mémoire interne du navigateur (mode de secours)' : 'Mémoire temporaire');
+  }
+};
+const save = () => Store.set(DB);
+
+let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
+const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
+const seed = () => migrate({
+  users: [{ id: uid(), username: 'admin', pass: hash('admin'), role: 'admin', mustChange: true }],
+  directions: [{ name: 'Direction des Finances Locales', divisions: ['Division 1', 'Division 2', 'Division 3'] }], agents: [], cadre: [], meta: { lastBackup: 0 }
+});
+
+/* ================= Icônes ================= */
+const IC = {
+  home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',
+  plus: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>', plusb: '<path d="M12 5v14M5 12h14"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  org: '<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  more: '<circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/>',
+  download: '<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>',
+  print: '<path d="M7 9V3h10v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
+  logout: '<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4M20 12H9"/>',
+  check: '<path d="M5 12l5 5 9-10"/>', key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
+  alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>', file: '<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/>'
+};
+const ico = (n, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+const MARK = '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0B5FB8"/><polygon points="0,21 21,0 32,0 0,32" fill="#F6C500"/><polygon points="0,25 25,0 29,0 0,29" fill="#CE1126"/><path d="M8 6l1.2 3.4 3.6.1-2.9 2.1 1.1 3.5L8 13l-3 2.1 1.1-3.5L3.2 9.5l3.6-.1z" fill="#F6C500"/></svg>';
+const initials = a => (((a.nom || '?')[0] || '?') + ((a.postnom || '')[0] || '')).toUpperCase();
+const avatar = a => `<span class="av">${a.photo ? `<img src="${a.photo}" alt="">` : esc(initials(a))}</span>`;
+
+/* ================= Navigation ================= */
+const NAV = [
+  { r: 'accueil', l: 'Accueil', i: 'home' }, { r: 'tableau', l: 'Tableau de bord', i: 'chart' }, { r: 'agents', l: 'Agents', i: 'users' }, { r: 'nouveau', l: 'Nouvel agent', i: 'plus' },
+  { g: 'Documents officiels' }, { r: 'mise-en-place', l: 'Mise en place', i: 'layers' }, { r: 'cadre', l: 'Cadre organique', i: 'org' }, { r: 'liste', l: 'Liste déclarative', i: 'list' },
+  { g: 'Gestion' }, { r: 'importer', l: 'Importer un fichier', i: 'upload' }, { r: 'admin', l: 'Administration', i: 'shield', admin: 1 }
+];
+const PROTECTED = ['tableau', 'agents', 'nouveau', 'mise-en-place', 'cadre', 'liste', 'importer', 'admin', 'compte', 'plus'];
+const DOCS = ['mise-en-place', 'cadre', 'liste'];
+const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents' };
+
+function shell(inner, name) {
+  const isAdmin = session && session.role === 'admin';
+  const side = NAV.filter(n => n.g || !(n.admin && !isAdmin)).map(n => n.g ? `<div class="gl">${n.g}</div>` : `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
+  const who = session
+    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${isAdmin ? 'Administrateur' : 'Saisie et consultation'}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
+    : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
+  const b = (r, l, i, on, fab) => `<a href="#/${r}" class="${fab ? 'fab' : ''}" ${on ? 'aria-current="page"' : ''}>${fab ? `<span>${ico(i, 26)}</span>` : ico(i, 22)}<small>${l}</small></a>`;
+  const bn = `<nav class="bnav" aria-label="Navigation">${b('accueil', 'Accueil', 'home', name === 'accueil')}${b('agents', 'Agents', 'users', name === 'agents')}${b('nouveau', 'Ajouter', 'plusb', name === 'nouveau', 1)}${b('mise-en-place', 'Documents', 'layers', DOCS.includes(name))}${b('plus', 'Plus', 'more', ['plus', 'tableau', 'importer', 'admin', 'compte'].includes(name))}</nav>`;
+  const banners = [];
+  if (session && session.mustChange) banners.push(`<div class="warn">${ico('alert', 20)}<span>Le mot de passe par défaut est encore actif. <a href="#/compte">Le changer maintenant</a></span></div>`);
+  if (isAdmin && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
+    banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/admin">Faire une sauvegarde</a></span></div>`);
+  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
+  <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
+  <main>${banners.join('')}${inner}</main>${bn}`;
+}
+
+/* ================= Pages ================= */
+const stat = (ic, cls, n, l) => `<div class="stat"><span class="ic ${cls}">${ico(ic, 22)}</span><div><b>${n}</b><span>${l}</span></div></div>`;
+function pAccueil() {
+  const nd = DB.directions.reduce((s, d) => s + d.divisions.length, 0);
+  const prevu = DB.cadre.reduce((s, c) => s + c.prevu, 0);
+  const tile = (r, t, d, i) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${t}</b><span>${d}</span></div></a>`;
+  return `<section class="hero"><span class="band"></span>
+    <span class="pill">République Démocratique du Congo</span>
+    <h1>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</h1>
+    <p class="hdir">Direction des Finances Locales</p>
+    <div class="cta">${session ? '<a class="btn" href="#/agents">Consulter les agents</a><a class="btn ghost" href="#/nouveau">Enregistrer un agent</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>
+  <div class="stats">${stat('users', '', DB.agents.length, 'agents enregistrés')}${stat('layers', 'y', nd, nd > 1 ? 'divisions' : 'division')}${stat('org', 'g', prevu || '–', 'postes au cadre organique')}${stat('check', 'r', DB.agents.filter(a => !incomplete(a)).length, 'dossiers complets')}</div>
+  <div class="tiles">
+    ${tile('agents', 'Base de données des agents', 'Rechercher, filtrer, ouvrir une fiche', 'users')}
+    ${tile('nouveau', 'Nouvel agent recruté', 'Remplir le formulaire d’enregistrement', 'plus')}
+    ${tile('mise-en-place', 'Mise en place', 'Agents répartis par division', 'layers')}
+    ${tile('cadre', 'Cadre organique', 'Postes prévus, occupés et vacants', 'org')}
+    ${tile('liste', 'Liste déclarative', 'Liste officielle numérotée des agents', 'list')}
+    ${tile('importer', 'Importer un fichier', 'Excel, Word, PDF ou CSV', 'upload')}
+  </div>
+  <p class="note">Cette application fonctionne sans internet. La base de données est un fichier enregistré dans l’application sur cet appareil : faites régulièrement une sauvegarde depuis l’espace Administration.</p>`;
+}
+function pLogin() {
+  const first = DB.users.some(u => u.mustChange);
+  return `<section class="card narrow"><h2>Connexion</h2><p class="sub">Accès réservé au personnel autorisé.</p>
+    <form data-f="login"><label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" required></label>
+    <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary">Se connecter</button></form>
+    ${first ? '<p class="sub" style="margin-top:14px">Premier accès : identifiant <b>admin</b>, mot de passe <b>admin</b>. Vous devrez le changer ensuite.</p>' : ''}</section>`;
+}
+function pCompte() {
+  return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
+    <form data-f="pw"><label>Mot de passe actuel<input name="old" type="password" autocomplete="current-password" required></label>
+    <label>Nouveau mot de passe (6 caractères minimum)<input name="n1" type="password" autocomplete="new-password" minlength="6" required></label>
+    <label>Confirmer le nouveau mot de passe<input name="n2" type="password" autocomplete="new-password" minlength="6" required></label>
+    <button class="btn primary">Enregistrer le mot de passe</button></form></section>`;
+}
+function pPlus() {
+  const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
+  return `<header class="ph"><h2>Plus</h2></header><div class="tiles">
+    ${it('tableau', 'Tableau de bord', 'chart', 'Statistiques et graphiques')}${it('importer', 'Importer un fichier', 'upload', 'Excel, Word, PDF ou CSV')}
+    ${session.role === 'admin' ? it('admin', 'Administration', 'shield', 'Sauvegarde, utilisateurs, divisions') : ''}${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
+    <button class="tile" data-act="logout" style="text-align:left;font:inherit"><span class="ic">${ico('logout')}</span><div><b>Se déconnecter</b><span>Fermer ma session</span></div></button></div>`;
+}
+
+/* ---------- Agents ---------- */
+const allDivisions = dir => DB.directions.filter(d => !dir || d.name === dir).flatMap(d => divOrder(d));
+function pAgents(arg) {
+  return `<header class="ph"><div><h2>Agents</h2><p class="sub" id="cnt"></p></div><div class="acts"><a class="btn" href="#/importer">${ico('upload', 18)}Importer</a><a class="btn primary" href="#/nouveau">${ico('plusb', 18)}Nouvel agent</a></div></header>
+  <div class="tools">
+    <input id="q" type="search" class="wide" placeholder="Rechercher : nom, matricule, fonction…" aria-label="Rechercher un agent">
+    <select id="fDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select>
+    <select id="fDiv" aria-label="Division"></select>
+    <select id="fSexe" aria-label="Sexe"><option value="">Tous les sexes</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
+    <select id="fSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select>
+    <select id="fInc" aria-label="Dossiers"><option value="">Tous les dossiers</option><option value="1" ${arg === 'inc' ? 'selected' : ''}>Dossiers incomplets</option></select>
+  </div><div id="list"></div>`;
+}
+function fillDivFilter() {
+  const cur = $('#fDiv').value;
+  $('#fDiv').innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions($('#fDir').value).map(v => `<option>${esc(v)}</option>`).join('');
+  if ([...$('#fDiv').options].some(o => o.value === cur)) $('#fDiv').value = cur;
+}
+function filtered() {
+  const q = norm($('#q').value), d = $('#fDir').value, v = $('#fDiv').value, s = $('#fSexe').value, t = $('#fSit').value, inc = $('#fInc').value;
+  return sortAgents(DB.agents.filter(a => (!d || a.direction === d) && (!v || a.division === v) && (!s || a.sexe === s) && (!t || a.situation === t) && (!inc || incomplete(a)) &&
+    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte].join(' ')).includes(q))), 'alpha');
+}
+const agentRow = a => `<button class="arow" data-act="fiche" data-id="${a.id}">${avatar(a)}<span class="an"><b>${esc(fullName(a))}</b><small>${esc(a.grade || 'Grade non renseigné')}${a.fonction ? ' — ' + esc(a.fonction) : ''}</small></span><span class="am">${esc(a.matricule || '')}${a.division ? `<br><span class="badge">${esc(a.division)}</span>` : ''}</span></button>`;
+function renderList() {
+  const L = filtered(), MAX = 200;
+  $('#cnt').textContent = `${L.length}${L.length !== DB.agents.length ? ' sur ' + DB.agents.length : ''} agent${L.length > 1 ? 's' : ''}`;
+  if (!DB.agents.length) { $('#list').innerHTML = `<div class="empty">Aucun agent enregistré.<br><br><a class="btn primary" href="#/nouveau">Ajouter le premier agent</a> <a class="btn" href="#/importer">Importer un fichier</a></div>`; return; }
+  if (!L.length) { $('#list').innerHTML = '<div class="empty">Aucun agent ne correspond à cette recherche.</div>'; return; }
+  $('#list').innerHTML = L.slice(0, MAX).map(agentRow).join('') + (L.length > MAX ? `<div class="empty">${MAX} premiers résultats affichés sur ${L.length}. Affinez la recherche.</div>` : '');
+}
+
+/* ---------- Fenêtres ---------- */
+function openModal(html) {
+  closeModal();
+  const m = document.createElement('div'); m.className = 'mb'; m.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+  document.body.appendChild(m);
+}
+function closeModal() { $$('.mb').forEach(m => m.remove()); document.body.classList.remove('printing'); }
+function ask(msg, def = '', type = 'text') {
+  return new Promise(res => {
+    const m = document.createElement('div'); m.className = 'mb'; m.style.zIndex = 90;
+    m.innerHTML = `<form class="modal" style="max-width:440px"><p style="margin-bottom:10px;font-weight:600">${esc(msg)}</p><input name="v" type="${type}" value="${esc(def)}" autocomplete="off"><div class="acts" style="margin-top:14px"><button class="btn primary">Valider</button><button type="button" class="btn" data-x>Annuler</button></div></form>`;
+    const done = v => { m.remove(); res(v); };
+    m.querySelector('form').addEventListener('submit', e => { e.preventDefault(); done(e.target.v.value); });
+    m.querySelector('[data-x]').addEventListener('click', () => done(null));
+    document.body.appendChild(m); m.querySelector('input').focus();
+  });
+}
+function openFiche(id) {
+  const a = DB.agents.find(x => x.id === id); if (!a) return;
+  const f = (l, v) => `<div><dt>${l}</dt><dd>${v ? esc(v) : '<span class="muted">Non renseigné</span>'}</dd></div>`, ag = age(a.naissance);
+  const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;
+  openModal(`<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>Direction des Finances Locales<h3 style="margin-top:8px">Fiche d’agent</h3></div>
+    <div class="fiche-top">${avatar(a)}<div><h3>${esc(fullName(a))}</h3><span class="muted" style="font-size:13px">${esc(a.fonction || a.grade || '')}</span>
+      <div class="badges">${a.situation ? `<span class="badge ok">${esc(a.situation)}</span>` : ''}${a.division ? `<span class="badge">${esc(a.division)}</span>` : ''}${incomplete(a) ? '<span class="badge warn">Dossier incomplet</span>' : ''}</div></div></div>
+    <dl class="f">${f('Matricule', a.matricule)}${f('N° acte d’engagement', a.acte)}${f('Date d’engagement', fmtDate(a.engagement))}${f('Situation', a.situation)}
+      ${f('Date de naissance', fmtDate(a.naissance) + (ag != null ? ` (${ag} ans)` : ''))}${f('Sexe', SEX[a.sexe])}${f('État civil', a.etat_civil)}${f('Diplôme', a.diplome)}
+      ${f('Grade', a.grade)}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Salaire', a.salaire)}${f('Prime', a.prime)}${f('Prise en charge', a.prise_en_charge)}</dl>
+    <div class="noprint"><div class="placed">
+      <a href="#/mise-en-place" data-act="close">${ico('layers', 20)}<span><b>Mise en place</b>${esc(a.division || 'Sans division')}</span></a>
+      <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
+      <a href="#/liste" data-act="close">${ico('list', 20)}<span><b>Liste déclarative</b>N° ${rank} sur ${DB.agents.filter(x => x.direction === a.direction).length}</span></a></div>
+    <div class="acts"><a class="btn primary" href="#/nouveau/${a.id}" data-act="close">Modifier</a>
+      ${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}
+      ${session.role === 'admin' ? `<button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>` : ''}
+      <button class="btn" data-act="close">Fermer</button></div></div>`);
+}
+
+/* ---------- Formulaire ---------- */
+function divOptions(dir, sel) {
+  const d = DB.directions.find(x => x.name === dir);
+  return '<option value="">Choisir…</option>' + (d ? divOrder(d) : []).map(v => `<option ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+}
+function pForm(id) {
+  const a = id ? DB.agents.find(x => x.id === id) : null;
+  if (id && !a) return '<div class="empty">Agent introuvable.</div>';
+  const v = a || { situation: 'Actif', salaire: 'Non', prime: 'Non', direction: DB.directions[0].name };
+  formPhoto = a ? (a.photo || '') : '';
+  const opt = (arr, sel) => '<option value="">Choisir…</option>' + arr.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  const radio = (n, list, val, req) => `<div class="radios">${list.map((o, i) => `<label class="rd"><input type="radio" name="${n}" value="${o[0]}" ${val === o[0] ? 'checked' : ''} ${req && i === 0 ? 'required' : ''}>${o[1]}</label>`).join('')}</div>`;
+  const yn = [['Oui', 'Oui'], ['Non', 'Non']], sec = (n, t) => `<h3><i>${n}</i>${t}</h3>`;
+  return `<header class="ph"><div><h2>${a ? 'Modifier l’agent' : 'Nouvel agent recruté'}</h2><p class="sub">Les champs marqués * sont obligatoires. L’agent sera placé automatiquement dans les 3 documents.</p></div></header>
+  <form data-f="agent" data-id="${a ? a.id : ''}" autocomplete="off">
+    <section class="card fsec">${sec(1, 'Identité')}<div class="grid">
+      <label>Nom *<input name="nom" value="${esc(v.nom)}" required></label><label>Postnom *<input name="postnom" value="${esc(v.postnom)}" required></label>
+      <label>Prénom<input name="prenom" value="${esc(v.prenom)}"></label><label>Date de naissance<input type="date" name="naissance" value="${esc(v.naissance)}"></label>
+      <div><label>Sexe *</label>${radio('sexe', [['M', 'Masculin'], ['F', 'Féminin']], v.sexe, true)}</div>
+      <label>État civil<select name="etat_civil">${opt(ETATS, v.etat_civil)}</select></label>
+      <label>Diplôme<input name="diplome" list="dl-dip" value="${esc(v.diplome)}"></label></div></section>
+    <section class="card fsec">${sec(2, 'Engagement')}<div class="grid">
+      <label>Matricule *<input name="matricule" value="${esc(v.matricule)}" required></label><label>N° de l’acte d’engagement<input name="acte" value="${esc(v.acte)}"></label>
+      <label>Date d’engagement<input type="date" name="engagement" value="${esc(v.engagement)}"></label><label>Grade<input name="grade" list="dl-grade" value="${esc(v.grade)}"></label>
+      <label>Fonction<input name="fonction" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></section>
+    <section class="card fsec">${sec(3, 'Affectation')}<div class="grid">
+      <label>Direction *<select name="direction" id="fmDir" required>${DB.directions.map(d => `<option ${d.name === v.direction ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
+      <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label></div></section>
+    <section class="card fsec">${sec(4, 'Rémunération et suivi')}<div class="grid">
+      <div><label>Salaire</label>${radio('salaire', yn, v.salaire)}</div><div><label>Prime</label>${radio('prime', yn, v.prime)}</div>
+      <label>Prise en charge<select name="prise_en_charge">${opt(PRISE, v.prise_en_charge)}</select></label></div></section>
+    <section class="card fsec">${sec(5, 'Photo')}<div class="photo-box"><span class="av" id="phPrev">${formPhoto ? `<img src="${formPhoto}" alt="">` : '+'}</span>
+      <div><input type="file" id="phIn" accept="image/*"><button type="button" class="btn sm" data-act="rmphoto" style="margin-top:8px">Retirer la photo</button></div></div></section>
+    <datalist id="dl-dip">${DIPLOMES.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+    <div class="formbar"><button class="btn primary">${ico('check', 18)}Enregistrer l’agent</button><a class="btn" href="#/agents">Annuler</a></div></form>`;
+}
+function resizeImg(file, max = 240) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => { const im = new Image(); im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.72)); }; im.onerror = rej; im.src = fr.result; };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+
+/* ---------- Tableau de bord ---------- */
+function bars(title, entries, color) {
+  const tot = entries.reduce((s, e) => s + e[1], 0), max = Math.max(1, ...entries.map(e => e[1]));
+  return `<section class="card chart"><h3>${title}</h3>${entries.map(([l, n]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${Math.round(n / max * 100)}%;${color && color[l] ? 'background:' + color[l] : ''}"></i></span><span class="n">${n} (${Math.round(n / tot * 100)}%)</span></div>`).join('')}</section>`;
+}
+const donut = (m, f) => { const t = m + f || 1, r = 42, c = 2 * Math.PI * r, a = c * m / t; return `<svg viewBox="0 0 100 100" width="130" height="130" role="img" aria-label="${m} hommes, ${f} femmes"><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--red)" stroke-width="14"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--blue)" stroke-width="14" stroke-dasharray="${a} ${c - a}" transform="rotate(-90 50 50)"/><text x="50" y="56" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor">${m + f}</text></svg>`; };
+function pTableau() {
+  return `<header class="ph"><div><h2>Tableau de bord</h2><p class="sub">Vue d’ensemble des agents enregistrés</p></div><select id="dDir" style="width:auto;margin:0" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select></header><div id="dash"></div>`;
+}
+function renderDash() {
+  const dir = $('#dDir').value, L = DB.agents.filter(a => !dir || a.direction === dir);
+  if (!L.length) { $('#dash').innerHTML = '<div class="empty">Aucun agent enregistré pour l’instant.<br><br><a class="btn primary" href="#/nouveau">Ajouter le premier agent</a></div>'; return; }
+  const ages = L.map(a => age(a.naissance)).filter(x => x != null), avg = ages.length ? Math.round(ages.reduce((s, x) => s + x, 0) / ages.length) : '–';
+  const m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length, inc = L.filter(incomplete).length;
+  let vac = 0; DB.directions.filter(d => !dir || d.name === dir).forEach(d => divOrder(d).concat(['']).forEach(v => cadreRows(d.name, v).forEach(r => { vac += Math.max(0, r.prevu - r.enplace); })));
+  const bucket = a => { const x = age(a.naissance); return x == null ? '' : x < 30 ? 'Moins de 30 ans' : x < 40 ? '30 à 39 ans' : x < 50 ? '40 à 49 ans' : x < 60 ? '50 à 59 ans' : '60 ans et plus'; };
+  const AB = ['Moins de 30 ans', '30 à 39 ans', '40 à 49 ans', '50 à 59 ans', '60 ans et plus', 'Non renseigné'];
+  const years = group(L, a => (a.engagement || '').slice(0, 4)).sort((a, b) => a[0] === 'Non renseigné' ? 1 : b[0] === 'Non renseigné' ? -1 : a[0].localeCompare(b[0]));
+  $('#dash').innerHTML = `<div class="stats">${stat('users', '', L.length, 'agents')}${stat('chart', 'y', avg, 'âge moyen')}${stat('org', 'g', vac, 'postes vacants')}
+    <a href="#/agents/inc" style="text-decoration:none;color:inherit">${stat('alert', 'r', inc, 'dossiers incomplets')}</a>${stat('check', 'g', L.filter(a => a.salaire === 'Oui').length, 'avec salaire')}${stat('check', 'y', L.filter(a => a.prime === 'Oui').length, 'avec prime')}</div>
+    <div class="charts">
+      <section class="card chart"><h3>Répartition par sexe</h3><div class="dn">${donut(m, f)}<ul><li><i style="background:var(--blue)"></i>Hommes : <b>${m}</b></li><li><i style="background:var(--red)"></i>Femmes : <b>${f}</b></li>${L.length - m - f ? `<li class="muted">Non renseigné : ${L.length - m - f}</li>` : ''}</ul></div></section>
+      ${bars('Agents par division', group(L, a => a.division))}${bars('Agents par grade', group(L, a => a.grade))}${bars('État civil', group(L, a => a.etat_civil, [...ETATS, 'Non renseigné']))}
+      ${bars('Tranches d’âge', group(L, bucket, AB))}${bars('Prise en charge', group(L, a => a.prise_en_charge))}${bars('Situation', group(L, a => a.situation, [...SITU, 'Non renseigné']))}${bars('Année d’engagement', years)}</div>`;
+}
+
+/* ---------- Les 3 documents : Mise en place, Cadre organique, Liste déclarative ---------- */
+const selDirs = () => ui.dir ? DB.directions.filter(d => d.name === ui.dir) : DB.directions;
+const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico({ 'mise-en-place': 'layers', cadre: 'org', liste: 'list' }[r], 17)}${DOCTITLE[r].replace(' des agents', '').replace(' du personnel', '')}</a>`).join('')}</div>`;
+const printHead = kind => `<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>${esc(ui.dir || 'Direction des Finances Locales')}<h3 style="margin-top:8px">${DOCTITLE[kind]}${kind === 'liste' ? ' – ' + DB.meta.annee : ''}</h3></div>`;
+function pDoc(kind) {
+  const desc = { 'mise-en-place': 'Répartition des agents par division. Mise à jour automatique à chaque enregistrement.', cadre: 'Postes prévus, occupés et vacants par division et par grade.', liste: `Liste officielle numérotée des agents – année ${DB.meta.annee}.` }[kind];
+  const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
+  const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="mat">Tri : matricule</option></select>` : '';
+  const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
+  return `${printHead(kind)}<header class="ph"><div><h2>${DOCTITLE[kind]}</h2><p class="sub">${desc}</p></div>
+    <div class="acts noprint"><button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
+    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}</div><div id="doc"></div>`;
+}
+function groupsFor(L) {
+  const out = [];
+  selDirs().forEach(d => { [...divOrder(d), ''].forEach(v => { const l = L.filter(a => a.direction === d.name && (a.division || '') === v); out.push({ d, v, label: v || 'Sans division', l }); }); });
+  return out;
+}
+function docRows(kind) {
+  const q = ui.q ? norm(ui.q) : '';
+  if (kind === 'mise-en-place') {
+    const rows = []; groupsFor(DB.agents).forEach(g => sortAgents(g.l, 'hier').forEach((a, i) => rows.push([g.label, i + 1, a.matricule, fullName(a), a.grade, a.fonction]))); return { header: ['Division', 'N°', 'Matricule', 'Noms', 'Grade', 'Fonction'], rows };
+  }
+  if (kind === 'cadre') {
+    const rows = []; selDirs().forEach(d => [...divOrder(d), ''].forEach(v => cadreRows(d.name, v).forEach(r => rows.push([v || 'Sans division', r.grade, r.prevu, r.enplace, r.prevu - r.enplace])))); return { header: ['Division', 'Grade / poste', 'Effectif prévu', 'En place', 'Écart (vacants)'], rows };
+  }
+  const L = listeAgents();
+  return { header: ['N°', 'Matricule', 'Noms', 'Sexe', 'Date de naissance', 'Grade', 'Fonction', 'Division', 'Date d’engagement', 'N° acte d’engagement', 'Salaire', 'Prime', 'Situation'], rows: L.map((a, i) => [i + 1, a.matricule, fullName(a), a.sexe, fmtDate(a.naissance), a.grade, a.fonction, a.division, fmtDate(a.engagement), a.acte, a.salaire, a.prime, a.situation]) };
+}
+function listeAgents() {
+  const q = norm($('#tq') ? $('#tq').value : ''), v = $('#tDiv') ? $('#tDiv').value : '', s = $('#tSit') ? $('#tSit').value : '', sort = $('#tSort') ? $('#tSort').value : 'hier';
+  return sortAgents(DB.agents.filter(a => (!ui.dir || a.direction === ui.dir) && (!v || a.division === v) && (!s || a.situation === s) &&
+    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte].join(' ')).includes(q))), sort);
+}
+function renderMise() {
+  const q = norm($('#tq').value); let html = '';
+  groupsFor(DB.agents).forEach(g => {
+    let L = g.l; if (q) L = L.filter(a => norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade].join(' ')).includes(q));
+    if ((!g.v || q) && !L.length) return;
+    L = sortAgents(L, 'hier');
+    const m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
+    html += `<section class="card dv"><header><div><h3>${esc(g.label)}</h3>${DB.directions.length > 1 ? `<small>${esc(g.d.name)}</small>` : ''}</div><div class="cnt"><b>${L.length}</b><small>agent${L.length > 1 ? 's' : ''} · ${m} H / ${f} F</small></div></header>
+      ${L.length ? `<div class="alist">${L.map(agentRow).join('')}</div>` : '<p class="muted" style="font-size:13px">Aucun agent affecté à cette division.</p>'}</section>`;
+  });
+  $('#doc').innerHTML = html || '<div class="empty">Aucun agent à afficher.</div>';
+}
+function renderCadre() {
+  let html = '', P = 0, E = 0, V = 0, S = 0; const admin = session.role === 'admin';
+  selDirs().forEach(d => [...divOrder(d), ''].forEach(v => {
+    const rows = cadreRows(d.name, v); if (!v && !rows.length) return;
+    const p = rows.reduce((s, r) => s + r.prevu, 0), e = rows.reduce((s, r) => s + r.enplace, 0), vac = rows.reduce((s, r) => s + Math.max(0, r.prevu - r.enplace), 0), sur = rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0);
+    P += p; E += e; V += vac; S += sur;
+    const occ = p ? Math.min(100, Math.round((p - vac) / p * 100)) : 0, key = `data-dir="${esc(d.name)}" data-div="${esc(v)}"`;
+    const ecart = r => { const x = r.prevu - r.enplace; return r.prevu === 0 ? '<span class="badge">Hors cadre</span>' : x > 0 ? `<span class="badge warn">${x} vacant${x > 1 ? 's' : ''}</span>` : x === 0 ? '<span class="badge ok">Complet</span>' : `<span class="badge bad">+${-x} en surnombre</span>`; };
+    html += `<section class="card dv"><header><div><h3>${esc(v || 'Sans division')}</h3>${DB.directions.length > 1 ? `<small>${esc(d.name)}</small>` : ''}</div><div class="cnt"><b>${p ? occ + ' %' : '–'}</b><small>taux d’occupation</small></div></header>
+      <div class="meter"><i style="width:${occ}%"></i></div>
+      <div class="tw" style="max-height:none"><table class="tbl"><thead><tr><th>Grade / poste</th><th class="c">Prévu</th><th class="c">En place</th><th>Écart</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>
+      ${rows.map(r => `<tr style="cursor:default"><td>${esc(r.grade)}${r.note ? `<br><small class="muted">${esc(r.note)}</small>` : ''}</td>
+        <td class="c">${admin ? `<input class="num" type="number" min="0" inputmode="numeric" value="${r.prevu}" data-prevu ${key} data-grade="${esc(r.grade)}" aria-label="Effectif prévu">` : r.prevu}</td>
+        <td class="c">${r.enplace ? `<button class="linkbtn" data-act="enplace" ${key} data-grade="${esc(r.grade)}">${r.enplace}</button>` : 0}</td><td>${ecart(r)}</td>
+        ${admin ? `<td>${r.id ? `<button class="btn sm danger" data-act="cadrerm" data-id="${r.id}" aria-label="Retirer ce poste">×</button>` : ''}</td>` : ''}</tr>`).join('') || `<tr style="cursor:default"><td colspan="5" class="muted">Aucun poste défini. ${admin ? 'Ajoutez un poste ci-dessous.' : ''}</td></tr>`}</tbody>
+      <tfoot><tr><td>Total</td><td class="c">${p}</td><td class="c">${e}</td><td>${vac ? vac + ' vacant' + (vac > 1 ? 's' : '') : ''}${vac && sur ? ' · ' : ''}${sur ? sur + ' en surnombre' : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
+      ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade / poste" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}</section>`;
+  }));
+  const kp = `<div class="stats">${stat('org', '', P, 'postes prévus')}${stat('users', 'g', E, 'agents en place')}${stat('alert', 'y', V, 'postes vacants')}${stat('chart', 'r', S, 'en surnombre / hors cadre')}</div>`;
+  $('#doc').innerHTML = kp + (html || '<div class="empty">Aucune donnée. Importez un fichier du cadre organique ou ajoutez des agents.</div>') + `<datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x)}">`).join('')}</datalist>`;
+}
+function renderListe() {
+  const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
+  if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer">Importer un fichier</a></div>'; return; }
+  $('#doc').innerHTML = `<div class="tw"><table class="tbl"><thead><tr><th class="s1 c">N°</th><th class="s2">Noms</th><th>Matricule</th><th class="c">Sexe</th><th>Date de naissance</th><th>Grade</th><th>Fonction</th><th>Division</th><th>Date d’engagement</th><th>N° acte</th><th class="c">Salaire</th><th class="c">Prime</th><th>Situation</th></tr></thead><tbody>
+    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="s1 c">${i + 1}</td><td class="s2">${esc(fullName(a))}</td><td>${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td><td>${fmtDate(a.naissance)}</td><td>${esc(a.grade)}</td><td>${esc(a.fonction)}</td><td>${esc(a.division)}</td><td>${fmtDate(a.engagement)}</td><td>${esc(a.acte)}</td><td class="c">${esc(a.salaire)}</td><td class="c">${esc(a.prime)}</td><td>${esc(a.situation)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td class="s1"></td><td class="s2">Effectif : ${L.length}</td><td colspan="11">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
+}
+const renderDoc = kind => ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])();
+function fillTDiv() { const s = $('#tDiv'); if (!s) return; const cur = s.value; s.innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions(ui.dir).map(v => `<option>${esc(v)}</option>`).join(''); s.value = cur; }
+
+/* ---------- Importer un fichier ---------- */
+function pImport() {
+  return `<header class="ph"><div><h2>Importer un fichier</h2><p class="sub">Excel, Word, PDF ou CSV : les agents sont placés automatiquement dans la mise en place, le cadre organique et la liste déclarative.</p></div></header>
+  <section class="card"><h3 style="margin-bottom:12px">1. Choisir le fichier</h3>
+    <label class="drop" for="impFile">${ico('upload')}<b>Toucher pour choisir un fichier</b><span>.xlsx, .xls, .csv, .docx, .pdf</span></label>
+    <input id="impFile" type="file" accept=".xlsx,.xls,.xlsm,.csv,.txt,.docx,.pdf" hidden>
+    <div class="grid sec2"><div><label>Le fichier contient</label><div class="radios"><label class="rd"><input type="radio" name="impMode" value="agents" checked>Des agents</label><label class="rd"><input type="radio" name="impMode" value="cadre">Le cadre organique (postes prévus)</label></div></div>
+      <label>Direction par défaut<select id="impDir">${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select></label></div>
+    <label class="rd sec2" style="display:flex"><input type="checkbox" id="impSheet">Utiliser le nom de la feuille / du tableau comme division (si le fichier n’a pas de colonne « Division »)</label>
+    <p class="sub sec2">Pas de fichier prêt ? <button class="linkbtn" data-act="template">Télécharger un modèle Excel</button></p></section>
+  <div id="impPreview" style="margin-top:14px"></div>`;
+}
+function colLabel(t, ci) { const h = String((t.aoa[t.hi] || [])[ci] ?? '').trim(); return `${ci + 1}. ${h || '(vide)'}`.slice(0, 48); }
+function buildImport() {
+  const mode = imp.mode, res = { items: [], skipped: 0, tables: [] };
+  imp.tables.forEach(t => {
+    const opt = { dir: imp.dir, sheetAsDiv: imp.sheetAsDiv }, keys = mode === 'agents' ? AKEYS : CKEYS; let n = 0;
+    if (t.map && Object.keys(t.map).length) t.aoa.slice(t.hi + 1).forEach(r => {
+      if (!r.some(c => String(c ?? '').trim() !== '') || isTotalRow(r) || looksLikeHeader(r, keys)) return;
+      const x = mode === 'agents' ? rowToAgent(r, t.map, opt, t.name) : rowToPost(r, t.map, opt, t.name);
+      if (x) { res.items.push(x); n++; } else res.skipped++;
+    });
+    res.tables.push(n);
+  });
+  return res;
+}
+function renderPreview() {
+  const box = $('#impPreview'); if (!imp || !imp.tables.length) { box.innerHTML = ''; return; }
+  const mode = imp.mode, res = buildImport(), fields = mode === 'agents' ? FIELDS : CFIELDS;
+  let nw = 0, up = 0;
+  if (mode === 'agents') { const keys = new Set(DB.agents.map(agentKey)); res.items.forEach(a => keys.has(agentKey(a)) ? up++ : nw++); }
+  const maps = imp.tables.map((t, ti) => `<details class="map" ${!res.tables[ti] ? 'open' : ''}><summary>${esc(t.name)} — ${res.tables[ti]} ligne${res.tables[ti] > 1 ? 's' : ''} reconnue${res.tables[ti] > 1 ? 's' : ''}</summary>
+    <div class="kv">${Object.keys(t.map || {}).map(k => `<span class="badge ok">${esc((fields.find(f => f[0] === k) || [k, k])[1].split(' (')[0])} ← ${esc(colLabel(t, t.map[k]).replace(/^\d+\.\s/, ''))}</span>`).join('') || '<span class="badge warn">Aucune colonne reconnue</span>'}</div>
+    <div class="grid"><label>Ligne des titres<input type="number" min="1" value="${t.hi + 1}" data-imp="${ti}|hi"></label>
+    ${fields.map(([k, l]) => `<label>${l}<select data-imp="${ti}|${k}"><option value="">— ignorer —</option>${(t.aoa[t.hi] || []).map((c, ci) => `<option value="${ci}" ${t.map && t.map[k] === ci ? 'selected' : ''}>${esc(colLabel(t, ci))}</option>`).join('')}</select></label>`).join('')}</div></details>`).join('');
+  const sample = mode === 'agents'
+    ? `<div class="tw" style="max-height:none;margin-top:12px"><table class="tbl"><thead><tr><th>Matricule</th><th>Noms</th><th class="c">Sexe</th><th>Grade</th><th>Division</th></tr></thead><tbody>${res.items.slice(0, 6).map(a => `<tr style="cursor:default"><td>${esc(a.matricule)}</td><td>${esc(fullName(a))}</td><td class="c">${a.sexe}</td><td>${esc(a.grade)}</td><td>${esc(a.division)}</td></tr>`).join('')}</tbody></table></div>`
+    : `<div class="tw" style="max-height:none;margin-top:12px"><table class="tbl"><thead><tr><th>Division</th><th>Grade / poste</th><th class="c">Prévu</th></tr></thead><tbody>${res.items.slice(0, 6).map(a => `<tr style="cursor:default"><td>${esc(a.division)}</td><td>${esc(a.grade)}</td><td class="c">${a.prevu}</td></tr>`).join('')}</tbody></table></div>`;
+  const n = res.items.length;
+  box.innerHTML = `<section class="card"><h3 style="margin-bottom:10px">2. Vérifier avant d’importer</h3>
+    ${n ? `<p><span class="badge ok">${ico('check', 14)} ${n} ${mode === 'agents' ? 'agent' : 'poste'}${n > 1 ? 's' : ''} reconnu${n > 1 ? 's' : ''}</span> ${mode === 'agents' ? `<span class="badge">${nw} nouveau${nw > 1 ? 'x' : ''}</span> <span class="badge">${up} à mettre à jour</span>` : ''} ${res.skipped ? `<span class="badge warn">${res.skipped} ligne${res.skipped > 1 ? 's' : ''} ignorée${res.skipped > 1 ? 's' : ''}</span>` : ''}</p>${sample}`
+      : '<div class="warn" style="margin:0">Aucune ligne reconnue. Ouvrez la section ci-dessous pour indiquer la ligne des titres et les colonnes, ou changez le type de contenu.</div>'}
+    ${maps}
+    <div class="acts sec2"><button class="btn primary" data-act="impapply" ${n ? '' : 'disabled'}>${ico('check', 18)}Importer ${n || ''} ${mode === 'agents' ? 'agent' : 'poste'}${n > 1 ? 's' : ''}</button></div></section>`;
+}
+function htmlTables(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html'), out = [];
+  doc.querySelectorAll('table').forEach((t, i) => out.push({ name: 'Tableau ' + (i + 1), aoa: [...t.querySelectorAll('tr')].map(tr => [...tr.children].map(c => c.textContent.trim())) }));
+  if (!out.length) out.push({ name: 'Texte', aoa: [...doc.querySelectorAll('p')].map(p => p.textContent.trim()).filter(Boolean).map(l => l.split(/\t| {2,}|;/).map(s => s.trim())) });
+  return out;
+}
+async function parsePdf(buf) {
+  await loadLib('pdf'); pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise, lines = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const tc = await (await pdf.getPage(p)).getTextContent();
+    const items = tc.items.filter(i => i.str && i.str.trim()).map(i => ({ s: i.str.trim(), x: i.transform[4], y: Math.round(i.transform[5]), w: i.width })).sort((a, b) => b.y - a.y || a.x - b.x), rows = [];
+    items.forEach(it => { const r = rows.find(r => Math.abs(r.y - it.y) <= 3); if (r) r.items.push(it); else rows.push({ y: it.y, items: [it] }); });
+    rows.forEach(r => { r.items.sort((a, b) => a.x - b.x); const ch = []; r.items.forEach(it => { const l = ch[ch.length - 1]; if (l && it.x - (l.x + l.w) < 5) { l.s += ' ' + it.s; l.w = it.x + it.w - l.x; } else ch.push({ ...it }); }); lines.push(ch); });
+  }
+  if (!lines.length) throw new Error('Ce PDF ne contient pas de texte lisible (document scanné). Utilisez un PDF créé depuis Word ou Excel, ou un fichier Excel.');
+  const keys = AKEYS.concat(['prevu']); let hdr = null;
+  for (const ch of lines) if (Object.keys(autoMap(ch.map(c => c.s), keys)).length >= 3) { hdr = ch; break; }
+  if (!hdr) return [{ name: 'PDF', aoa: lines.map(ch => ch.map(c => c.s)) }];
+  const xs = hdr.map(c => c.x), aoa = [hdr.map(c => c.s)];
+  lines.forEach(ch => {
+    if (ch === hdr || Object.keys(autoMap(ch.map(c => c.s), keys)).length >= 3) return;
+    const row = new Array(xs.length).fill('');
+    ch.forEach(c => { let ci = 0; xs.forEach((x, i) => { if (c.x >= x - 6) ci = i; }); row[ci] = (row[ci] ? row[ci] + ' ' : '') + c.s; });
+    aoa.push(row);
+  });
+  return [{ name: 'PDF', aoa }];
+}
+async function parseFile(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase(), buf = await file.arrayBuffer();
+  if (['xlsx', 'xls', 'xlsm', 'ods'].includes(ext)) { await loadLib('xlsx'); const wb = XLSX.read(buf, { type: 'array' }); return wb.SheetNames.map(n => ({ name: n, aoa: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' }) })); }
+  if (ext === 'csv' || ext === 'txt') { let t; try { t = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { t = new TextDecoder('windows-1252').decode(buf); } return [{ name: file.name, aoa: parseCSV(t) }]; }
+  if (ext === 'docx') { await loadLib('mammoth'); return htmlTables((await mammoth.convertToHtml({ arrayBuffer: buf })).value); }
+  if (ext === 'pdf') return parsePdf(buf);
+  if (ext === 'doc') throw new Error('Ancien format Word (.doc) non pris en charge. Ouvrez-le dans Word et enregistrez-le en .docx.');
+  throw new Error('Format non pris en charge. Utilisez Excel, Word (.docx), PDF ou CSV.');
+}
+function setupTables() {
+  const keys = imp.mode === 'agents' ? AKEYS : CKEYS;
+  imp.tables.forEach(t => { const p = pickTable(t.aoa, keys); t.hi = p ? p.hi : 0; t.map = p ? p.map : autoMap(t.aoa[0] || [], keys); });
+}
+
+/* ---------- Administration ---------- */
+function pAdmin() {
+  if (session.role !== 'admin') return '<div class="empty">Cet espace est réservé aux administrateurs.</div>';
+  const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${u.role === 'admin' ? 'Administrateur' : 'Saisie et consultation'}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
+  const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
+    <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
+    <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
+  const last = DB.meta.lastBackup ? new Date(DB.meta.lastBackup).toLocaleDateString('fr-FR') : 'jamais';
+  return `<header class="ph"><div><h2>Administration</h2><p class="sub">Sauvegarde, structure et utilisateurs</p></div></header>
+  <section class="card"><h3>Base de données</h3><p class="sub" style="margin-bottom:12px">Emplacement : <b id="whereDb">…</b></p>
+    <p class="sub" style="margin-bottom:12px">Une copie automatique est faite chaque jour. Dernière sauvegarde manuelle : ${last}. Si l’application est désinstallée, la base de données est supprimée : sauvegardez et copiez le fichier en lieu sûr.</p>
+    <div class="acts"><button class="btn primary" data-act="backup">${ico('download', 18)}Sauvegarder (fichier complet)</button><label class="btn"><input type="file" id="impJson" accept=".json,application/json" hidden>Restaurer une sauvegarde</label>${window.dflDesktop ? '<button class="btn" data-act="openfolder">Ouvrir le dossier</button>' : ''}</div>
+    <div class="acts sec2"><button class="btn" data-act="exportall">Exporter tous les agents (Excel)</button><a class="btn" href="#/importer">${ico('upload', 18)}Importer un fichier</a></div></section>
+  <section class="card sec2"><h3>Liste déclarative</h3><form class="inline" data-f="year" style="margin-top:10px;max-width:340px"><input name="y" type="number" min="2000" max="2100" value="${DB.meta.annee}" required aria-label="Année"><button class="btn">Enregistrer l’année</button></form></section>
+  <section class="card sec2"><h3>Directions et divisions</h3><p class="sub" style="margin-bottom:12px">Touchez le nom d’une division pour la renommer. Une division qui contient des agents ne peut pas être supprimée.</p>${dirs}
+    <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>
+  <section class="card sec2"><h3>Utilisateurs</h3><ul class="list" style="margin:12px 0 14px">${users}</ul>
+    <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (6 caractères minimum)<input name="p" type="password" minlength="6" required></label>
+    <label>Rôle<select name="r"><option value="saisie">Saisie et consultation</option><option value="admin">Administrateur</option></select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
+  <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Efface tous les agents de cet appareil. Pensez à sauvegarder avant.</p><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></section>`;
+}
+
+/* ================= Routage ================= */
+function route() {
+  const h = location.hash.replace(/^#\//, '') || 'accueil', [name, arg] = h.split('/');
+  if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
+  if (name === 'login' && session) { location.hash = '#/accueil'; return; }
+  closeModal();
+  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, plus: pPlus, agents: () => pAgents(arg), nouveau: () => pForm(arg), tableau: pTableau, importer: pImport, admin: pAdmin };
+  DOCS.forEach(d => pages[d] = () => pDoc(d));
+  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? name : 'accueil');
+  window.scrollTo(0, 0);
+  if (name === 'agents') {
+    fillDivFilter(); renderList();
+    $('#q').addEventListener('input', renderList); $('#fDir').addEventListener('change', () => { fillDivFilter(); renderList(); });
+    ['fDiv', 'fSexe', 'fSit', 'fInc'].forEach(i => $('#' + i).addEventListener('change', renderList));
+  }
+  if (name === 'tableau') { renderDash(); $('#dDir').addEventListener('change', renderDash); }
+  if (DOCS.includes(name)) {
+    fillTDiv(); const rd = () => renderDoc(name);
+    ['tq', 'tDiv', 'tSit', 'tSort'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', rd); });
+    if ($('#tDir')) $('#tDir').addEventListener('change', e => { ui.dir = e.target.value; fillTDiv(); rd(); });
+    rd();
+  }
+  if (name === 'nouveau') {
+    $('#fmDir').addEventListener('change', e => { $('#fmDiv').innerHTML = divOptions(e.target.value, ''); });
+    $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
+  }
+  if (name === 'importer') imp = { tables: [], mode: 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
+  if (name === 'admin') Store.where().then(w => { const e = $('#whereDb'); if (e) e.textContent = w; });
+  if (afterRoute) { const f = afterRoute; afterRoute = null; f(); }
+}
+
+/* ================= Actions ================= */
+const A = {
+  close: () => closeModal(),
+  logout: () => { session = null; try { sessionStorage.removeItem('dfl_s'); } catch (e) {} location.hash = '#/accueil'; route(); },
+  fiche: t => openFiche(t.dataset.id),
+  print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
+  rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
+  delagent: t => { const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); save(); closeModal(); toast('Fiche supprimée'); route(); } },
+  resetpw: async t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`, '', 'password'); if (p == null) return; if (p.length < 6) return toast('Mot de passe trop court', true); u.pass = hash(p); u.mustChange = false; save(); toast('Mot de passe modifié'); },
+  deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
+  rendir: async t => {
+    const d = DB.directions[+t.dataset.i], n = ((await ask('Nouveau nom de la direction :', d.name)) || '').trim(); if (!n || n === d.name) return;
+    if (DB.directions.some(x => x.name === n)) return toast('Ce nom existe déjà', true);
+    DB.agents.forEach(a => { if (a.direction === d.name) a.direction = n; }); DB.cadre.forEach(c => { if (c.direction === d.name) c.direction = n; }); d.name = n; save(); route();
+  },
+  deldir: t => { const d = DB.directions[+t.dataset.i]; if (DB.agents.some(a => a.direction === d.name)) return toast('Cette direction contient encore des agents', true); if (DB.directions.length < 2) return toast('Il faut garder au moins une direction', true); if (confirm(`Supprimer la direction « ${d.name} » ?`)) { DB.cadre = DB.cadre.filter(c => c.direction !== d.name); DB.directions.splice(+t.dataset.i, 1); save(); route(); } },
+  rendiv: async t => {
+    const d = DB.directions[+t.dataset.i], old = d.divisions[+t.dataset.j], n = ((await ask('Nouveau nom de la division :', old)) || '').trim(); if (!n || n === old) return;
+    if (d.divisions.includes(n)) return toast('Ce nom existe déjà', true);
+    DB.agents.forEach(a => { if (a.direction === d.name && a.division === old) a.division = n; }); DB.cadre.forEach(c => { if (c.direction === d.name && c.division === old) c.division = n; });
+    d.divisions[+t.dataset.j] = n; save(); route();
+  },
+  deldiv: t => { const d = DB.directions[+t.dataset.i], v = d.divisions[+t.dataset.j]; if (DB.agents.some(a => a.direction === d.name && a.division === v)) return toast('Cette division contient encore des agents', true); if (confirm(`Supprimer la division « ${v} » ?`)) { DB.cadre = DB.cadre.filter(c => !(c.direction === d.name && c.division === v)); d.divisions.splice(+t.dataset.j, 1); save(); route(); } },
+  backup: async () => { DB.meta.lastBackup = Date.now(); save(); await saveFile(`sauvegarde_agents_DFL_${today()}.json`, JSON.stringify(DB), 'application/json'); route(); },
+  exportall: () => exportTable('agents_DFL_' + today(), ['Nom', 'Postnom', 'Prénom', 'Date de naissance', 'Sexe', 'État civil', 'Diplôme', 'Matricule', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Salaire', 'Prime', 'Prise en charge', 'Situation'],
+    DB.agents.map(a => [a.nom, a.postnom, a.prenom, fmtDate(a.naissance), SEX[a.sexe] || '', a.etat_civil, a.diplome, a.matricule, a.acte, fmtDate(a.engagement), a.grade, a.fonction, a.direction, a.division, a.salaire, a.prime, a.prise_en_charge, a.situation])),
+  exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee }[k] + '_DFL_' + today(), r.header, r.rows); },
+  template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Salaire', 'Prime', 'Situation'], []),
+  openfolder: () => window.dflDesktop && window.dflDesktop.open(),
+  wipe: async () => { if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; save(); toast('Tous les agents ont été supprimés'); route(); } },
+  enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
+  cadrerm: t => { DB.cadre = DB.cadre.filter(c => c.id !== t.dataset.id); save(); renderCadre(); },
+  impapply: () => {
+    const res = buildImport(); let nw = 0, up = 0;
+    const dirOf = n => { let d = DB.directions.find(x => norm(x.name) === norm(n || imp.dir)); if (!d) { d = { name: n || imp.dir, divisions: [] }; DB.directions.push(d); } return d; };
+    if (imp.mode === 'agents') {
+      res.items.forEach(c => {
+        const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
+        const ex = DB.agents.find(a => agentKey(a) === agentKey(c));
+        if (ex) { for (const k in c) if (c[k]) ex[k] = c[k]; ex.updated = Date.now(); up++; } else { DB.agents.push({ id: uid(), photo: '', created: Date.now(), updated: Date.now(), ...c, situation: c.situation || 'Actif' }); nw++; }
+      });
+      save(); toast(`Import terminé : ${nw} ajouté(s), ${up} mis à jour`); afterRoute = null; location.hash = '#/liste'; route();
+    } else {
+      res.items.forEach(c => {
+        const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
+        const ex = DB.cadre.find(x => x.direction === c.direction && x.division === c.division && norm(x.grade) === norm(c.grade));
+        if (ex) { ex.prevu = c.prevu; if (c.note) ex.note = c.note; up++; } else { DB.cadre.push({ id: uid(), ...c }); nw++; }
+      });
+      save(); toast(`Cadre organique : ${nw} poste(s) ajouté(s), ${up} mis à jour`); location.hash = '#/cadre'; route();
+    }
+  }
+};
+
+/* ================= Formulaires ================= */
+const F = {
+  login(f) {
+    const u = f.u.value.trim().toLowerCase(), user = DB.users.find(x => x.username.toLowerCase() === u && x.pass === hash(f.p.value));
+    if (!user) return toast('Identifiant ou mot de passe incorrect', true);
+    session = { id: user.id, username: user.username, role: user.role, mustChange: !!user.mustChange };
+    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    const n = user.mustChange ? 'compte' : (nextRoute || 'accueil'); nextRoute = ''; location.hash = '#/' + n; route();
+  },
+  pw(f) {
+    const user = DB.users.find(x => x.id === session.id);
+    if (user.pass !== hash(f.old.value)) return toast('Le mot de passe actuel est incorrect', true);
+    if (f.n1.value !== f.n2.value) return toast('Les deux nouveaux mots de passe sont différents', true);
+    if (f.n1.value.length < 6 || f.n1.value.toLowerCase() === 'admin') return toast('Choisissez un mot de passe d’au moins 6 caractères, différent de « admin »', true);
+    user.pass = hash(f.n1.value); user.mustChange = false; session.mustChange = false;
+    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    save(); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
+  },
+  adduser(f) { const u = f.u.value.trim(); if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: hash(f.p.value), role: f.r.value, mustChange: false }); save(); toast('Utilisateur ajouté'); route(); },
+  adddir(f) { const v = f.v.value.trim(); if (DB.directions.some(d => d.name === v)) return toast('Cette direction existe déjà', true); DB.directions.push({ name: v, divisions: [] }); save(); route(); },
+  adddiv(f) { const d = DB.directions[+f.dataset.i], v = f.v.value.trim(); if (d.divisions.includes(v)) return toast('Cette division existe déjà', true); d.divisions.push(v); save(); route(); },
+  year(f) { DB.meta.annee = parseInt(f.y.value, 10) || DB.meta.annee; save(); toast('Année enregistrée'); },
+  addpost(f) {
+    const dir = f.dataset.dir, div = f.dataset.div, g = f.g.value.trim(), p = Math.max(0, parseInt(f.p.value, 10) || 0), ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(c.grade) === norm(g));
+    if (ex) ex.prevu = p; else DB.cadre.push({ id: uid(), direction: dir, division: div, grade: g, prevu: p, note: '' });
+    save(); renderCadre();
+  },
+  agent(f) {
+    const g = n => (f.elements[n] ? f.elements[n].value : '').trim(), id = f.dataset.id, o = {};
+    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'prise_en_charge', 'situation'].forEach(k => o[k] = g(k));
+    ['sexe', 'salaire', 'prime'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
+    const dup = DB.agents.find(a => a.matricule && a.matricule.toLowerCase() === o.matricule.toLowerCase() && a.id !== id);
+    if (dup) return toast(`Ce matricule existe déjà : ${fullName(dup)}`, true);
+    let a;
+    if (id) { a = DB.agents.find(x => x.id === id); Object.assign(a, o, { updated: Date.now() }); } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o }; DB.agents.push(a); }
+    const dv = o.division; if (dv) { const d = DB.directions.find(x => x.name === o.direction); if (d && !d.divisions.includes(dv)) d.divisions.push(dv); }
+    save();
+    if (id) { toast('Fiche modifiée'); location.hash = '#/agents'; return; }
+    const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;
+    afterRoute = () => openModal(`<div class="okhead"><span class="ic">${ico('check', 24)}</span><div><h3>Agent enregistré</h3><span class="muted" style="font-size:13px">${esc(fullName(a))}</span></div></div>
+      <p class="sub" style="margin-bottom:10px">Ses informations ont été placées automatiquement dans les 3 documents :</p><div class="placed">
+      <a href="#/mise-en-place" data-act="close">${ico('layers', 20)}<span><b>Mise en place</b>${esc(a.division || 'Sans division')}</span></a>
+      <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
+      <a href="#/liste" data-act="close">${ico('list', 20)}<span><b>Liste déclarative</b>N° ${rank} sur ${DB.agents.filter(x => x.direction === a.direction).length}</span></a></div>
+      <div class="acts"><a class="btn primary" href="#/nouveau" data-act="close">Ajouter un autre agent</a><button class="btn" data-act="close">Fermer</button></div>`);
+    location.hash = '#/agents';
+  }
+};
+
+document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = A[t.dataset.act]; if (fn) fn(t, e); });
+document.addEventListener('submit', e => { const f = e.target; if (!f.dataset || !F[f.dataset.f]) return; e.preventDefault(); F[f.dataset.f](f); });
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.matches('input[data-prevu]')) {
+    const v = Math.max(0, parseInt(t.value, 10) || 0), dir = t.dataset.dir, div = t.dataset.div, g = t.dataset.grade;
+    const ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(c.grade) === norm(g));
+    if (ex) ex.prevu = v; else DB.cadre.push({ id: uid(), direction: dir, division: div, grade: g, prevu: v, note: '' });
+    save(); renderCadre(); return;
+  }
+  if (t.name === 'impMode' && imp) { imp.mode = t.value; setupTables(); renderPreview(); return; }
+  if (t.id === 'impDir' && imp) { imp.dir = t.value; renderPreview(); return; }
+  if (t.id === 'impSheet' && imp) { imp.sheetAsDiv = t.checked; renderPreview(); return; }
+  if (t.dataset && t.dataset.imp && imp) {
+    const [ti, k] = t.dataset.imp.split('|'), tb = imp.tables[+ti], keys = imp.mode === 'agents' ? AKEYS : CKEYS;
+    if (k === 'hi') { tb.hi = Math.max(0, (parseInt(t.value, 10) || 1) - 1); tb.map = autoMap(tb.aoa[tb.hi] || [], keys); } else if (t.value === '') delete tb.map[k]; else tb.map[k] = +t.value;
+    renderPreview(); const d = $$('#impPreview details')[+ti]; if (d) d.open = true; return;
+  }
+  const file = t.files && t.files[0]; if (!file) return;
+  if (t.id === 'impFile' && imp) {
+    $('#impPreview').innerHTML = '<div class="card"><p>Lecture du fichier…</p></div>';
+    try {
+      imp.tables = (await parseFile(file)).filter(x => x.aoa.length); imp.mode = ($('input[name=impMode]:checked') || {}).value || 'agents'; imp.dir = $('#impDir').value; imp.sheetAsDiv = $('#impSheet').checked;
+      if (!imp.tables.length) throw new Error('Le fichier est vide.'); setupTables(); renderPreview();
+    } catch (err) {
+      imp.tables = []; $('#impPreview').innerHTML = `<div class="warn">${ico('alert', 20)}<span>${esc(err.message === 'lib' ? 'Module de lecture indisponible dans cette version.' : err.message)}</span></div>`;
+    }
+    t.value = '';
+  }
+  if (t.id === 'impJson') {
+    try {
+      const d = JSON.parse(await file.text());
+      if (!d || !Array.isArray(d.agents) || !Array.isArray(d.users) || !Array.isArray(d.directions)) throw 0;
+      if (!confirm(`Remplacer toutes les données actuelles par cette sauvegarde (${d.agents.length} agents) ?`)) return;
+      DB = migrate(d); save();
+      const me = DB.users.find(u => u.id === session.id) || DB.users.find(u => u.username === session.username);
+      if (me) session = { id: me.id, username: me.username, role: me.role, mustChange: !!me.mustChange }; else { session = null; location.hash = '#/login'; }
+      toast('Sauvegarde restaurée'); route();
+    } catch (err) { toast('Ce fichier n’est pas une sauvegarde valide', true); }
+    t.value = '';
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
+window.addEventListener('hashchange', route);
+document.addEventListener('visibilitychange', () => { if (document.hidden) Store.flush(); });
+window.addEventListener('pagehide', () => Store.flush());
+
+/* Déconnexion automatique après 15 minutes d'inactivité */
+let idle; const IDLE = 15 * 60 * 1000;
+const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { if (session) { A.logout(); toast('Session fermée après 15 minutes d’inactivité'); } }, IDLE); };
+['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, bump, { passive: true }));
+
+/* ================= Démarrage ================= */
+(async () => {
+  await Store.open();
+  let d = await Store.get();
+  DB = (d && Array.isArray(d.agents)) ? migrate(d) : seed();
+  if ((Store.kind === 'native' || Store.kind === 'desktop') && DB.meta.lastAuto !== today()) { try { await Store.writeRaw(AUXFILE, JSON.stringify(DB)); DB.meta.lastAuto = today(); } catch (e) {} save(); }
+  save();
+  try { const s = sessionStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
+  route(); bump();
+})();
+})();
+</script>
+</body>
+</html>
