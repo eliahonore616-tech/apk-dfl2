@@ -111,6 +111,20 @@ label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;
 @media (min-width:700px){.tools .wide{grid-column:span 2}}
 .printhead{display:none;text-align:center;margin-bottom:14px}
 
+/* ---------- Améliorations v2.1 (design) ---------- */
+.hero{text-align:center}
+.hero .hdir{margin-left:auto;margin-right:auto}
+.hero .cta{justify-content:center}
+.foot{margin-top:34px;padding:26px 16px;border-radius:16px;background:linear-gradient(135deg,#0A2342 0%,#0B4AA0 60%,#0B63CE 100%);color:#fff;text-align:center;font-size:13px;line-height:1.8;box-shadow:var(--shadow)}
+.foot b{font-size:14.5px}
+.foot span{opacity:.85;font-size:12px}
+.lockhead{display:flex;justify-content:center;margin-bottom:12px}
+.lockhead .lk{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--soft);color:var(--blue)}
+.narrow .btn{width:100%}
+fieldset.fsec{border:1px solid var(--line);border-radius:16px;padding:20px;margin:0 0 14px;background:var(--card);box-shadow:var(--shadow);min-width:0}
+fieldset.fsec legend{display:flex;align-items:center;gap:10px;padding:0 8px;font-weight:700;font-size:15px}
+fieldset.fsec legend i{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--btn);color:#fff;font-style:normal;font-size:13px}
+
 /* ---------- Accueil ---------- */
 .hero{position:relative;overflow:hidden;border-radius:22px;color:#fff;padding:26px 22px 104px;background:linear-gradient(135deg,#0A2342 0%,#0B4AA0 60%,#0B63CE 100%);margin-bottom:16px}
 .hero::before{content:"";position:absolute;right:-50px;top:-50px;width:320px;height:320px;opacity:.12;
@@ -234,6 +248,7 @@ details.map .grid{margin-top:12px}
 .kv{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 
 @media print{
+  @page{size:A4 landscape;margin:12mm}
   .top,.bnav,.side,#toast,.noprint,.tools,.seg{display:none!important}
   main{margin:0;padding:0;max-width:none}
   body{background:#fff;color:#000}
@@ -267,6 +282,10 @@ const hash = s => {
   h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+};
+const sha256 = async s => {
+  try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('dfl-v2|' + s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  catch (e) { return hash('v2|' + s); }
 };
 const SEX = { M: 'Masculin', F: 'Féminin' };
 const ETATS = ['Célibataire', 'Fiancé(e)', 'Marié(e)', 'Divorcé(e)', 'Veuf/Veuve'];
@@ -490,7 +509,7 @@ const Store = {
       try {
         await FS().writeFile({ path: 'dfl/.test', data: 'ok', directory: 'DATA', encoding: 'utf8', recursive: true });
         const r = await FS().readFile({ path: 'dfl/.test', directory: 'DATA', encoding: 'utf8' });
-        if (r.data === 'ok') { this.kind = 'native'; return; }
+        if (r.data === 'ok') { this.kind = 'native'; try { await FS().deleteFile({ path: 'dfl/.test', directory: 'DATA' }); } catch (e) {} return; }
       } catch (e) { toast('Stockage fichier indisponible : utilisation de la mémoire interne de l’application', true); }
     }
     await new Promise(res => {
@@ -544,6 +563,7 @@ const Store = {
 };
 const save = () => Store.set(DB);
 
+const APP_VERSION = '2.1.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
 const seed = () => migrate({
@@ -598,38 +618,28 @@ function shell(inner, name) {
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/admin">Faire une sauvegarde</a></span></div>`);
   return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
-  <main>${banners.join('')}${inner}</main>${bn}`;
+  <main>${banners.join('')}${inner}<footer class="foot"><b>Direction des Finances Locales</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br><span>Application de gestion des agents · version ${APP_VERSION} · fonctionne sans internet — pensez à faire des sauvegardes régulières</span></footer></main>${bn}`;
 }
 
 /* ================= Pages ================= */
 const stat = (ic, cls, n, l) => `<div class="stat"><span class="ic ${cls}">${ico(ic, 22)}</span><div><b>${n}</b><span>${l}</span></div></div>`;
 function pAccueil() {
-  const nd = DB.directions.reduce((s, d) => s + d.divisions.length, 0);
-  const prevu = DB.cadre.reduce((s, c) => s + c.prevu, 0);
-  const tile = (r, t, d, i) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${t}</b><span>${d}</span></div></a>`;
   return `<section class="hero"><span class="band"></span>
     <span class="pill">République Démocratique du Congo</span>
     <h1>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</h1>
     <p class="hdir">Direction des Finances Locales</p>
-    <div class="cta">${session ? '<a class="btn" href="#/agents">Consulter les agents</a><a class="btn ghost" href="#/nouveau">Enregistrer un agent</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>
-  <div class="stats">${stat('users', '', DB.agents.length, 'agents enregistrés')}${stat('layers', 'y', nd, nd > 1 ? 'divisions' : 'division')}${stat('org', 'g', prevu || '–', 'postes au cadre organique')}${stat('check', 'r', DB.agents.filter(a => !incomplete(a)).length, 'dossiers complets')}</div>
-  <div class="tiles">
-    ${tile('agents', 'Base de données des agents', 'Rechercher, filtrer, ouvrir une fiche', 'users')}
-    ${tile('nouveau', 'Nouvel agent recruté', 'Remplir le formulaire d’enregistrement', 'plus')}
-    ${tile('mise-en-place', 'Mise en place', 'Agents répartis par division', 'layers')}
-    ${tile('cadre', 'Cadre organique', 'Postes prévus, occupés et vacants', 'org')}
-    ${tile('liste', 'Liste déclarative', 'Liste officielle numérotée des agents', 'list')}
-    ${tile('importer', 'Importer un fichier', 'Excel, Word, PDF ou CSV', 'upload')}
-  </div>
-  <p class="note">Cette application fonctionne sans internet. La base de données est un fichier enregistré dans l’application sur cet appareil : faites régulièrement une sauvegarde depuis l’espace Administration.</p>`;
+    <p style="color:#fff;opacity:.85;margin-top:14px;font-size:15px;max-width:34em;margin-left:auto;margin-right:auto">Gestion des agents : base de données, mise en place du personnel, cadre organique et liste déclarative.</p>
+    <div class="cta">${session ? '<a class="btn" href="#/agents">Consulter les agents</a><a class="btn ghost" href="#/nouveau">Enregistrer un agent</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>`;
 }
 function pLogin() {
   const first = DB.users.some(u => u.mustChange);
-  return `<section class="card narrow"><h2>Connexion</h2><p class="sub">Accès réservé au personnel autorisé.</p>
+  return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
+    <h2 style="text-align:center">Connexion</h2><p class="sub" style="text-align:center">Accès réservé au personnel autorisé.</p>
     <form data-f="login"><label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
     <button class="btn primary">Se connecter</button></form>
-    ${first ? '<p class="sub" style="margin-top:14px">Premier accès : identifiant <b>admin</b>, mot de passe <b>admin</b>. Vous devrez le changer ensuite.</p>' : ''}</section>`;
+    ${first ? '<p class="sub" style="margin-top:14px">Premier accès : identifiant <b>admin</b>, mot de passe <b>admin</b>. Vous devrez le changer ensuite.</p>' : ''}
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
   return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
@@ -643,6 +653,7 @@ function pPlus() {
   return `<header class="ph"><h2>Plus</h2></header><div class="tiles">
     ${it('tableau', 'Tableau de bord', 'chart', 'Statistiques et graphiques')}${it('importer', 'Importer un fichier', 'upload', 'Excel, Word, PDF ou CSV')}
     ${session.role === 'admin' ? it('admin', 'Administration', 'shield', 'Sauvegarde, utilisateurs, divisions') : ''}${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
+    <div class="tile"><span class="ic">${ico('shield')}</span><div><b>Version ${APP_VERSION}</b><span>Application hors ligne · données stockées sur l’appareil</span></div></div>
     <button class="tile" data-act="logout" style="text-align:left;font:inherit"><span class="ic">${ico('logout')}</span><div><b>Se déconnecter</b><span>Fermer ma session</span></div></button></div>`;
 }
 
@@ -655,6 +666,7 @@ function pAgents(arg) {
     <select id="fDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select>
     <select id="fDiv" aria-label="Division"></select>
     <select id="fSexe" aria-label="Sexe"><option value="">Tous les sexes</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
+    <select id="fEtat" aria-label="État civil"><option value="">Tous les états civils</option>${ETATS.map(e => `<option>${e}</option>`).join('')}</select>
     <select id="fSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select>
     <select id="fInc" aria-label="Dossiers"><option value="">Tous les dossiers</option><option value="1" ${arg === 'inc' ? 'selected' : ''}>Dossiers incomplets</option></select>
   </div><div id="list"></div>`;
@@ -665,9 +677,9 @@ function fillDivFilter() {
   if ([...$('#fDiv').options].some(o => o.value === cur)) $('#fDiv').value = cur;
 }
 function filtered() {
-  const q = norm($('#q').value), d = $('#fDir').value, v = $('#fDiv').value, s = $('#fSexe').value, t = $('#fSit').value, inc = $('#fInc').value;
-  return sortAgents(DB.agents.filter(a => (!d || a.direction === d) && (!v || a.division === v) && (!s || a.sexe === s) && (!t || a.situation === t) && (!inc || incomplete(a)) &&
-    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte].join(' ')).includes(q))), 'alpha');
+  const q = norm($('#q').value), d = $('#fDir').value, v = $('#fDiv').value, s = $('#fSexe').value, t = $('#fSit').value, inc = $('#fInc').value, ec = $('#fEtat').value;
+  return sortAgents(DB.agents.filter(a => (!d || a.direction === d) && (!v || a.division === v) && (!s || a.sexe === s) && (!t || a.situation === t) && (!ec || a.etat_civil === ec) && (!inc || incomplete(a)) &&
+    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division, a.etat_civil].join(' ')).includes(q))), 'alpha');
 }
 const agentRow = a => `<button class="arow" data-act="fiche" data-id="${a.id}">${avatar(a)}<span class="an"><b>${esc(fullName(a))}</b><small>${esc(a.grade || 'Grade non renseigné')}${a.fonction ? ' — ' + esc(a.fonction) : ''}</small></span><span class="am">${esc(a.matricule || '')}${a.division ? `<br><span class="badge">${esc(a.division)}</span>` : ''}</span></button>`;
 function renderList() {
@@ -705,7 +717,7 @@ function openFiche(id) {
       <div class="badges">${a.situation ? `<span class="badge ok">${esc(a.situation)}</span>` : ''}${a.division ? `<span class="badge">${esc(a.division)}</span>` : ''}${incomplete(a) ? '<span class="badge warn">Dossier incomplet</span>' : ''}</div></div></div>
     <dl class="f">${f('Matricule', a.matricule)}${f('N° acte d’engagement', a.acte)}${f('Date d’engagement', fmtDate(a.engagement))}${f('Situation', a.situation)}
       ${f('Date de naissance', fmtDate(a.naissance) + (ag != null ? ` (${ag} ans)` : ''))}${f('Sexe', SEX[a.sexe])}${f('État civil', a.etat_civil)}${f('Diplôme', a.diplome)}
-      ${f('Grade', a.grade)}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Salaire', a.salaire)}${f('Prime', a.prime)}${f('Prise en charge', a.prise_en_charge)}</dl>
+      ${f('Grade', a.grade)}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Salaire', a.salaire)}${f('Prime', a.prime)}${f('Prise en charge', a.prise_en_charge)}${f('Fiche créée le', a.created ? new Date(a.created).toLocaleDateString('fr-FR') : '')}${a.updated && a.updated !== a.created ? f('Dernière modification', new Date(a.updated).toLocaleDateString('fr-FR')) : ''}</dl>
     <div class="noprint"><div class="placed">
       <a href="#/mise-en-place" data-act="close">${ico('layers', 20)}<span><b>Mise en place</b>${esc(a.division || 'Sans division')}</span></a>
       <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
@@ -728,27 +740,27 @@ function pForm(id) {
   formPhoto = a ? (a.photo || '') : '';
   const opt = (arr, sel) => '<option value="">Choisir…</option>' + arr.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
   const radio = (n, list, val, req) => `<div class="radios">${list.map((o, i) => `<label class="rd"><input type="radio" name="${n}" value="${o[0]}" ${val === o[0] ? 'checked' : ''} ${req && i === 0 ? 'required' : ''}>${o[1]}</label>`).join('')}</div>`;
-  const yn = [['Oui', 'Oui'], ['Non', 'Non']], sec = (n, t) => `<h3><i>${n}</i>${t}</h3>`;
+  const yn = [['Oui', 'Oui'], ['Non', 'Non']], sec = (n, t) => `<legend><i>${n}</i>${t}</legend>`;
   return `<header class="ph"><div><h2>${a ? 'Modifier l’agent' : 'Nouvel agent recruté'}</h2><p class="sub">Les champs marqués * sont obligatoires. L’agent sera placé automatiquement dans les 3 documents.</p></div></header>
   <form data-f="agent" data-id="${a ? a.id : ''}" autocomplete="off">
-    <section class="card fsec">${sec(1, 'Identité')}<div class="grid">
+    <fieldset class="fsec">${sec(1, 'Identité')}<div class="grid">
       <label>Nom *<input name="nom" value="${esc(v.nom)}" required></label><label>Postnom *<input name="postnom" value="${esc(v.postnom)}" required></label>
       <label>Prénom<input name="prenom" value="${esc(v.prenom)}"></label><label>Date de naissance<input type="date" name="naissance" value="${esc(v.naissance)}"></label>
       <div><label>Sexe *</label>${radio('sexe', [['M', 'Masculin'], ['F', 'Féminin']], v.sexe, true)}</div>
       <label>État civil<select name="etat_civil">${opt(ETATS, v.etat_civil)}</select></label>
-      <label>Diplôme<input name="diplome" list="dl-dip" value="${esc(v.diplome)}"></label></div></section>
-    <section class="card fsec">${sec(2, 'Engagement')}<div class="grid">
-      <label>Matricule *<input name="matricule" value="${esc(v.matricule)}" required></label><label>N° de l’acte d’engagement<input name="acte" value="${esc(v.acte)}"></label>
+      <label>Diplôme<input name="diplome" list="dl-dip" value="${esc(v.diplome)}"></label></div></fieldset>
+    <fieldset class="fsec">${sec(2, 'Engagement')}<div class="grid">
+      <label>Matricule<input name="matricule" value="${esc(v.matricule)}"></label><label>N° de l’acte d’engagement<input name="acte" value="${esc(v.acte)}"></label>
       <label>Date d’engagement<input type="date" name="engagement" value="${esc(v.engagement)}"></label><label>Grade<input name="grade" list="dl-grade" value="${esc(v.grade)}"></label>
-      <label>Fonction<input name="fonction" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></section>
-    <section class="card fsec">${sec(3, 'Affectation')}<div class="grid">
+      <label>Fonction<input name="fonction" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></fieldset>
+    <fieldset class="fsec">${sec(3, 'Affectation')}<div class="grid">
       <label>Direction *<select name="direction" id="fmDir" required>${DB.directions.map(d => `<option ${d.name === v.direction ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
-      <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label></div></section>
-    <section class="card fsec">${sec(4, 'Rémunération et suivi')}<div class="grid">
+      <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label></div></fieldset>
+    <fieldset class="fsec">${sec(4, 'Rémunération et suivi')}<div class="grid">
       <div><label>Salaire</label>${radio('salaire', yn, v.salaire)}</div><div><label>Prime</label>${radio('prime', yn, v.prime)}</div>
-      <label>Prise en charge<select name="prise_en_charge">${opt(PRISE, v.prise_en_charge)}</select></label></div></section>
-    <section class="card fsec">${sec(5, 'Photo')}<div class="photo-box"><span class="av" id="phPrev">${formPhoto ? `<img src="${formPhoto}" alt="">` : '+'}</span>
-      <div><input type="file" id="phIn" accept="image/*"><button type="button" class="btn sm" data-act="rmphoto" style="margin-top:8px">Retirer la photo</button></div></div></section>
+      <label>Prise en charge<select name="prise_en_charge">${opt(PRISE, v.prise_en_charge)}</select></label></div></fieldset>
+    <fieldset class="fsec">${sec(5, 'Photo')}<div class="photo-box"><span class="av" id="phPrev">${formPhoto ? `<img src="${formPhoto}" alt="">` : '+'}</span>
+      <div><input type="file" id="phIn" accept="image/*"><button type="button" class="btn sm" data-act="rmphoto" style="margin-top:8px">Retirer la photo</button></div></div></fieldset>
     <datalist id="dl-dip">${DIPLOMES.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
     <div class="formbar"><button class="btn primary">${ico('check', 18)}Enregistrer l’agent</button><a class="btn" href="#/agents">Annuler</a></div></form>`;
 }
@@ -766,6 +778,7 @@ function bars(title, entries, color) {
   return `<section class="card chart"><h3>${title}</h3>${entries.map(([l, n]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${Math.round(n / max * 100)}%;${color && color[l] ? 'background:' + color[l] : ''}"></i></span><span class="n">${n} (${Math.round(n / tot * 100)}%)</span></div>`).join('')}</section>`;
 }
 const donut = (m, f) => { const t = m + f || 1, r = 42, c = 2 * Math.PI * r, a = c * m / t; return `<svg viewBox="0 0 100 100" width="130" height="130" role="img" aria-label="${m} hommes, ${f} femmes"><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--red)" stroke-width="14"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--blue)" stroke-width="14" stroke-dasharray="${a} ${c - a}" transform="rotate(-90 50 50)"/><text x="50" y="56" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor">${m + f}</text></svg>`; };
+const occBars = t => { const max = Math.max(1, ...t.map(e => e[1])); return `<section class="card chart"><h3>Taux d’occupation du cadre par division</h3>${t.map(([l, n]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${n}%;background:${n >= 100 ? 'var(--green)' : n >= 70 ? 'var(--blue)' : 'var(--red)'}"></i></span><span class="n">${n} %</span></div>`).join('')}</section>`; };
 function pTableau() {
   return `<header class="ph"><div><h2>Tableau de bord</h2><p class="sub">Vue d’ensemble des agents enregistrés</p></div><select id="dDir" style="width:auto;margin:0" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select></header><div id="dash"></div>`;
 }
@@ -778,12 +791,17 @@ function renderDash() {
   const bucket = a => { const x = age(a.naissance); return x == null ? '' : x < 30 ? 'Moins de 30 ans' : x < 40 ? '30 à 39 ans' : x < 50 ? '40 à 49 ans' : x < 60 ? '50 à 59 ans' : '60 ans et plus'; };
   const AB = ['Moins de 30 ans', '30 à 39 ans', '40 à 49 ans', '50 à 59 ans', '60 ans et plus', 'Non renseigné'];
   const years = group(L, a => (a.engagement || '').slice(0, 4)).sort((a, b) => a[0] === 'Non renseigné' ? 1 : b[0] === 'Non renseigné' ? -1 : a[0].localeCompare(b[0]));
+  const occ = [];
+  DB.directions.filter(d => !dir || d.name === dir).forEach(d => [...divOrder(d), ''].forEach(v => {
+    let p = 0, e = 0; cadreRows(d.name, v).forEach(r => { p += r.prevu; e += r.enplace; });
+    if (p > 0) occ.push([v || d.name + ' — Sans division', Math.min(100, Math.round(e / p * 100))]);
+  }));
   $('#dash').innerHTML = `<div class="stats">${stat('users', '', L.length, 'agents')}${stat('chart', 'y', avg, 'âge moyen')}${stat('org', 'g', vac, 'postes vacants')}
     <a href="#/agents/inc" style="text-decoration:none;color:inherit">${stat('alert', 'r', inc, 'dossiers incomplets')}</a>${stat('check', 'g', L.filter(a => a.salaire === 'Oui').length, 'avec salaire')}${stat('check', 'y', L.filter(a => a.prime === 'Oui').length, 'avec prime')}</div>
     <div class="charts">
       <section class="card chart"><h3>Répartition par sexe</h3><div class="dn">${donut(m, f)}<ul><li><i style="background:var(--blue)"></i>Hommes : <b>${m}</b></li><li><i style="background:var(--red)"></i>Femmes : <b>${f}</b></li>${L.length - m - f ? `<li class="muted">Non renseigné : ${L.length - m - f}</li>` : ''}</ul></div></section>
       ${bars('Agents par division', group(L, a => a.division))}${bars('Agents par grade', group(L, a => a.grade))}${bars('État civil', group(L, a => a.etat_civil, [...ETATS, 'Non renseigné']))}
-      ${bars('Tranches d’âge', group(L, bucket, AB))}${bars('Prise en charge', group(L, a => a.prise_en_charge))}${bars('Situation', group(L, a => a.situation, [...SITU, 'Non renseigné']))}${bars('Année d’engagement', years)}</div>`;
+      ${bars('Tranches d’âge', group(L, bucket, AB))}${bars('Prise en charge', group(L, a => a.prise_en_charge))}${bars('Situation', group(L, a => a.situation, [...SITU, 'Non renseigné']))}${bars('Année d’engagement', years)}${occ.length ? occBars(occ) : ''}</div>`;
 }
 
 /* ---------- Les 3 documents : Mise en place, Cadre organique, Liste déclarative ---------- */
@@ -818,7 +836,7 @@ function docRows(kind) {
 function listeAgents() {
   const q = norm($('#tq') ? $('#tq').value : ''), v = $('#tDiv') ? $('#tDiv').value : '', s = $('#tSit') ? $('#tSit').value : '', sort = $('#tSort') ? $('#tSort').value : 'hier';
   return sortAgents(DB.agents.filter(a => (!ui.dir || a.direction === ui.dir) && (!v || a.division === v) && (!s || a.situation === s) &&
-    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte].join(' ')).includes(q))), sort);
+    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division].join(' ')).includes(q))), sort);
 }
 function renderMise() {
   const q = norm($('#tq').value); let html = '';
@@ -892,8 +910,8 @@ function buildImport() {
 function renderPreview() {
   const box = $('#impPreview'); if (!imp || !imp.tables.length) { box.innerHTML = ''; return; }
   const mode = imp.mode, res = buildImport(), fields = mode === 'agents' ? FIELDS : CFIELDS;
-  let nw = 0, up = 0;
-  if (mode === 'agents') { const keys = new Set(DB.agents.map(agentKey)); res.items.forEach(a => keys.has(agentKey(a)) ? up++ : nw++); }
+  let nw = 0, up = 0, hom = 0;
+  if (mode === 'agents') { const keys = new Set(DB.agents.map(agentKey)); res.items.forEach(a => keys.has(agentKey(a)) ? up++ : nw++); const c = {}; res.items.forEach(a => { const k = agentKey(a); c[k] = (c[k] || 0) + 1; }); hom = Object.values(c).filter(x => x > 1).reduce((s, x) => s + x - 1, 0); }
   const maps = imp.tables.map((t, ti) => `<details class="map" ${!res.tables[ti] ? 'open' : ''}><summary>${esc(t.name)} — ${res.tables[ti]} ligne${res.tables[ti] > 1 ? 's' : ''} reconnue${res.tables[ti] > 1 ? 's' : ''}</summary>
     <div class="kv">${Object.keys(t.map || {}).map(k => `<span class="badge ok">${esc((fields.find(f => f[0] === k) || [k, k])[1].split(' (')[0])} ← ${esc(colLabel(t, t.map[k]).replace(/^\d+\.\s/, ''))}</span>`).join('') || '<span class="badge warn">Aucune colonne reconnue</span>'}</div>
     <div class="grid"><label>Ligne des titres<input type="number" min="1" value="${t.hi + 1}" data-imp="${ti}|hi"></label>
@@ -903,7 +921,7 @@ function renderPreview() {
     : `<div class="tw" style="max-height:none;margin-top:12px"><table class="tbl"><thead><tr><th>Division</th><th>Grade / poste</th><th class="c">Prévu</th></tr></thead><tbody>${res.items.slice(0, 6).map(a => `<tr style="cursor:default"><td>${esc(a.division)}</td><td>${esc(a.grade)}</td><td class="c">${a.prevu}</td></tr>`).join('')}</tbody></table></div>`;
   const n = res.items.length;
   box.innerHTML = `<section class="card"><h3 style="margin-bottom:10px">2. Vérifier avant d’importer</h3>
-    ${n ? `<p><span class="badge ok">${ico('check', 14)} ${n} ${mode === 'agents' ? 'agent' : 'poste'}${n > 1 ? 's' : ''} reconnu${n > 1 ? 's' : ''}</span> ${mode === 'agents' ? `<span class="badge">${nw} nouveau${nw > 1 ? 'x' : ''}</span> <span class="badge">${up} à mettre à jour</span>` : ''} ${res.skipped ? `<span class="badge warn">${res.skipped} ligne${res.skipped > 1 ? 's' : ''} ignorée${res.skipped > 1 ? 's' : ''}</span>` : ''}</p>${sample}`
+    ${n ? `<p><span class="badge ok">${ico('check', 14)} ${n} ${mode === 'agents' ? 'agent' : 'poste'}${n > 1 ? 's' : ''} reconnu${n > 1 ? 's' : ''}</span> ${mode === 'agents' ? `<span class="badge">${nw} nouveau${nw > 1 ? 'x' : ''}</span> <span class="badge">${up} à mettre à jour</span>${hom ? ` <span class="badge bad">${ico('alert', 13)} ${hom} doublon(s) — fusion à l’import</span>` : ''}` : ''} ${res.skipped ? `<span class="badge warn">${res.skipped} ligne${res.skipped > 1 ? 's' : ''} ignorée${res.skipped > 1 ? 's' : ''}</span>` : ''}</p>${sample}`
       : '<div class="warn" style="margin:0">Aucune ligne reconnue. Ouvrez la section ci-dessous pour indiquer la ligne des titres et les colonnes, ou changez le type de contenu.</div>'}
     ${maps}
     <div class="acts sec2"><button class="btn primary" data-act="impapply" ${n ? '' : 'disabled'}>${ico('check', 18)}Importer ${n || ''} ${mode === 'agents' ? 'agent' : 'poste'}${n > 1 ? 's' : ''}</button></div></section>`;
@@ -958,7 +976,7 @@ function pAdmin() {
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
     <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
   const last = DB.meta.lastBackup ? new Date(DB.meta.lastBackup).toLocaleDateString('fr-FR') : 'jamais';
-  return `<header class="ph"><div><h2>Administration</h2><p class="sub">Sauvegarde, structure et utilisateurs</p></div></header>
+  return `<header class="ph"><div><h2>Administration</h2><p class="sub">Sauvegarde, structure et utilisateurs · version ${APP_VERSION}</p></div></header>
   <section class="card"><h3>Base de données</h3><p class="sub" style="margin-bottom:12px">Emplacement : <b id="whereDb">…</b></p>
     <p class="sub" style="margin-bottom:12px">Une copie automatique est faite chaque jour. Dernière sauvegarde manuelle : ${last}. Si l’application est désinstallée, la base de données est supprimée : sauvegardez et copiez le fichier en lieu sûr.</p>
     <div class="acts"><button class="btn primary" data-act="backup">${ico('download', 18)}Sauvegarder (fichier complet)</button><label class="btn"><input type="file" id="impJson" accept=".json,application/json" hidden>Restaurer une sauvegarde</label>${window.dflDesktop ? '<button class="btn" data-act="openfolder">Ouvrir le dossier</button>' : ''}</div>
@@ -985,7 +1003,7 @@ function route() {
   if (name === 'agents') {
     fillDivFilter(); renderList();
     $('#q').addEventListener('input', renderList); $('#fDir').addEventListener('change', () => { fillDivFilter(); renderList(); });
-    ['fDiv', 'fSexe', 'fSit', 'fInc'].forEach(i => $('#' + i).addEventListener('change', renderList));
+    ['fDiv', 'fSexe', 'fEtat', 'fSit', 'fInc'].forEach(i => $('#' + i).addEventListener('change', renderList));
   }
   if (name === 'tableau') { renderDash(); $('#dDir').addEventListener('change', renderDash); }
   if (DOCS.includes(name)) {
@@ -1006,12 +1024,12 @@ function route() {
 /* ================= Actions ================= */
 const A = {
   close: () => closeModal(),
-  logout: () => { session = null; try { sessionStorage.removeItem('dfl_s'); } catch (e) {} location.hash = '#/accueil'; route(); },
+  logout: () => { session = null; try { localStorage.removeItem('dfl_s'); } catch (e) {}; if (location.hash === '#/accueil' || !location.hash) route(); else location.hash = '#/accueil'; },
   fiche: t => openFiche(t.dataset.id),
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
   delagent: t => { const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); save(); closeModal(); toast('Fiche supprimée'); route(); } },
-  resetpw: async t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`, '', 'password'); if (p == null) return; if (p.length < 6) return toast('Mot de passe trop court', true); u.pass = hash(p); u.mustChange = false; save(); toast('Mot de passe modifié'); },
+  resetpw: async t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`, '', 'password'); if (p == null) return; if (p.length < 6) return toast('Mot de passe trop court', true); u.pass = await sha256(p); u.mustChange = false; save(); toast('Mot de passe modifié'); },
   deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
   rendir: async t => {
     const d = DB.directions[+t.dataset.i], n = ((await ask('Nouveau nom de la direction :', d.name)) || '').trim(); if (!n || n === d.name) return;
@@ -1058,23 +1076,27 @@ const A = {
 
 /* ================= Formulaires ================= */
 const F = {
-  login(f) {
-    const u = f.u.value.trim().toLowerCase(), user = DB.users.find(x => x.username.toLowerCase() === u && x.pass === hash(f.p.value));
+  async login(f) {
+    const u = f.u.value.trim().toLowerCase(), user = DB.users.find(x => x.username.toLowerCase() === u);
     if (!user) return toast('Identifiant ou mot de passe incorrect', true);
+    const p = f.p.value, ok = user.pass.length === 64 ? user.pass === await sha256(p) : user.pass === hash(p);
+    if (!ok) return toast('Identifiant ou mot de passe incorrect', true);
+    if (user.pass.length !== 64) { user.pass = await sha256(p); save(); }
     session = { id: user.id, username: user.username, role: user.role, mustChange: !!user.mustChange };
-    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    try { localStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
     const n = user.mustChange ? 'compte' : (nextRoute || 'accueil'); nextRoute = ''; location.hash = '#/' + n; route();
   },
-  pw(f) {
+  async pw(f) {
     const user = DB.users.find(x => x.id === session.id);
-    if (user.pass !== hash(f.old.value)) return toast('Le mot de passe actuel est incorrect', true);
+    const oldOK = user.pass.length === 64 ? user.pass === await sha256(f.old.value) : user.pass === hash(f.old.value);
+    if (!oldOK) return toast('Le mot de passe actuel est incorrect', true);
     if (f.n1.value !== f.n2.value) return toast('Les deux nouveaux mots de passe sont différents', true);
     if (f.n1.value.length < 6 || f.n1.value.toLowerCase() === 'admin') return toast('Choisissez un mot de passe d’au moins 6 caractères, différent de « admin »', true);
-    user.pass = hash(f.n1.value); user.mustChange = false; session.mustChange = false;
-    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    user.pass = await sha256(f.n1.value); user.mustChange = false; session.mustChange = false;
+    try { localStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
     save(); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
   },
-  adduser(f) { const u = f.u.value.trim(); if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: hash(f.p.value), role: f.r.value, mustChange: false }); save(); toast('Utilisateur ajouté'); route(); },
+  async adduser(f) { const u = f.u.value.trim(); if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: await sha256(f.p.value), role: f.r.value, mustChange: false }); save(); toast('Utilisateur ajouté'); route(); },
   adddir(f) { const v = f.v.value.trim(); if (DB.directions.some(d => d.name === v)) return toast('Cette direction existe déjà', true); DB.directions.push({ name: v, divisions: [] }); save(); route(); },
   adddiv(f) { const d = DB.directions[+f.dataset.i], v = f.v.value.trim(); if (d.divisions.includes(v)) return toast('Cette division existe déjà', true); d.divisions.push(v); save(); route(); },
   year(f) { DB.meta.annee = parseInt(f.y.value, 10) || DB.meta.annee; save(); toast('Année enregistrée'); },
@@ -1087,7 +1109,7 @@ const F = {
     const g = n => (f.elements[n] ? f.elements[n].value : '').trim(), id = f.dataset.id, o = {};
     ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'prise_en_charge', 'situation'].forEach(k => o[k] = g(k));
     ['sexe', 'salaire', 'prime'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
-    const dup = DB.agents.find(a => a.matricule && a.matricule.toLowerCase() === o.matricule.toLowerCase() && a.id !== id);
+    const dup = o.matricule && DB.agents.find(a => a.matricule && a.id !== id && a.matricule.toLowerCase() === o.matricule.toLowerCase());
     if (dup) return toast(`Ce matricule existe déjà : ${fullName(dup)}`, true);
     let a;
     if (id) { a = DB.agents.find(x => x.id === id); Object.assign(a, o, { updated: Date.now() }); } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o }; DB.agents.push(a); }
@@ -1165,7 +1187,7 @@ const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { 
   DB = (d && Array.isArray(d.agents)) ? migrate(d) : seed();
   if ((Store.kind === 'native' || Store.kind === 'desktop') && DB.meta.lastAuto !== today()) { try { await Store.writeRaw(AUXFILE, JSON.stringify(DB)); DB.meta.lastAuto = today(); } catch (e) {} save(); }
   save();
-  try { const s = sessionStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
+  try { const s = localStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
   route(); bump();
 })();
 })();
