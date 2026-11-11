@@ -1,6 +1,13 @@
-MISE A JOUR DE L'APK (version 2)
+MISE A JOUR DE L'APK (version 2.1)
 
-Dans votre depot GitHub (apk-dfl), envoyez ces 4 fichiers (Add file > Upload files) :
+Changements principaux :
+- Message d'accueil : « Bienvenue à la Direction de Suivi des Finances Locales »
+- Structure Mise en place : 4 divisions × 2 bureaux (8), noms + CD + CB modifiables
+- Formulaire agent : champ Bureau ajouté (avec Division)
+- Liste déclarative / exports : colonne Bureau
+- Rôles : Administrateur (Directeur), Directeur, Chef de division (CD), Chef de bureau / Secrétariat, Saisie
+
+Dans votre dépôt GitHub (apk-dfl), envoyez ces 4 fichiers (Add file > Upload files) :
   index.html, package.json, prepare.js, debug.keystore
 Les 2 premiers remplacent les anciens. Validez avec "Commit changes".
-La construction demarre toute seule (onglet Actions). Telechargez ensuite l'APK dans "Artifacts".
+La construction démarre toute seule (onglet Actions). Téléchargez ensuite l'APK dans "Artifacts".

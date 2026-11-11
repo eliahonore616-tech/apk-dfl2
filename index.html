@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#0A2342">
-<title>Gestion des agents – Direction des Finances Locales</title>
+<title>Gestion des agents – Direction de Suivi des Finances Locales</title>
 <style>
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/montserrat-latin-wght-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:'Montserrat';font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/montserrat-latin-ext-wght-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
@@ -326,7 +326,7 @@ const normEtat = s => {
 /* ---- Lecture des fichiers : reconnaissance des colonnes ---- */
 const FIELDS = [['noms', 'Noms complets (nom + postnom + prénom)'], ['nom', 'Nom'], ['postnom', 'Postnom'], ['prenom', 'Prénom'], ['sexe', 'Sexe'],
   ['naissance', 'Date de naissance'], ['etat_civil', 'État civil'], ['diplome', 'Diplôme'], ['matricule', 'Matricule'], ['acte', 'N° acte d’engagement'],
-  ['engagement', 'Date d’engagement'], ['grade', 'Grade'], ['fonction', 'Fonction'], ['direction', 'Direction'], ['division', 'Division'],
+  ['engagement', 'Date d’engagement'], ['grade', 'Grade'], ['fonction', 'Fonction'], ['direction', 'Direction'], ['division', 'Division'], ['bureau', 'Bureau'],
   ['salaire', 'Salaire (oui/non)'], ['prime', 'Prime (oui/non)'], ['prise_en_charge', 'Prise en charge'], ['situation', 'Situation']];
 const CFIELDS = [['direction', 'Direction'], ['division', 'Division'], ['grade', 'Grade / poste'], ['prevu', 'Effectif prévu'], ['note', 'Remarque']];
 const AKEYS = FIELDS.map(f => f[0]), CKEYS = CFIELDS.map(f => f[0]);
@@ -341,7 +341,7 @@ const ALIAS = {
   acte: ['nactedengagement', 'acteengagement', 'actedengagement', 'acte', 'nacte', 'numeroacte', 'referenceacte'],
   engagement: ['datedengagement', 'dateengagement', 'engagement', 'datedentreeenservice', 'dateentree', 'datedeprisedeservice', 'datedeprise', 'datedenomination'],
   grade: ['grade', 'gradeactuel'], fonction: ['fonction', 'poste', 'emploi', 'fonctionexercee'],
-  direction: ['direction'], division: ['division', 'service', 'bureau', 'affectation', 'divisiondaffectation'],
+  direction: ['direction'], division: ['division', 'service', 'affectation', 'divisiondaffectation'], bureau: ['bureau', 'bureaux', 'cellule', 'section'],
   salaire: ['salaire', 'paie'], prime: ['prime'], prise_en_charge: ['priseencharge'],
   situation: ['situation', 'statut', 'situationadministrative'],
   prevu: ['effectifprevu', 'effectifsprevus', 'prevu', 'prevus', 'postesprevus', 'effectifcadre', 'effectifs', 'nombredepostes', 'nbpostes', 'cadre'],
@@ -382,7 +382,7 @@ function rowToAgent(r, map, opt, sheet) {
     nom, postnom, prenom, naissance: dateFrom(map.naissance != null ? r[map.naissance] : ''), sexe: sx.startsWith('f') ? 'F' : sx.startsWith('m') ? 'M' : '',
     etat_civil: normEtat(g('etat_civil')), diplome: g('diplome'), matricule: g('matricule'), acte: g('acte'),
     engagement: dateFrom(map.engagement != null ? r[map.engagement] : ''), grade: g('grade'), fonction: g('fonction'),
-    direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''),
+    direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''), bureau: g('bureau'),
     salaire: yn(g('salaire')), prime: yn(g('prime')), prise_en_charge: g('prise_en_charge'), situation: g('situation')
   };
 }
@@ -448,12 +448,53 @@ const group = (list, fn, order) => {
   if (order) e.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0])); else e.sort((a, b) => b[1] - a[1]);
   return e;
 };
+const defaultOrg = () => ({
+  directeur: '',
+  divisions: [1, 2, 3, 4].map(i => ({
+    id: 'd' + i,
+    name: 'Division ' + i,
+    cd: '',
+    bureaux: [
+      { id: 'd' + i + 'b1', name: 'Bureau ' + ((i - 1) * 2 + 1), cb: '' },
+      { id: 'd' + i + 'b2', name: 'Bureau ' + ((i - 1) * 2 + 2), cb: '' }
+    ]
+  }))
+});
 const migrate = d => {
   d.users = d.users || []; d.directions = d.directions || []; d.agents = d.agents || [];
   d.cadre = d.cadre || []; d.meta = d.meta || {}; if (!d.meta.annee) d.meta.annee = new Date().getFullYear();
-  if (!d.directions.length) d.directions.push({ name: 'Direction des Finances Locales', divisions: [] });
-  d.agents.forEach(a => { if (!a.direction) a.direction = d.directions[0].name; });
-  d.version = 2; return d;
+  if (!d.directions.length) d.directions.push({ name: 'Direction de Suivi des Finances Locales', divisions: [] });
+  d.agents.forEach(a => {
+    if (!a.direction) a.direction = d.directions[0].name;
+    if (a.bureau == null) a.bureau = '';
+  });
+  if (!d.org || !Array.isArray(d.org.divisions) || d.org.divisions.length !== 4) {
+    d.org = defaultOrg();
+    const oldDivs = (d.directions[0] && d.directions[0].divisions) || [];
+    d.org.divisions.forEach((div, i) => { if (oldDivs[i]) div.name = oldDivs[i]; });
+  } else {
+    d.org.directeur = d.org.directeur || '';
+    d.org.divisions.forEach((div, i) => {
+      div.id = div.id || ('d' + (i + 1));
+      div.name = div.name || ('Division ' + (i + 1));
+      div.cd = div.cd || '';
+      if (!Array.isArray(div.bureaux) || div.bureaux.length < 2) {
+        div.bureaux = [
+          { id: div.id + 'b1', name: 'Bureau ' + (i * 2 + 1), cb: '' },
+          { id: div.id + 'b2', name: 'Bureau ' + (i * 2 + 2), cb: '' }
+        ];
+      } else {
+        div.bureaux.forEach((b, j) => {
+          b.id = b.id || (div.id + 'b' + (j + 1));
+          b.name = b.name || ('Bureau ' + (i * 2 + j + 1));
+          b.cb = b.cb || '';
+        });
+      }
+    });
+  }
+  const main = d.directions[0];
+  if (main) main.divisions = d.org.divisions.map(x => x.name);
+  d.version = 3; return d;
 };
 /*PURE-END*/
 
@@ -568,7 +609,8 @@ let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = nul
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
 const seed = () => migrate({
   users: [{ id: uid(), username: 'admin', pass: hash('admin'), role: 'admin', mustChange: true }],
-  directions: [{ name: 'Direction des Finances Locales', divisions: ['Division 1', 'Division 2', 'Division 3'] }], agents: [], cadre: [], meta: { lastBackup: 0 }
+  directions: [{ name: 'Direction de Suivi des Finances Locales', divisions: [] }],
+  agents: [], cadre: [], org: defaultOrg(), meta: { lastBackup: 0 }
 });
 
 /* ================= Icônes ================= */
@@ -605,10 +647,10 @@ const DOCS = ['mise-en-place', 'cadre', 'liste'];
 const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents' };
 
 function shell(inner, name) {
-  const isAdmin = session && session.role === 'admin';
+  const isAdmin = session && (session.role === 'admin' || session.role === 'directeur');
   const side = NAV.filter(n => n.g || !(n.admin && !isAdmin)).map(n => n.g ? `<div class="gl">${n.g}</div>` : `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
-    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${isAdmin ? 'Administrateur' : 'Saisie et consultation'}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
+    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${({admin:'Administrateur (Directeur)',directeur:'Directeur',cd:'Chef de division',cb:'Chef de bureau / Secrétariat',saisie:'Saisie et consultation'})[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
   const b = (r, l, i, on, fab) => `<a href="#/${r}" class="${fab ? 'fab' : ''}" ${on ? 'aria-current="page"' : ''}>${fab ? `<span>${ico(i, 26)}</span>` : ico(i, 22)}<small>${l}</small></a>`;
   const bn = `<nav class="bnav" aria-label="Navigation">${b('accueil', 'Accueil', 'home', name === 'accueil')}${b('agents', 'Agents', 'users', name === 'agents')}${b('nouveau', 'Ajouter', 'plusb', name === 'nouveau', 1)}${b('mise-en-place', 'Documents', 'layers', DOCS.includes(name))}${b('plus', 'Plus', 'more', ['plus', 'tableau', 'importer', 'admin', 'compte'].includes(name))}</nav>`;
@@ -618,18 +660,30 @@ function shell(inner, name) {
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/admin">Faire une sauvegarde</a></span></div>`);
   return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
-  <main>${banners.join('')}${inner}<footer class="foot"><b>Direction des Finances Locales</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br><span>Application de gestion des agents · version ${APP_VERSION} · fonctionne sans internet — pensez à faire des sauvegardes régulières</span></footer></main>${bn}`;
+  <main>${banners.join('')}${inner}<footer class="foot"><b>Direction de Suivi des Finances Locales</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br><span>Application de gestion des agents · version ${APP_VERSION} · fonctionne sans internet — pensez à faire des sauvegardes régulières</span></footer></main>${bn}`;
 }
 
 /* ================= Pages ================= */
 const stat = (ic, cls, n, l) => `<div class="stat"><span class="ic ${cls}">${ico(ic, 22)}</span><div><b>${n}</b><span>${l}</span></div></div>`;
 function pAccueil() {
+  const nd = (DB.org && DB.org.divisions) ? DB.org.divisions.length : 0;
+  const nb = (DB.org && DB.org.divisions) ? DB.org.divisions.reduce((s, d) => s + (d.bureaux || []).length, 0) : 0;
+  const tile = (r, t, d, i) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${t}</b><span>${d}</span></div></a>`;
   return `<section class="hero"><span class="band"></span>
     <span class="pill">République Démocratique du Congo</span>
-    <h1>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</h1>
-    <p class="hdir">Direction des Finances Locales</p>
+    <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
+    <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
     <p style="color:#fff;opacity:.85;margin-top:14px;font-size:15px;max-width:34em;margin-left:auto;margin-right:auto">Gestion des agents : base de données, mise en place du personnel, cadre organique et liste déclarative.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/agents">Consulter les agents</a><a class="btn ghost" href="#/nouveau">Enregistrer un agent</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>`;
+    <div class="cta">${session ? '<a class="btn" href="#/agents">Consulter les agents</a><a class="btn ghost" href="#/nouveau">Enregistrer un agent</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>
+  <div class="stats">${stat('users', '', DB.agents.length, 'agents enregistrés')}${stat('layers', 'y', nd || 4, 'divisions')}${stat('org', 'g', nb || 8, 'bureaux')}${stat('check', 'r', DB.agents.filter(a => !incomplete(a)).length, 'dossiers complets')}</div>
+  <div class="tiles">
+    ${tile('agents', 'Base de données des agents', 'Rechercher, filtrer, ouvrir une fiche', 'users')}
+    ${tile('nouveau', 'Nouvel agent recruté', 'Remplir le formulaire d’enregistrement', 'plus')}
+    ${tile('mise-en-place', 'Mise en place', '4 divisions · 8 bureaux · CD et CB', 'layers')}
+    ${tile('cadre', 'Cadre organique', 'Postes prévus, occupés et vacants', 'org')}
+    ${tile('liste', 'Liste déclarative', 'Liste officielle numérotée des agents', 'list')}
+    ${tile('importer', 'Importer un fichier', 'Excel, Word, PDF ou CSV', 'upload')}
+  </div>`;
 }
 function pLogin() {
   const first = DB.users.some(u => u.mustChange);
@@ -639,7 +693,7 @@ function pLogin() {
     <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
     <button class="btn primary">Se connecter</button></form>
     ${first ? '<p class="sub" style="margin-top:14px">Premier accès : identifiant <b>admin</b>, mot de passe <b>admin</b>. Vous devrez le changer ensuite.</p>' : ''}
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction des Finances Locales · version ${APP_VERSION}</p></section>`;
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
   return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
@@ -652,7 +706,7 @@ function pPlus() {
   const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
   return `<header class="ph"><h2>Plus</h2></header><div class="tiles">
     ${it('tableau', 'Tableau de bord', 'chart', 'Statistiques et graphiques')}${it('importer', 'Importer un fichier', 'upload', 'Excel, Word, PDF ou CSV')}
-    ${session.role === 'admin' ? it('admin', 'Administration', 'shield', 'Sauvegarde, utilisateurs, divisions') : ''}${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
+    ${isAdmin ? it('admin', 'Administration', 'shield', 'Sauvegarde, utilisateurs, structure') : ''}${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
     <div class="tile"><span class="ic">${ico('shield')}</span><div><b>Version ${APP_VERSION}</b><span>Application hors ligne · données stockées sur l’appareil</span></div></div>
     <button class="tile" data-act="logout" style="text-align:left;font:inherit"><span class="ic">${ico('logout')}</span><div><b>Se déconnecter</b><span>Fermer ma session</span></div></button></div>`;
 }
@@ -681,7 +735,7 @@ function filtered() {
   return sortAgents(DB.agents.filter(a => (!d || a.direction === d) && (!v || a.division === v) && (!s || a.sexe === s) && (!t || a.situation === t) && (!ec || a.etat_civil === ec) && (!inc || incomplete(a)) &&
     (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division, a.etat_civil].join(' ')).includes(q))), 'alpha');
 }
-const agentRow = a => `<button class="arow" data-act="fiche" data-id="${a.id}">${avatar(a)}<span class="an"><b>${esc(fullName(a))}</b><small>${esc(a.grade || 'Grade non renseigné')}${a.fonction ? ' — ' + esc(a.fonction) : ''}</small></span><span class="am">${esc(a.matricule || '')}${a.division ? `<br><span class="badge">${esc(a.division)}</span>` : ''}</span></button>`;
+const agentRow = a => `<button class="arow" data-act="fiche" data-id="${a.id}">${avatar(a)}<span class="an"><b>${esc(fullName(a))}</b><small>${esc(a.grade || 'Grade non renseigné')}${a.fonction ? ' — ' + esc(a.fonction) : ''}</small></span><span class="am">${esc(a.matricule || '')}${a.bureau ? `<br><span class="badge">${esc(a.bureau)}</span>` : a.division ? `<br><span class="badge">${esc(a.division)}</span>` : ''}</span></button>`;
 function renderList() {
   const L = filtered(), MAX = 200;
   $('#cnt').textContent = `${L.length}${L.length !== DB.agents.length ? ' sur ' + DB.agents.length : ''} agent${L.length > 1 ? 's' : ''}`;
@@ -712,26 +766,38 @@ function openFiche(id) {
   const a = DB.agents.find(x => x.id === id); if (!a) return;
   const f = (l, v) => `<div><dt>${l}</dt><dd>${v ? esc(v) : '<span class="muted">Non renseigné</span>'}</dd></div>`, ag = age(a.naissance);
   const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;
-  openModal(`<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>Direction des Finances Locales<h3 style="margin-top:8px">Fiche d’agent</h3></div>
+  openModal(`<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>Direction de Suivi des Finances Locales<h3 style="margin-top:8px">Fiche d’agent</h3></div>
     <div class="fiche-top">${avatar(a)}<div><h3>${esc(fullName(a))}</h3><span class="muted" style="font-size:13px">${esc(a.fonction || a.grade || '')}</span>
       <div class="badges">${a.situation ? `<span class="badge ok">${esc(a.situation)}</span>` : ''}${a.division ? `<span class="badge">${esc(a.division)}</span>` : ''}${incomplete(a) ? '<span class="badge warn">Dossier incomplet</span>' : ''}</div></div></div>
     <dl class="f">${f('Matricule', a.matricule)}${f('N° acte d’engagement', a.acte)}${f('Date d’engagement', fmtDate(a.engagement))}${f('Situation', a.situation)}
       ${f('Date de naissance', fmtDate(a.naissance) + (ag != null ? ` (${ag} ans)` : ''))}${f('Sexe', SEX[a.sexe])}${f('État civil', a.etat_civil)}${f('Diplôme', a.diplome)}
-      ${f('Grade', a.grade)}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Salaire', a.salaire)}${f('Prime', a.prime)}${f('Prise en charge', a.prise_en_charge)}${f('Fiche créée le', a.created ? new Date(a.created).toLocaleDateString('fr-FR') : '')}${a.updated && a.updated !== a.created ? f('Dernière modification', new Date(a.updated).toLocaleDateString('fr-FR')) : ''}</dl>
+      ${f('Grade', a.grade)}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Bureau', a.bureau)}${f('Salaire', a.salaire)}${f('Prime', a.prime)}${f('Prise en charge', a.prise_en_charge)}${f('Fiche créée le', a.created ? new Date(a.created).toLocaleDateString('fr-FR') : '')}${a.updated && a.updated !== a.created ? f('Dernière modification', new Date(a.updated).toLocaleDateString('fr-FR')) : ''}</dl>
     <div class="noprint"><div class="placed">
       <a href="#/mise-en-place" data-act="close">${ico('layers', 20)}<span><b>Mise en place</b>${esc(a.division || 'Sans division')}</span></a>
       <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
       <a href="#/liste" data-act="close">${ico('list', 20)}<span><b>Liste déclarative</b>N° ${rank} sur ${DB.agents.filter(x => x.direction === a.direction).length}</span></a></div>
     <div class="acts"><a class="btn primary" href="#/nouveau/${a.id}" data-act="close">Modifier</a>
       ${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}
-      ${session.role === 'admin' ? `<button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>` : ''}
+      ${isAdmin ? `<button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>` : ''}
       <button class="btn" data-act="close">Fermer</button></div></div>`);
 }
 
 /* ---------- Formulaire ---------- */
 function divOptions(dir, sel) {
+  if (DB.org && DB.org.divisions && DB.org.divisions.length) {
+    return '<option value="">Choisir…</option>' + DB.org.divisions.map(v => `<option ${v.name === sel ? 'selected' : ''}>${esc(v.name)}</option>`).join('');
+  }
   const d = DB.directions.find(x => x.name === dir);
   return '<option value="">Choisir…</option>' + (d ? divOrder(d) : []).map(v => `<option ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+}
+function bureauOptions(divName, sel) {
+  const div = (DB.org && DB.org.divisions || []).find(x => x.name === divName);
+  const list = div ? div.bureaux.map(b => b.name) : [];
+  return '<option value="">Choisir…</option>' + list.map(v => `<option ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+}
+function syncOrgToDirections() {
+  if (!DB.org || !DB.directions[0]) return;
+  DB.directions[0].divisions = DB.org.divisions.map(d => d.name);
 }
 function pForm(id) {
   const a = id ? DB.agents.find(x => x.id === id) : null;
@@ -755,7 +821,8 @@ function pForm(id) {
       <label>Fonction<input name="fonction" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></fieldset>
     <fieldset class="fsec">${sec(3, 'Affectation')}<div class="grid">
       <label>Direction *<select name="direction" id="fmDir" required>${DB.directions.map(d => `<option ${d.name === v.direction ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
-      <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label></div></fieldset>
+      <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label>
+      <label>Bureau *<select name="bureau" id="fmBur" required>${bureauOptions(v.division, v.bureau)}</select></label></div></fieldset>
     <fieldset class="fsec">${sec(4, 'Rémunération et suivi')}<div class="grid">
       <div><label>Salaire</label>${radio('salaire', yn, v.salaire)}</div><div><label>Prime</label>${radio('prime', yn, v.prime)}</div>
       <label>Prise en charge<select name="prise_en_charge">${opt(PRISE, v.prise_en_charge)}</select></label></div></fieldset>
@@ -807,9 +874,9 @@ function renderDash() {
 /* ---------- Les 3 documents : Mise en place, Cadre organique, Liste déclarative ---------- */
 const selDirs = () => ui.dir ? DB.directions.filter(d => d.name === ui.dir) : DB.directions;
 const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico({ 'mise-en-place': 'layers', cadre: 'org', liste: 'list' }[r], 17)}${DOCTITLE[r].replace(' des agents', '').replace(' du personnel', '')}</a>`).join('')}</div>`;
-const printHead = kind => `<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>${esc(ui.dir || 'Direction des Finances Locales')}<h3 style="margin-top:8px">${DOCTITLE[kind]}${kind === 'liste' ? ' – ' + DB.meta.annee : ''}</h3></div>`;
+const printHead = kind => `<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>${esc(ui.dir || 'Direction de Suivi des Finances Locales')}<h3 style="margin-top:8px">${DOCTITLE[kind]}${kind === 'liste' ? ' – ' + DB.meta.annee : ''}</h3></div>`;
 function pDoc(kind) {
-  const desc = { 'mise-en-place': 'Répartition des agents par division. Mise à jour automatique à chaque enregistrement.', cadre: 'Postes prévus, occupés et vacants par division et par grade.', liste: `Liste officielle numérotée des agents – année ${DB.meta.annee}.` }[kind];
+  const desc = { 'mise-en-place': '4 divisions et 8 bureaux. Noms, CD et CB modifiables. Agents répartis automatiquement.', cadre: 'Postes prévus, occupés et vacants par division et par grade.', liste: `Liste officielle numérotée des agents – année ${DB.meta.annee}.` }[kind];
   const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
   const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="mat">Tri : matricule</option></select>` : '';
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
@@ -825,13 +892,22 @@ function groupsFor(L) {
 function docRows(kind) {
   const q = ui.q ? norm(ui.q) : '';
   if (kind === 'mise-en-place') {
-    const rows = []; groupsFor(DB.agents).forEach(g => sortAgents(g.l, 'hier').forEach((a, i) => rows.push([g.label, i + 1, a.matricule, fullName(a), a.grade, a.fonction]))); return { header: ['Division', 'N°', 'Matricule', 'Noms', 'Grade', 'Fonction'], rows };
+    const rows = [];
+    (DB.org && DB.org.divisions || []).forEach(div => {
+      (div.bureaux || []).forEach(bur => {
+        sortAgents(DB.agents.filter(a => a.division === div.name && a.bureau === bur.name), 'hier').forEach((a, i) =>
+          rows.push([div.name, bur.name, i + 1, a.matricule, fullName(a), a.grade, a.fonction]));
+      });
+      sortAgents(DB.agents.filter(a => a.division === div.name && !a.bureau), 'hier').forEach((a, i) =>
+        rows.push([div.name, '—', i + 1, a.matricule, fullName(a), a.grade, a.fonction]));
+    });
+    return { header: ['Division', 'Bureau', 'N°', 'Matricule', 'Noms', 'Grade', 'Fonction'], rows };
   }
   if (kind === 'cadre') {
     const rows = []; selDirs().forEach(d => [...divOrder(d), ''].forEach(v => cadreRows(d.name, v).forEach(r => rows.push([v || 'Sans division', r.grade, r.prevu, r.enplace, r.prevu - r.enplace])))); return { header: ['Division', 'Grade / poste', 'Effectif prévu', 'En place', 'Écart (vacants)'], rows };
   }
   const L = listeAgents();
-  return { header: ['N°', 'Matricule', 'Noms', 'Sexe', 'Date de naissance', 'Grade', 'Fonction', 'Division', 'Date d’engagement', 'N° acte d’engagement', 'Salaire', 'Prime', 'Situation'], rows: L.map((a, i) => [i + 1, a.matricule, fullName(a), a.sexe, fmtDate(a.naissance), a.grade, a.fonction, a.division, fmtDate(a.engagement), a.acte, a.salaire, a.prime, a.situation]) };
+  return { header: ['N°', 'Matricule', 'Noms', 'Sexe', 'Date de naissance', 'Grade', 'Fonction', 'Division', 'Bureau', 'Date d’engagement', 'N° acte d’engagement', 'Salaire', 'Prime', 'Situation'], rows: L.map((a, i) => [i + 1, a.matricule, fullName(a), a.sexe, fmtDate(a.naissance), a.grade, a.fonction, a.division, a.bureau, fmtDate(a.engagement), a.acte, a.salaire, a.prime, a.situation]) };
 }
 function listeAgents() {
   const q = norm($('#tq') ? $('#tq').value : ''), v = $('#tDiv') ? $('#tDiv').value : '', s = $('#tSit') ? $('#tSit').value : '', sort = $('#tSort') ? $('#tSort').value : 'hier';
@@ -839,19 +915,70 @@ function listeAgents() {
     (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division].join(' ')).includes(q))), sort);
 }
 function renderMise() {
-  const q = norm($('#tq').value); let html = '';
-  groupsFor(DB.agents).forEach(g => {
-    let L = g.l; if (q) L = L.filter(a => norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade].join(' ')).includes(q));
-    if ((!g.v || q) && !L.length) return;
-    L = sortAgents(L, 'hier');
-    const m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
-    html += `<section class="card dv"><header><div><h3>${esc(g.label)}</h3>${DB.directions.length > 1 ? `<small>${esc(g.d.name)}</small>` : ''}</div><div class="cnt"><b>${L.length}</b><small>agent${L.length > 1 ? 's' : ''} · ${m} H / ${f} F</small></div></header>
-      ${L.length ? `<div class="alist">${L.map(agentRow).join('')}</div>` : '<p class="muted" style="font-size:13px">Aucun agent affecté à cette division.</p>'}</section>`;
+  const q = norm(($('#tq') && $('#tq').value) || '');
+  const admin = session && (session.role === 'admin' || session.role === 'directeur');
+  const org = DB.org || defaultOrg();
+  let html = '';
+  html += `<section class="card dv"><header><div><h3>Direction</h3><small>Direction de Suivi des Finances Locales</small></div></header>
+    <label class="muted" style="font-size:13px">Directeur${admin ? ' (modifiable)' : ''}</label>
+    ${admin ? `<input data-org="directeur" value="${esc(org.directeur || '')}" placeholder="Nom du Directeur" style="margin-top:6px;max-width:420px">` : `<p style="margin-top:6px;font-weight:700">${esc(org.directeur || 'Non renseigné')}</p>`}
+  </section>`;
+  org.divisions.forEach((div, di) => {
+    const agentsDiv = DB.agents.filter(a => a.division === div.name && (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.bureau].join(' ')).includes(q)));
+    const m = agentsDiv.filter(a => a.sexe === 'M').length, f = agentsDiv.filter(a => a.sexe === 'F').length;
+    html += `<section class="card dv"><header><div>
+      ${admin ? `<input data-org="divname" data-i="${di}" value="${esc(div.name)}" style="font-weight:800;font-size:17px;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:2px 0;min-height:0;width:100%;max-width:360px">` : `<h3>${esc(div.name)}</h3>`}
+      <small style="display:block;margin-top:4px">Chef de division (CD)${admin ? ' — modifiable' : ''}</small>
+      ${admin ? `<input data-org="cd" data-i="${di}" value="${esc(div.cd || '')}" placeholder="Nom du CD" style="margin-top:4px;max-width:360px;min-height:38px">` : `<b>${esc(div.cd || 'Non renseigné')}</b>`}
+    </div><div class="cnt"><b>${agentsDiv.length}</b><small>agent${agentsDiv.length > 1 ? 's' : ''} · ${m} H / ${f} F</small></div></header>`;
+    (div.bureaux || []).forEach((bur, bi) => {
+      let L = DB.agents.filter(a => a.division === div.name && a.bureau === bur.name);
+      if (q) L = L.filter(a => norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade].join(' ')).includes(q));
+      L = sortAgents(L, 'hier');
+      html += `<div style="margin:14px 0 8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft)">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:8px">
+          <div style="flex:1;min-width:180px">
+            ${admin ? `<input data-org="burname" data-i="${di}" data-j="${bi}" value="${esc(bur.name)}" style="font-weight:700;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:2px 0;min-height:0;width:100%">` : `<b>${esc(bur.name)}</b>`}
+            <small class="muted" style="display:block;margin-top:4px">Chef de bureau (CB)</small>
+            ${admin ? `<input data-org="cb" data-i="${di}" data-j="${bi}" value="${esc(bur.cb || '')}" placeholder="Nom du CB" style="margin-top:4px;min-height:36px">` : `<span style="font-weight:600">${esc(bur.cb || 'Non renseigné')}</span>`}
+          </div>
+          <div class="cnt"><b>${L.length}</b><small>agent${L.length > 1 ? 's' : ''}</small></div>
+        </div>
+        ${L.length ? `<div class="alist">${L.map(agentRow).join('')}</div>` : '<p class="muted" style="font-size:13px;margin:0">Aucun agent dans ce bureau.</p>'}
+      </div>`;
+    });
+    const noBur = agentsDiv.filter(a => !a.bureau);
+    if (noBur.length) {
+      html += `<div style="margin-top:10px"><p class="muted" style="font-size:13px;margin-bottom:6px">Agents de la division sans bureau renseigné</p><div class="alist">${sortAgents(noBur, 'hier').map(agentRow).join('')}</div></div>`;
+    }
+    html += `</section>`;
   });
-  $('#doc').innerHTML = html || '<div class="empty">Aucun agent à afficher.</div>';
+  $('#doc').innerHTML = html;
+  if (admin) {
+    $$('#doc [data-org]').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const k = inp.dataset.org, i = +inp.dataset.i, j = +inp.dataset.j, val = inp.value.trim();
+        if (k === 'directeur') DB.org.directeur = val;
+        else if (k === 'divname') {
+          const oldN = DB.org.divisions[i].name;
+          DB.org.divisions[i].name = val || oldN;
+          DB.agents.forEach(a => { if (a.division === oldN) a.division = DB.org.divisions[i].name; });
+          DB.cadre.forEach(c => { if (c.division === oldN) c.division = DB.org.divisions[i].name; });
+          syncOrgToDirections();
+        } else if (k === 'cd') DB.org.divisions[i].cd = val;
+        else if (k === 'burname') {
+          const oldN = DB.org.divisions[i].bureaux[j].name;
+          DB.org.divisions[i].bureaux[j].name = val || oldN;
+          DB.agents.forEach(a => { if (a.division === DB.org.divisions[i].name && a.bureau === oldN) a.bureau = DB.org.divisions[i].bureaux[j].name; });
+        } else if (k === 'cb') DB.org.divisions[i].bureaux[j].cb = val;
+        save();
+        toast('Structure mise à jour');
+      });
+    });
+  }
 }
 function renderCadre() {
-  let html = '', P = 0, E = 0, V = 0, S = 0; const admin = session.role === 'admin';
+  let html = '', P = 0, E = 0, V = 0, S = 0; const admin = session && (session.role === 'admin' || session.role === 'directeur');
   selDirs().forEach(d => [...divOrder(d), ''].forEach(v => {
     const rows = cadreRows(d.name, v); if (!v && !rows.length) return;
     const p = rows.reduce((s, r) => s + r.prevu, 0), e = rows.reduce((s, r) => s + r.enplace, 0), vac = rows.reduce((s, r) => s + Math.max(0, r.prevu - r.enplace), 0), sur = rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0);
@@ -874,9 +1001,9 @@ function renderCadre() {
 function renderListe() {
   const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
   if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer">Importer un fichier</a></div>'; return; }
-  $('#doc').innerHTML = `<div class="tw"><table class="tbl"><thead><tr><th class="s1 c">N°</th><th class="s2">Noms</th><th>Matricule</th><th class="c">Sexe</th><th>Date de naissance</th><th>Grade</th><th>Fonction</th><th>Division</th><th>Date d’engagement</th><th>N° acte</th><th class="c">Salaire</th><th class="c">Prime</th><th>Situation</th></tr></thead><tbody>
-    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="s1 c">${i + 1}</td><td class="s2">${esc(fullName(a))}</td><td>${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td><td>${fmtDate(a.naissance)}</td><td>${esc(a.grade)}</td><td>${esc(a.fonction)}</td><td>${esc(a.division)}</td><td>${fmtDate(a.engagement)}</td><td>${esc(a.acte)}</td><td class="c">${esc(a.salaire)}</td><td class="c">${esc(a.prime)}</td><td>${esc(a.situation)}</td></tr>`).join('')}</tbody>
-    <tfoot><tr><td class="s1"></td><td class="s2">Effectif : ${L.length}</td><td colspan="11">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
+  $('#doc').innerHTML = `<div class="tw"><table class="tbl"><thead><tr><th class="s1 c">N°</th><th class="s2">Noms</th><th>Matricule</th><th class="c">Sexe</th><th>Date de naissance</th><th>Grade</th><th>Fonction</th><th>Division</th><th>Bureau</th><th>Date d’engagement</th><th>N° acte</th><th class="c">Salaire</th><th class="c">Prime</th><th>Situation</th></tr></thead><tbody>
+    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="s1 c">${i + 1}</td><td class="s2">${esc(fullName(a))}</td><td>${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td><td>${fmtDate(a.naissance)}</td><td>${esc(a.grade)}</td><td>${esc(a.fonction)}</td><td>${esc(a.division)}</td><td>${esc(a.bureau)}</td><td>${fmtDate(a.engagement)}</td><td>${esc(a.acte)}</td><td class="c">${esc(a.salaire)}</td><td class="c">${esc(a.prime)}</td><td>${esc(a.situation)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td class="s1"></td><td class="s2">Effectif : ${L.length}</td><td colspan="12">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
 }
 const renderDoc = kind => ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])();
 function fillTDiv() { const s = $('#tDiv'); if (!s) return; const cur = s.value; s.innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions(ui.dir).map(v => `<option>${esc(v)}</option>`).join(''); s.value = cur; }
@@ -971,7 +1098,8 @@ function setupTables() {
 /* ---------- Administration ---------- */
 function pAdmin() {
   if (session.role !== 'admin') return '<div class="empty">Cet espace est réservé aux administrateurs.</div>';
-  const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${u.role === 'admin' ? 'Administrateur' : 'Saisie et consultation'}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
+  const roleLabel = r => ({admin:'Administrateur (Directeur)',directeur:'Directeur',cd:'Chef de division (CD)',cb:'Chef de bureau / Secrétariat',saisie:'Saisie et consultation'})[r] || r;
+  const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${roleLabel(u.role)}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
     <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
@@ -986,7 +1114,7 @@ function pAdmin() {
     <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>
   <section class="card sec2"><h3>Utilisateurs</h3><ul class="list" style="margin:12px 0 14px">${users}</ul>
     <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (6 caractères minimum)<input name="p" type="password" minlength="6" required></label>
-    <label>Rôle<select name="r"><option value="saisie">Saisie et consultation</option><option value="admin">Administrateur</option></select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
+    <label>Rôle<select name="r"><option value="saisie">Saisie et consultation</option><option value="cb">Chef de bureau / Secrétariat</option><option value="cd">Chef de division (CD)</option><option value="directeur">Directeur</option><option value="admin">Administrateur (Directeur)</option></select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
   <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Efface tous les agents de cet appareil. Pensez à sauvegarder avant.</p><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></section>`;
 }
 
@@ -1013,7 +1141,8 @@ function route() {
     rd();
   }
   if (name === 'nouveau') {
-    $('#fmDir').addEventListener('change', e => { $('#fmDiv').innerHTML = divOptions(e.target.value, ''); });
+    $('#fmDir').addEventListener('change', e => { $('#fmDiv').innerHTML = divOptions(e.target.value, ''); $('#fmBur').innerHTML = bureauOptions('', ''); });
+    $('#fmDiv').addEventListener('change', e => { $('#fmBur').innerHTML = bureauOptions(e.target.value, ''); });
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
   if (name === 'importer') imp = { tables: [], mode: 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
@@ -1030,7 +1159,7 @@ const A = {
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
   delagent: t => { const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); save(); closeModal(); toast('Fiche supprimée'); route(); } },
   resetpw: async t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`, '', 'password'); if (p == null) return; if (p.length < 6) return toast('Mot de passe trop court', true); u.pass = await sha256(p); u.mustChange = false; save(); toast('Mot de passe modifié'); },
-  deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
+  deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if ((u.role === 'admin' || u.role === 'directeur') && DB.users.filter(x => x.role === 'admin' || x.role === 'directeur').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
   rendir: async t => {
     const d = DB.directions[+t.dataset.i], n = ((await ask('Nouveau nom de la direction :', d.name)) || '').trim(); if (!n || n === d.name) return;
     if (DB.directions.some(x => x.name === n)) return toast('Ce nom existe déjà', true);
@@ -1045,10 +1174,10 @@ const A = {
   },
   deldiv: t => { const d = DB.directions[+t.dataset.i], v = d.divisions[+t.dataset.j]; if (DB.agents.some(a => a.direction === d.name && a.division === v)) return toast('Cette division contient encore des agents', true); if (confirm(`Supprimer la division « ${v} » ?`)) { DB.cadre = DB.cadre.filter(c => !(c.direction === d.name && c.division === v)); d.divisions.splice(+t.dataset.j, 1); save(); route(); } },
   backup: async () => { DB.meta.lastBackup = Date.now(); save(); await saveFile(`sauvegarde_agents_DFL_${today()}.json`, JSON.stringify(DB), 'application/json'); route(); },
-  exportall: () => exportTable('agents_DFL_' + today(), ['Nom', 'Postnom', 'Prénom', 'Date de naissance', 'Sexe', 'État civil', 'Diplôme', 'Matricule', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Salaire', 'Prime', 'Prise en charge', 'Situation'],
-    DB.agents.map(a => [a.nom, a.postnom, a.prenom, fmtDate(a.naissance), SEX[a.sexe] || '', a.etat_civil, a.diplome, a.matricule, a.acte, fmtDate(a.engagement), a.grade, a.fonction, a.direction, a.division, a.salaire, a.prime, a.prise_en_charge, a.situation])),
+  exportall: () => exportTable('agents_DFL_' + today(), ['Nom', 'Postnom', 'Prénom', 'Date de naissance', 'Sexe', 'État civil', 'Diplôme', 'Matricule', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Prise en charge', 'Situation'],
+    DB.agents.map(a => [a.nom, a.postnom, a.prenom, fmtDate(a.naissance), SEX[a.sexe] || '', a.etat_civil, a.diplome, a.matricule, a.acte, fmtDate(a.engagement), a.grade, a.fonction, a.direction, a.division, a.bureau, a.salaire, a.prime, a.prise_en_charge, a.situation])),
   exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee }[k] + '_DFL_' + today(), r.header, r.rows); },
-  template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Salaire', 'Prime', 'Situation'], []),
+  template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Situation'], []),
   openfolder: () => window.dflDesktop && window.dflDesktop.open(),
   wipe: async () => { if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; save(); toast('Tous les agents ont été supprimés'); route(); } },
   enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
@@ -1107,13 +1236,18 @@ const F = {
   },
   agent(f) {
     const g = n => (f.elements[n] ? f.elements[n].value : '').trim(), id = f.dataset.id, o = {};
-    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'prise_en_charge', 'situation'].forEach(k => o[k] = g(k));
+    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'bureau', 'prise_en_charge', 'situation'].forEach(k => o[k] = g(k));
     ['sexe', 'salaire', 'prime'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
     const dup = o.matricule && DB.agents.find(a => a.matricule && a.id !== id && a.matricule.toLowerCase() === o.matricule.toLowerCase());
     if (dup) return toast(`Ce matricule existe déjà : ${fullName(dup)}`, true);
     let a;
     if (id) { a = DB.agents.find(x => x.id === id); Object.assign(a, o, { updated: Date.now() }); } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o }; DB.agents.push(a); }
     const dv = o.division; if (dv) { const d = DB.directions.find(x => x.name === o.direction); if (d && !d.divisions.includes(dv)) d.divisions.push(dv); }
+    if (o.division && o.bureau && DB.org) {
+      const od = DB.org.divisions.find(x => x.name === o.division);
+      if (od && !od.bureaux.some(b => b.name === o.bureau)) od.bureaux.push({ id: uid(), name: o.bureau, cb: '' });
+    }
+    syncOrgToDirections();
     save();
     if (id) { toast('Fiche modifiée'); location.hash = '#/agents'; return; }
     const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;

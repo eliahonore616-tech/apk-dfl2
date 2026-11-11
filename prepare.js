@@ -6,7 +6,7 @@ const nm = path.join(root, 'node_modules');
 
 // Fichier d'identité de l'application Android : recréé à chaque construction pour éviter toute erreur de saisie
 if (fs.existsSync(path.join(root, 'www'))) {
-  fs.writeFileSync(path.join(root, 'capacitor.config.json'), JSON.stringify({ appId: 'cd.interieur.dfl.agents', appName: 'Gestion Agents DFL', webDir: 'www' }, null, 2));
+  fs.writeFileSync(path.join(root, 'capacitor.config.json'), JSON.stringify({ appId: 'cd.interieur.dsfl.agents', appName: 'Gestion Agents DSFL', webDir: 'www' }, null, 2));
   console.log('OK   capacitor.config.json');
 }
 
