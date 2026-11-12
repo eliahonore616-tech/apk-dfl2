@@ -492,6 +492,7 @@ const migrate = d => {
       }
     });
   }
+  d.users.forEach(u => { if (u.role === 'directeur') u.role = 'admin'; else if (u.role === 'saisie') u.role = 'cb'; });
   const main = d.directions[0];
   if (main) main.divisions = d.org.divisions.map(x => x.name);
   d.version = 3; return d;
@@ -604,7 +605,7 @@ const Store = {
 };
 const save = () => Store.set(DB);
 
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
 const seed = () => migrate({
@@ -638,22 +639,22 @@ const avatar = a => `<span class="av">${a.photo ? `<img src="${a.photo}" alt="">
 
 /* ================= Navigation ================= */
 const NAV = [
-  { r: 'accueil', l: 'Accueil', i: 'home' }, { r: 'tableau', l: 'Tableau de bord', i: 'chart' }, { r: 'agents', l: 'Agents', i: 'users' }, { r: 'nouveau', l: 'Nouvel agent', i: 'plus' },
-  { g: 'Documents officiels' }, { r: 'mise-en-place', l: 'Mise en place', i: 'layers' }, { r: 'cadre', l: 'Cadre organique', i: 'org' }, { r: 'liste', l: 'Liste déclarative', i: 'list' },
-  { g: 'Gestion' }, { r: 'importer', l: 'Importer un fichier', i: 'upload' }, { r: 'admin', l: 'Administration', i: 'shield', admin: 1 }
+  { r: 'accueil', l: 'Accueil', i: 'home' }, { r: 'nouveau', l: 'Formulaire', i: 'plus' },
+  { g: 'Documents officiels' }, { r: 'liste', l: 'Liste déclarative', i: 'list' }, { r: 'mise-en-place', l: 'Mise en place', i: 'layers' }, { r: 'cadre', l: 'Cadre organique', i: 'org' },
+  { g: 'Gestion' }, { r: 'admin', l: 'Administration', i: 'shield', admin: 1 }
 ];
 const PROTECTED = ['tableau', 'agents', 'nouveau', 'mise-en-place', 'cadre', 'liste', 'importer', 'admin', 'compte', 'plus'];
 const DOCS = ['mise-en-place', 'cadre', 'liste'];
 const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents' };
 
 function shell(inner, name) {
-  const isAdmin = session && (session.role === 'admin' || session.role === 'directeur');
+  const isAdmin = session && session.role === 'admin';
   const side = NAV.filter(n => n.g || !(n.admin && !isAdmin)).map(n => n.g ? `<div class="gl">${n.g}</div>` : `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
-    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${({admin:'Administrateur (Directeur)',directeur:'Directeur',cd:'Chef de division',cb:'Chef de bureau / Secrétariat',saisie:'Saisie et consultation'})[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
+    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${({admin:'Adm1 — Directeur (DR)',cd:'Adm2 — Chef de division (CD)',cb:'Adm3 — Secrétaire / CB'})[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
   const b = (r, l, i, on, fab) => `<a href="#/${r}" class="${fab ? 'fab' : ''}" ${on ? 'aria-current="page"' : ''}>${fab ? `<span>${ico(i, 26)}</span>` : ico(i, 22)}<small>${l}</small></a>`;
-  const bn = `<nav class="bnav" aria-label="Navigation">${b('accueil', 'Accueil', 'home', name === 'accueil')}${b('agents', 'Agents', 'users', name === 'agents')}${b('nouveau', 'Ajouter', 'plusb', name === 'nouveau', 1)}${b('mise-en-place', 'Documents', 'layers', DOCS.includes(name))}${b('plus', 'Plus', 'more', ['plus', 'tableau', 'importer', 'admin', 'compte'].includes(name))}</nav>`;
+  const bn = `<nav class="bnav" aria-label="Navigation">${b('accueil', 'Accueil', 'home', name === 'accueil')}${b('liste', 'Liste', 'list', name === 'liste')}${b('nouveau', 'Formulaire', 'plusb', name === 'nouveau', 1)}${b('mise-en-place', 'Mise en place', 'layers', name === 'mise-en-place')}${b('plus', 'Plus', 'more', ['plus', 'cadre', 'tableau', 'importer', 'admin', 'compte', 'agents'].includes(name))}</nav>`;
   const banners = [];
   if (session && session.mustChange) banners.push(`<div class="warn">${ico('alert', 20)}<span>Le mot de passe par défaut est encore actif. <a href="#/compte">Le changer maintenant</a></span></div>`);
   if (isAdmin && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
@@ -666,24 +667,12 @@ function shell(inner, name) {
 /* ================= Pages ================= */
 const stat = (ic, cls, n, l) => `<div class="stat"><span class="ic ${cls}">${ico(ic, 22)}</span><div><b>${n}</b><span>${l}</span></div></div>`;
 function pAccueil() {
-  const nd = (DB.org && DB.org.divisions) ? DB.org.divisions.length : 0;
-  const nb = (DB.org && DB.org.divisions) ? DB.org.divisions.reduce((s, d) => s + (d.bureaux || []).length, 0) : 0;
-  const tile = (r, t, d, i) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${t}</b><span>${d}</span></div></a>`;
   return `<section class="hero"><span class="band"></span>
     <span class="pill">République Démocratique du Congo</span>
     <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
     <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
-    <p style="color:#fff;opacity:.85;margin-top:14px;font-size:15px;max-width:34em;margin-left:auto;margin-right:auto">Gestion des agents : base de données, mise en place du personnel, cadre organique et liste déclarative.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/agents">Consulter les agents</a><a class="btn ghost" href="#/nouveau">Enregistrer un agent</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>
-  <div class="stats">${stat('users', '', DB.agents.length, 'agents enregistrés')}${stat('layers', 'y', nd || 4, 'divisions')}${stat('org', 'g', nb || 8, 'bureaux')}${stat('check', 'r', DB.agents.filter(a => !incomplete(a)).length, 'dossiers complets')}</div>
-  <div class="tiles">
-    ${tile('agents', 'Base de données des agents', 'Rechercher, filtrer, ouvrir une fiche', 'users')}
-    ${tile('nouveau', 'Nouvel agent recruté', 'Remplir le formulaire d’enregistrement', 'plus')}
-    ${tile('mise-en-place', 'Mise en place', '4 divisions · 8 bureaux · CD et CB', 'layers')}
-    ${tile('cadre', 'Cadre organique', 'Postes prévus, occupés et vacants', 'org')}
-    ${tile('liste', 'Liste déclarative', 'Liste officielle numérotée des agents', 'list')}
-    ${tile('importer', 'Importer un fichier', 'Excel, Word, PDF ou CSV', 'upload')}
-  </div>`;
+    <p style="color:#fff;opacity:.85;margin-top:14px;font-size:15px;max-width:34em;margin-left:auto;margin-right:auto">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
+    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>`;
 }
 function pLogin() {
   const first = DB.users.some(u => u.mustChange);
@@ -705,8 +694,8 @@ function pCompte() {
 function pPlus() {
   const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
   return `<header class="ph"><h2>Plus</h2></header><div class="tiles">
-    ${it('tableau', 'Tableau de bord', 'chart', 'Statistiques et graphiques')}${it('importer', 'Importer un fichier', 'upload', 'Excel, Word, PDF ou CSV')}
-    ${isAdmin ? it('admin', 'Administration', 'shield', 'Sauvegarde, utilisateurs, structure') : ''}${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
+    ${it('cadre', 'Cadre organique', 'org', 'Postes prévus, occupés et vacants')}
+    ${session && session.role === 'admin' ? it('admin', 'Administration', 'shield', 'Sauvegarde, utilisateurs, structure') : ''}${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
     <div class="tile"><span class="ic">${ico('shield')}</span><div><b>Version ${APP_VERSION}</b><span>Application hors ligne · données stockées sur l’appareil</span></div></div>
     <button class="tile" data-act="logout" style="text-align:left;font:inherit"><span class="ic">${ico('logout')}</span><div><b>Se déconnecter</b><span>Fermer ma session</span></div></button></div>`;
 }
@@ -778,7 +767,7 @@ function openFiche(id) {
       <a href="#/liste" data-act="close">${ico('list', 20)}<span><b>Liste déclarative</b>N° ${rank} sur ${DB.agents.filter(x => x.direction === a.direction).length}</span></a></div>
     <div class="acts"><a class="btn primary" href="#/nouveau/${a.id}" data-act="close">Modifier</a>
       ${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}
-      ${isAdmin ? `<button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>` : ''}
+      ${session.role === 'admin' ? `<button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>` : ''}
       <button class="btn" data-act="close">Fermer</button></div></div>`);
 }
 
@@ -916,7 +905,7 @@ function listeAgents() {
 }
 function renderMise() {
   const q = norm(($('#tq') && $('#tq').value) || '');
-  const admin = session && (session.role === 'admin' || session.role === 'directeur');
+  const admin = session && session.role === 'admin';
   const org = DB.org || defaultOrg();
   let html = '';
   html += `<section class="card dv"><header><div><h3>Direction</h3><small>Direction de Suivi des Finances Locales</small></div></header>
@@ -978,7 +967,7 @@ function renderMise() {
   }
 }
 function renderCadre() {
-  let html = '', P = 0, E = 0, V = 0, S = 0; const admin = session && (session.role === 'admin' || session.role === 'directeur');
+  let html = '', P = 0, E = 0, V = 0, S = 0; const admin = session && (session.role === 'admin' || session.role === 'cd');
   selDirs().forEach(d => [...divOrder(d), ''].forEach(v => {
     const rows = cadreRows(d.name, v); if (!v && !rows.length) return;
     const p = rows.reduce((s, r) => s + r.prevu, 0), e = rows.reduce((s, r) => s + r.enplace, 0), vac = rows.reduce((s, r) => s + Math.max(0, r.prevu - r.enplace), 0), sur = rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0);
@@ -1098,7 +1087,7 @@ function setupTables() {
 /* ---------- Administration ---------- */
 function pAdmin() {
   if (session.role !== 'admin') return '<div class="empty">Cet espace est réservé aux administrateurs.</div>';
-  const roleLabel = r => ({admin:'Administrateur (Directeur)',directeur:'Directeur',cd:'Chef de division (CD)',cb:'Chef de bureau / Secrétariat',saisie:'Saisie et consultation'})[r] || r;
+  const roleLabel = r => ({admin:'Adm1 — Directeur (DR)',cd:'Adm2 — Chef de division (CD)',cb:'Adm3 — Secrétaire / CB'})[r] || r;
   const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${roleLabel(u.role)}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
@@ -1114,7 +1103,7 @@ function pAdmin() {
     <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>
   <section class="card sec2"><h3>Utilisateurs</h3><ul class="list" style="margin:12px 0 14px">${users}</ul>
     <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (6 caractères minimum)<input name="p" type="password" minlength="6" required></label>
-    <label>Rôle<select name="r"><option value="saisie">Saisie et consultation</option><option value="cb">Chef de bureau / Secrétariat</option><option value="cd">Chef de division (CD)</option><option value="directeur">Directeur</option><option value="admin">Administrateur (Directeur)</option></select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
+    <label>Rôle<select name="r"><option value="cb">Adm3 — Secrétaire / Chef de bureau (CB)</option><option value="cd">Adm2 — Chef de division (CD)</option><option value="admin">Adm1 — Directeur (DR)</option></select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
   <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Efface tous les agents de cet appareil. Pensez à sauvegarder avant.</p><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></section>`;
 }
 
@@ -1159,7 +1148,7 @@ const A = {
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
   delagent: t => { const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); save(); closeModal(); toast('Fiche supprimée'); route(); } },
   resetpw: async t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`, '', 'password'); if (p == null) return; if (p.length < 6) return toast('Mot de passe trop court', true); u.pass = await sha256(p); u.mustChange = false; save(); toast('Mot de passe modifié'); },
-  deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if ((u.role === 'admin' || u.role === 'directeur') && DB.users.filter(x => x.role === 'admin' || x.role === 'directeur').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
+  deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
   rendir: async t => {
     const d = DB.directions[+t.dataset.i], n = ((await ask('Nouveau nom de la direction :', d.name)) || '').trim(); if (!n || n === d.name) return;
     if (DB.directions.some(x => x.name === n)) return toast('Ce nom existe déjà', true);
@@ -1249,7 +1238,7 @@ const F = {
     }
     syncOrgToDirections();
     save();
-    if (id) { toast('Fiche modifiée'); location.hash = '#/agents'; return; }
+    if (id) { toast('Fiche modifiée'); location.hash = '#/liste'; return; }
     const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;
     afterRoute = () => openModal(`<div class="okhead"><span class="ic">${ico('check', 24)}</span><div><h3>Agent enregistré</h3><span class="muted" style="font-size:13px">${esc(fullName(a))}</span></div></div>
       <p class="sub" style="margin-bottom:10px">Ses informations ont été placées automatiquement dans les 3 documents :</p><div class="placed">
@@ -1257,7 +1246,7 @@ const F = {
       <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
       <a href="#/liste" data-act="close">${ico('list', 20)}<span><b>Liste déclarative</b>N° ${rank} sur ${DB.agents.filter(x => x.direction === a.direction).length}</span></a></div>
       <div class="acts"><a class="btn primary" href="#/nouveau" data-act="close">Ajouter un autre agent</a><button class="btn" data-act="close">Fermer</button></div>`);
-    location.hash = '#/agents';
+    location.hash = '#/liste';
   }
 };
 
