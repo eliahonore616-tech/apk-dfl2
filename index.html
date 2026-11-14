@@ -50,14 +50,11 @@ button{cursor:pointer}
 .brand b{font-size:16px;font-weight:800}
 .brand small{font-size:11.5px;opacity:.85;font-weight:500}
 .side{display:none}
-.bnav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(6,1fr);background:var(--card);
   border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 16px rgba(0,91,150,.08)}
-.bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;color:var(--muted);text-decoration:none;font-size:10.5px;font-weight:600}
+.bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;padding:0 2px;color:var(--muted);text-decoration:none;font-size:10px;font-weight:600;text-align:center;line-height:1.15}
 .bnav a[aria-current="page"]{color:var(--deep)}
-.bnav a[aria-current="page"]:not(.fab){box-shadow:inset 0 3px 0 var(--sky)}
-.bnav .fab span{display:grid;place-items:center;width:52px;height:52px;margin-top:-24px;border-radius:50%;background:var(--btn);color:#fff;
-  box-shadow:0 6px 16px rgba(0,91,150,.35);border:4px solid var(--card)}
-.bnav .fab small{margin-top:2px}
+.bnav a[aria-current="page"]{box-shadow:inset 0 3px 0 var(--sky)}
 .ava{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--sky);color:var(--deep);font-weight:800;flex:none}
 .top .ava{width:32px;height:32px;text-decoration:none;font-size:14px}
 main{padding:16px 14px 104px;max-width:1120px;margin:0 auto}
@@ -121,12 +118,6 @@ label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;
 .printhead{display:none;text-align:center;margin-bottom:14px}
 
 /* ---------- Design & Pied de page ---------- */
-.hero{text-align:center}
-.hero .hdir{margin-left:auto;margin-right:auto}
-.hero .cta{justify-content:center}
-.foot{margin-top:34px;padding:24px 16px;border-radius:14px;background:linear-gradient(135deg,#005B96 0%,#4682B4 100%);color:#fff;text-align:center;font-size:13px;line-height:1.8;box-shadow:var(--shadow)}
-.foot b{font-size:14.5px}
-.foot span{opacity:.9;font-size:12px}
 .lockhead{display:flex;justify-content:center;margin-bottom:12px}
 .lockhead .lk{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--soft);color:var(--deep)}
 .narrow .btn{width:100%;border-radius:999px}
@@ -134,21 +125,10 @@ fieldset.fsec{border:1px solid var(--line);border-radius:14px;padding:20px;margi
 fieldset.fsec legend{display:flex;align-items:center;gap:10px;padding:0 8px;font-weight:700;font-size:15px}
 fieldset.fsec legend i{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--btn);color:#fff;font-style:normal;font-size:13px}
 
-/* ---------- Accueil avec Drapeau RDC ---------- */
-.hero{position:relative;overflow:hidden;border-radius:20px;color:#fff;padding:34px 24px 104px;background:linear-gradient(135deg,#005B96 0%,#4682B4 65%,#87CEEB 100%);margin-bottom:16px;box-shadow:var(--shadow)}
-.hero::before{content:"";position:absolute;left:-30px;top:-30px;width:260px;height:260px;opacity:.22;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon fill='%23F6C500' points='50,5 61,38 96,38 68,58 79,92 50,71 21,92 32,58 4,38 39,38'/%3E%3C/svg%3E") center/contain no-repeat}
-.hero .band{position:absolute;left:-12%;right:-12%;bottom:-34px;height:86px;transform:rotate(-5deg);background:linear-gradient(var(--yellow) 0 12%,var(--red) 12% 88%,var(--yellow) 88% 100%)}
-.hero>*:not(.band){position:relative}
-.pill{display:inline-block;padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12px;font-weight:600;margin-bottom:14px}
-.hero h1{font-size:clamp(22px,4.8vw,35px);font-weight:800;max-width:21em;margin:0 auto}
-.hero .hdir{margin-top:12px;font-size:17px;font-weight:700;color:var(--yellow)}
-.hero .cta{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
-.hero .btn{background:#fff;color:var(--deep);border-color:#fff;border-radius:999px;padding:0 24px;font-weight:700}
-.hero .btn:hover{background:var(--alice)}
-.hero .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.75)}
-@media (min-width:760px){.hero{padding:48px 38px 78px}.hero .band{width:46%;left:auto;right:-60px;bottom:-20px;height:76px;transform:rotate(-24deg)}}
-
+/* ---------- Accueil ---------- */
+.welcome{border-radius:16px;padding:26px 22px;color:#fff;background:var(--hero-grad);box-shadow:var(--shadow);margin-bottom:16px}
+.welcome h2{font-size:clamp(22px,4.5vw,30px);font-weight:800}
+.welcome p{margin-top:8px;font-size:15px;opacity:.95;max-width:34em}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
 .stat .ic{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:var(--soft);color:var(--deep);flex:none}
@@ -226,18 +206,6 @@ table.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 .linkbtn{background:none;border:0;padding:0;color:var(--deep);font-weight:800;text-decoration:underline;font-size:13px}
 .addpost{display:flex;gap:8px;margin-top:12px}.addpost input{margin-top:0}
 
-/* ---------- Tableau de bord ---------- */
-.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.chart h3{margin-bottom:12px;font-size:15px}
-.bar{display:grid;grid-template-columns:minmax(80px,38%) 1fr 62px;gap:8px;align-items:center;margin:8px 0;font-size:13px}
-.bar .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
-.bar .t{height:11px;border-radius:6px;background:var(--line);overflow:hidden}
-.bar .t i{display:block;height:100%;border-radius:6px;background:var(--steel)}
-.bar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
-.dn{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.dn ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px}
-.dn li i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px}
-
 /* ---------- Administration / Base de données ---------- */
 .list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .list li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
@@ -304,9 +272,25 @@ const SEX = { M: 'Masculin', F: 'Féminin' };
 const ETATS = ['Célibataire', 'Fiancé(e)', 'Marié(e)', 'Divorcé(e)', 'Veuf/Veuve'];
 const PRISE = ['Suivi', 'Financé', 'Suivi et financé', 'Aucune'];
 const SITU = ['Actif', 'Détaché', 'Suspendu', 'Retraité', 'Décédé'];
-const GRADES = ['Secrétaire Général', 'Directeur', 'Chef de Division', 'Chef de Bureau', 'Attaché de Bureau de 1ère classe', 'Attaché de Bureau de 2ème classe', 'Agent de Bureau de 1ère classe', 'Agent de Bureau de 2ème classe', 'Huissier'];
+const DIRNAME = 'Direction de Suivi des Finances Locales';
+const ROLES = { admin: 'Adm1 — Directeur (DR)', cd: 'Adm2 — Chef de division (CD)', cb: 'Adm3 — Secrétaire et Chef de bureau (Sec et CB)' };
+const GRADES = [
+  { c: '120', l: 'Directeur-Chef de Service', a: 'DIR', p: 1 }, { c: '130', l: 'Chef de Division', a: 'CD', p: 4 }, { c: '140', l: 'Chef de Bureau', a: 'CB', p: 10 },
+  { c: '210', l: 'Attaché d’Administration de 1ère Classe', a: 'ATA1', p: 14 }, { c: '220', l: 'Attaché d’Administration de 2ème Classe', a: 'ATA2', p: 890 },
+  { c: '310', l: 'Agent d’Administration de 1ère Classe', a: 'AGA1', p: 215 }, { c: '320', l: 'Agent d’Administration de 2ème Classe', a: 'AGA2', p: 25 },
+  { c: '', l: 'Agent Auxiliaire de 1ère Classe', a: '', p: 0 }, { c: '', l: 'Agent Auxiliaire de 2ème Classe', a: '', p: 0 }, { c: '', l: 'Huissier', a: 'HUISSIER', p: 2 }
+];
+const FONCTIONS = ['DIR', 'CD', 'CB', 'ATA1', 'ATA2', 'AGA1', 'AGA2', 'HUISSIER'];
+const canonGrade = g => {
+  let s = String(g ?? '').trim(); if (!s) return '';
+  const m = s.match(/\((\d{3})\)/), n = norm(m ? m[1] : s);
+  const f = GRADES.find(x => (x.c && x.c === n) || norm(x.l) === n || (x.a && norm(x.a) === n) || (n === 'directeur' && x.c === '120'));
+  return f ? f.l : s;
+};
+const gradeCode = g => { const f = GRADES.find(x => x.l === canonGrade(g)); return f ? (f.c || f.l) : String(g || ''); };
 const DIPLOMES = ['Diplôme d’État (D6)', 'Graduat', 'Licence', 'Master', 'Doctorat', 'Brevet'];
-const gradeRank = g => { const n = norm(g); const i = GRADES.findIndex(x => norm(x) === n); return i < 0 ? 50 : i; };
+const gradeRank = g => { const c = canonGrade(g); const i = GRADES.findIndex(x => x.l === c); return i < 0 ? 50 : i; };
+const isMat = m => !!m && !/^n\.?\s?u\.?$/i.test(String(m).trim());
 const fullName = a => `${(a.nom || '').toUpperCase()} ${(a.postnom || '').toUpperCase()} ${a.prenom || ''}`.replace(/\s+/g, ' ').trim();
 
 const isoOK = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
@@ -340,24 +324,24 @@ const normEtat = s => {
 const FIELDS = [['noms', 'Noms complets (nom + postnom + prénom)'], ['nom', 'Nom'], ['postnom', 'Postnom'], ['prenom', 'Prénom'], ['sexe', 'Sexe'],
   ['naissance', 'Date de naissance'], ['etat_civil', 'État civil'], ['diplome', 'Diplôme'], ['matricule', 'Matricule'], ['acte', 'N° acte d’engagement'],
   ['engagement', 'Date d’engagement'], ['grade', 'Grade'], ['fonction', 'Fonction'], ['direction', 'Direction'], ['division', 'Division'], ['bureau', 'Bureau'],
-  ['salaire', 'Salaire (oui/non)'], ['prime', 'Prime (oui/non)'], ['prise_en_charge', 'Prise en charge'], ['situation', 'Situation']];
+  ['salaire', 'Salaire (oui/non)'], ['salaire_montant', 'Montant du salaire'], ['prime', 'Prime (oui/non)'], ['prime_montant', 'Montant de la prime'], ['recense', 'Recensé (oui/non)'], ['prise_en_charge', 'Prise en charge'], ['situation', 'Situation'], ['observation', 'Observation']];
 const CFIELDS = [['direction', 'Direction'], ['division', 'Division'], ['grade', 'Grade / poste'], ['prevu', 'Effectif prévu'], ['note', 'Remarque']];
 const AKEYS = FIELDS.map(f => f[0]), CKEYS = CFIELDS.map(f => f[0]);
 const ALIAS = {
-  noms: ['noms', 'nomcomplet', 'nomscomplets', 'nomsetpostnoms', 'nometpostnom', 'nomsetpostnom', 'nomspostnomsetprenoms', 'nomsetprenoms', 'nomprenom', 'nometprenom', 'nomsdesagents', 'nomsagents', 'agent', 'identite', 'nomsprenomsetpostnoms', 'nompostnomprenom', 'nompostnometprenom', 'nomdelagent', 'nomsdelagent'],
+  noms: ['noms', 'nomcomplet', 'nomscomplets', 'nomsetpostnoms', 'nometpostnom', 'nomsetpostnom', 'nomspostnomsetprenoms', 'nomsetprenoms', 'nomprenom', 'nometprenom', 'nomsdesagents', 'nomsagents', 'agent', 'identite', 'nomsprenomsetpostnoms', 'nompostnomprenom', 'nompostnometprenom', 'nomdelagent', 'nomsdelagent', 'nomspostnoms', 'nomspostnom'],
   nom: ['nom'], postnom: ['postnom'], prenom: ['prenom'],
   naissance: ['datedenaissance', 'datenaissance', 'naissance', 'datenaiss', 'nele'],
   sexe: ['sexe', 'genre', 'sx'],
   etat_civil: ['etatcivil', 'ec', 'situationmatrimoniale', 'etatmatrimonial'],
   diplome: ['diplome', 'niveaudetudes', 'niveauetude', 'niveaudetude', 'qualification'],
-  matricule: ['matricule', 'matr', 'nmatricule', 'matriculeagent', 'numeromatricule', 'nomatricule'],
+  matricule: ['matricule', 'matricul', 'matr', 'nmatricule', 'matriculeagent', 'numeromatricule', 'nomatricule'],
   acte: ['nactedengagement', 'acteengagement', 'actedengagement', 'acte', 'nacte', 'numeroacte', 'referenceacte'],
   engagement: ['datedengagement', 'dateengagement', 'engagement', 'datedentreeenservice', 'dateentree', 'datedeprisedeservice', 'datedeprise', 'datedenomination'],
-  grade: ['grade', 'gradeactuel'], fonction: ['fonction', 'poste', 'emploi', 'fonctionexercee'],
-  direction: ['direction'], division: ['division', 'service', 'affectation', 'divisiondaffectation'], bureau: ['bureau', 'bureaux', 'cellule', 'section'],
-  salaire: ['salaire', 'paie'], prime: ['prime'], prise_en_charge: ['priseencharge'],
+  grade: ['grade', 'gradeactuel', 'structure'], fonction: ['fonction', 'poste', 'emploi', 'fonctionexercee'],
+  direction: ['direction'], division: ['division', 'divisiondaffectation'], bureau: ['bureau', 'bureaux', 'cellule', 'section'],
+  salaire: ['salaire', 'paie'], salaire_montant: ['montant', 'montantsalaire'], prime: ['prime'], prime_montant: ['montant2', 'montantprime'], recense: ['recenser', 'recense', 'recensement'], observation: ['observation', 'observations', 'remarque', 'remarques'], prise_en_charge: ['priseencharge'],
   situation: ['situation', 'statut', 'situationadministrative'],
-  prevu: ['effectifprevu', 'effectifsprevus', 'prevu', 'prevus', 'postesprevus', 'effectifcadre', 'effectifs', 'nombredepostes', 'nbpostes', 'cadre'],
+  prevu: ['effectif', 'effectifprevu', 'effectifsprevus', 'prevu', 'prevus', 'postesprevus', 'effectifcadre', 'effectifs', 'nombredepostes', 'nbpostes', 'cadre'],
   note: ['remarque', 'remarques', 'observation', 'observations', 'note']
 };
 function bestField(h, keys) {
@@ -394,14 +378,14 @@ function rowToAgent(r, map, opt, sheet) {
   return {
     nom, postnom, prenom, naissance: dateFrom(map.naissance != null ? r[map.naissance] : ''), sexe: sx.startsWith('f') ? 'F' : sx.startsWith('m') ? 'M' : '',
     etat_civil: normEtat(g('etat_civil')), diplome: g('diplome'), matricule: g('matricule'), acte: g('acte'),
-    engagement: dateFrom(map.engagement != null ? r[map.engagement] : ''), grade: g('grade'), fonction: g('fonction'),
+    engagement: dateFrom(map.engagement != null ? r[map.engagement] : ''), grade: (() => { let gr = canonGrade(g('grade')); if (!GRADES.some(x => x.l === gr)) { const f = canonGrade(g('fonction')); if (GRADES.some(x => x.l === f)) gr = f; } return gr; })(), fonction: g('fonction'),
     direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''), bureau: g('bureau'),
-    salaire: yn(g('salaire')), prime: yn(g('prime')), prise_en_charge: g('prise_en_charge'), situation: g('situation')
+    salaire: yn(g('salaire')), salaire_montant: g('salaire_montant'), prime: yn(g('prime')), prime_montant: g('prime_montant'), recense: yn(g('recense')), prise_en_charge: g('prise_en_charge'), situation: g('situation'), observation: g('observation')
   };
 }
 function rowToPost(r, map, opt, sheet) {
   const g = k => map[k] != null ? String(r[map[k]] ?? '').replace(/\s+/g, ' ').trim() : '';
-  const grade = g('grade') || g('note'); if (!grade) return null;
+  const grade = canonGrade(g('grade') || g('note')); if (!grade) return null;
   const prevu = parseInt(g('prevu').replace(/[^\d]/g, ''), 10); if (isNaN(prevu)) return null;
   return { direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''), grade, prevu, note: g('grade') ? g('note') : '' };
 }
@@ -423,7 +407,7 @@ function parseCSV(t) {
 }
 const csvCell = v => { v = String(v ?? ''); return /[;"\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
 const matchDivision = (name, list) => { const n = norm(name); return list.find(x => norm(x) === n) || name; };
-const agentKey = a => a.matricule ? 'm:' + norm(a.matricule) : 'n:' + norm(a.nom + a.postnom + (a.naissance || ''));
+const agentKey = a => isMat(a.matricule) ? 'm:' + norm(a.matricule) : 'n:' + norm(a.nom + a.postnom + a.prenom + (a.naissance || ''));
 
 /* ---- Calculs utilisés par les onglets (dépendent de la base) ---- */
 let DB = null;
@@ -444,15 +428,26 @@ function sortAgents(list, mode) {
   }[mode || 'hier'];
   return [...list].sort(c);
 }
-function cadreRows(dirName, div) {
+function cadreRows(dirName) {
   const rows = new Map();
-  DB.cadre.filter(c => c.direction === dirName && c.division === div).forEach(c => rows.set(norm(c.grade), { grade: c.grade, prevu: c.prevu, enplace: 0, id: c.id, note: c.note || '' }));
-  DB.agents.filter(a => a.direction === dirName && (a.division || '') === div).forEach(a => {
-    const g = a.grade || 'Grade non renseigné', k = norm(g);
-    if (!rows.has(k)) rows.set(k, { grade: g, prevu: 0, enplace: 0, id: null, note: '' });
+  DB.cadre.filter(c => c.direction === dirName && !c.division).forEach(c => { const g = canonGrade(c.grade); rows.set(norm(g), { grade: g, prevu: c.prevu, enplace: 0, id: c.id }); });
+  DB.agents.filter(a => a.direction === dirName).forEach(a => {
+    const g = canonGrade(a.grade) || 'Grade non renseigné', k = norm(g);
+    if (!rows.has(k)) rows.set(k, { grade: g, prevu: 0, enplace: 0, id: null });
     rows.get(k).enplace++;
   });
   return [...rows.values()].sort((a, b) => gradeRank(a.grade) - gradeRank(b.grade) || a.grade.localeCompare(b.grade, 'fr'));
+}
+function unitRows() {
+  const org = DB.org, out = [], inDiv = (a, n) => a.division === n;
+  org.divisions.forEach((div, i) => {
+    if (div.kind === 'sec') { out.push({ type: 'sec', i, name: div.name, resp: div.cd, prevu: div.prevu || 0, enplace: DB.agents.filter(a => inDiv(a, div.name)).length }); return; }
+    out.push({ type: 'div', i, name: div.name, resp: div.cd, enplace: DB.agents.filter(a => inDiv(a, div.name) && !a.bureau).length });
+    div.bureaux.forEach((b, j) => out.push({ type: 'bur', i, j, name: b.name, resp: b.cb, prevu: b.prevu || 0, enplace: DB.agents.filter(a => inDiv(a, div.name) && a.bureau === b.name).length }));
+  });
+  const known = new Set(org.divisions.map(v => v.name)), un = DB.agents.filter(a => !known.has(a.division)).length;
+  if (un) out.push({ type: 'none', name: 'Sans affectation', resp: '', prevu: 0, enplace: un });
+  return out;
 }
 const incomplete = a => !a.matricule || !a.acte || !a.naissance || !a.grade || !a.fonction || !a.diplome || !a.engagement;
 const group = (list, fn, order) => {
@@ -462,50 +457,55 @@ const group = (list, fn, order) => {
   return e;
 };
 const defaultOrg = () => ({
-  directeur: '',
-  divisions: [1, 2, 3, 4].map(i => ({
-    id: 'd' + i,
-    name: 'Division ' + i,
-    cd: '',
-    bureaux: [
-      { id: 'd' + i + 'b1', name: 'Bureau ' + ((i - 1) * 2 + 1), cb: '' },
-      { id: 'd' + i + 'b2', name: 'Bureau ' + ((i - 1) * 2 + 2), cb: '' }
-    ]
-  }))
+  directeur: 'KIVUNDE KITAMBO Jean de Dieu',
+  divisions: [
+    { id: 'd1', name: 'Appui à la fiscalité provinciale', cd: 'KAMAYI NKASHAMA Jacques', bureaux: [
+      { id: 'd1b1', name: 'Appui à la fiscalité provinciale Pool-Est', cb: 'KAFUNDA KAFUNDA Delphin', prevu: 131 },
+      { id: 'd1b2', name: 'Appui à la fiscalité provinciale Pool-Ouest', cb: 'YONDO MPIA LUANGE Jean Pierre', prevu: 139 }] },
+    { id: 'd2', name: 'Appui à la fiscalité locale', cd: 'MWAMBA BONSO Jacques', bureaux: [
+      { id: 'd2b1', name: 'Appui à la fiscalité locale (ETD) Pool-Est', cb: 'LINGOYA KUNDAKEFE Sylvie', prevu: 134 },
+      { id: 'd2b2', name: 'Appui à la fiscalité locale (ETD) Pool-Ouest', cb: 'SAFU NSAMBA Nanou', prevu: 0 }] },
+    { id: 'd3', name: 'Vérification des actes financiers des provinces', cd: 'MANSONI MAYIKOTI Marie France', bureaux: [
+      { id: 'd3b1', name: 'Examen de conformité des édits financiers et budgétaires des provinces', cb: 'BWANDALA BATUBU Racheté', prevu: 135 },
+      { id: 'd3b2', name: 'Examen de conformité des décisions financières et budgétaires des ETD', cb: 'ESAMBO NDOWO Paul', prevu: 129 }] },
+    { id: 'd4', name: 'Statistiques des finances publiques provinciales et des ETD', cd: 'MAVUNGU MABIALA Flavien', bureaux: [
+      { id: 'd4b1', name: 'Statistiques des finances publiques provinciales', cb: 'MAKUALA KETO Becky', prevu: 151 },
+      { id: 'd4b2', name: 'Statistiques des finances publiques des ETD', cb: 'KOYI KIZI', prevu: 149 }] },
+    secDefault()
+  ]
 });
+function secDefault() { return { id: 'sec', kind: 'sec', name: 'Secrétariat de Direction', cd: 'MBUFULI BOKHUAN Patrick Richard', prevu: 24, bureaux: [] }; }
 const migrate = d => {
   d.users = d.users || []; d.directions = d.directions || []; d.agents = d.agents || [];
   d.cadre = d.cadre || []; d.meta = d.meta || {}; if (!d.meta.annee) d.meta.annee = new Date().getFullYear();
-  if (!d.directions.length) d.directions.push({ name: 'Direction de Suivi des Finances Locales', divisions: [] });
+  if (!d.directions.length) d.directions.push({ name: DIRNAME, divisions: [] });
   d.agents.forEach(a => {
     if (!a.direction) a.direction = d.directions[0].name;
     if (a.bureau == null) a.bureau = '';
   });
-  if (!d.org || !Array.isArray(d.org.divisions) || d.org.divisions.length !== 4) {
-    d.org = defaultOrg();
-    const oldDivs = (d.directions[0] && d.directions[0].divisions) || [];
-    d.org.divisions.forEach((div, i) => { if (oldDivs[i]) div.name = oldDivs[i]; });
+  const generic = o => o && Array.isArray(o.divisions) && !o.directeur && o.divisions.every(v => /^Division \d$/.test(v.name || '') && !v.cd && (v.bureaux || []).every(b => !b.cb));
+  if (!d.org || !Array.isArray(d.org.divisions) || generic(d.org)) {
+    const old = (d.org && d.org.divisions) || [], neo = defaultOrg();
+    old.forEach((ov, i) => { const nv = neo.divisions[i]; if (!nv || nv.kind) return;
+      d.agents.forEach(a => { if (a.division === ov.name) { a.division = nv.name; const j = (ov.bureaux || []).findIndex(b => b.name === a.bureau); if (j >= 0 && nv.bureaux[j]) a.bureau = nv.bureaux[j].name; } }); });
+    d.org = neo;
   } else {
     d.org.directeur = d.org.directeur || '';
     d.org.divisions.forEach((div, i) => {
-      div.id = div.id || ('d' + (i + 1));
-      div.name = div.name || ('Division ' + (i + 1));
-      div.cd = div.cd || '';
-      if (!Array.isArray(div.bureaux) || div.bureaux.length < 2) {
-        div.bureaux = [
-          { id: div.id + 'b1', name: 'Bureau ' + (i * 2 + 1), cb: '' },
-          { id: div.id + 'b2', name: 'Bureau ' + (i * 2 + 2), cb: '' }
-        ];
-      } else {
-        div.bureaux.forEach((b, j) => {
-          b.id = b.id || (div.id + 'b' + (j + 1));
-          b.name = b.name || ('Bureau ' + (i * 2 + j + 1));
-          b.cb = b.cb || '';
-        });
-      }
+      div.id = div.id || ('d' + (i + 1)); div.name = div.name || ('Division ' + (i + 1)); div.cd = div.cd || ''; div.prevu = +div.prevu || 0;
+      if (!Array.isArray(div.bureaux)) div.bureaux = [];
+      div.bureaux.forEach((b, j) => { b.id = b.id || (div.id + 'b' + (j + 1)); b.name = b.name || ('Bureau ' + (j + 1)); b.cb = b.cb || ''; b.prevu = +b.prevu || 0; });
     });
+    if (!d.org.divisions.some(v => v.kind === 'sec')) d.org.divisions.push(secDefault());
   }
+  const main0 = d.directions[0];
+  if (!d.meta.cadreInit) {
+    GRADES.forEach(g => { if (!d.cadre.some(c => c.direction === main0.name && !c.division && canonGrade(c.grade) === g.l)) d.cadre.push({ id: uid(), direction: main0.name, division: '', grade: g.l, prevu: g.p, note: '' }); });
+    d.meta.cadreInit = true;
+  }
+  d.agents.forEach(a => { if (a.grade) a.grade = canonGrade(a.grade); });
   d.users.forEach(u => { if (u.role === 'directeur') u.role = 'admin'; else if (u.role === 'saisie') u.role = 'cb'; });
+  [['cd', 'Adm2'], ['cb', 'Adm3']].forEach(([r, n]) => { if (!d.users.some(u => u.role === r) && !d.users.some(u => u.username.toLowerCase() === n.toLowerCase())) d.users.push({ id: uid(), username: n, pass: hash(n.toLowerCase()), role: r, mustChange: true }); });
   const main = d.directions[0];
   if (main) main.divisions = d.org.divisions.map(x => x.name);
   d.version = 3; return d;
@@ -617,12 +617,16 @@ const Store = {
 };
 const save = () => Store.set(DB);
 
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.6.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
 const seed = () => migrate({
-  users: [{ id: uid(), username: 'admin', pass: hash('admin'), role: 'admin', mustChange: true }],
-  directions: [{ name: 'Direction de Suivi des Finances Locales', divisions: [] }],
+  users: [
+    { id: uid(), username: 'Adm1', pass: hash('adm1'), role: 'admin', mustChange: true },
+    { id: uid(), username: 'Adm2', pass: hash('adm2'), role: 'cd', mustChange: true },
+    { id: uid(), username: 'Adm3', pass: hash('adm3'), role: 'cb', mustChange: true }
+  ],
+  directions: [{ name: DIRNAME, divisions: [] }],
   agents: [], cadre: [], org: defaultOrg(), meta: { lastBackup: 0 }
 });
 
@@ -652,48 +656,39 @@ const MARK = '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" heigh
 const initials = a => (((a.nom || '?')[0] || '?') + ((a.postnom || '')[0] || '')).toUpperCase();
 const avatar = a => `<span class="av">${a.photo ? `<img src="${a.photo}" alt="">` : esc(initials(a))}</span>`;
 
-/* ================= Navigation (7 pages principales) ================= */
+/* ================= Navigation (6 sections) ================= */
 const NAV = [
-  { r: 'accueil', l: 'Accueil', i: 'home' },
-  { r: 'nouveau', l: 'Formulaire', i: 'plus' },
-  { g: 'Documents officiels' },
-  { r: 'liste', l: 'Liste déclarative', i: 'list' },
-  { r: 'mise-en-place', l: 'Mise en place', i: 'layers' },
-  { r: 'cadre', l: 'Cadre organique', i: 'org' },
-  { g: 'Gestion & Stockage' },
-  { r: 'admin', l: 'Administration', i: 'shield', admin: 1 },
-  { r: 'base-de-donnees', l: 'Base de données', i: 'db' }
+  { r: 'accueil', l: 'Accueil', s: 'Accueil', i: 'home' },
+  { r: 'nouveau', l: 'Formulaire', s: 'Formulaire', i: 'plus' },
+  { r: 'liste', l: 'Liste déclarative', s: 'Liste', i: 'list' },
+  { r: 'mise-en-place', l: 'Mise en place', s: 'Mise en place', i: 'layers' },
+  { r: 'cadre', l: 'Cadre organique', s: 'Cadre', i: 'org' },
+  { r: 'admin', l: 'Administration', s: 'Admin', i: 'shield' }
 ];
-const PROTECTED = ['tableau', 'agents', 'nouveau', 'mise-en-place', 'cadre', 'liste', 'importer', 'admin', 'base-de-donnees', 'compte', 'plus'];
+const PROTECTED = ['nouveau', 'mise-en-place', 'cadre', 'liste', 'importer', 'admin', 'base-de-donnees', 'compte'];
 const DOCS = ['mise-en-place', 'cadre', 'liste'];
 const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents' };
 
 function shell(inner, name) {
   const isAdmin = session && session.role === 'admin';
-  const side = NAV.filter(n => n.g || !(n.admin && !isAdmin)).map(n => n.g ? `<div class="gl">${n.g}</div>` : `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
+  const side = NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
-    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${({admin:'Adm1 — Directeur (DR)',cd:'Adm2 — Chef de division (CD)',cb:'Adm3 — Secrétaire / CB'})[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
+    ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${ROLES[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
-  const b = (r, l, i, on, fab) => `<a href="#/${r}" class="${fab ? 'fab' : ''}" ${on ? 'aria-current="page"' : ''}>${fab ? `<span>${ico(i, 26)}</span>` : ico(i, 22)}<small>${l}</small></a>`;
-  const bn = `<nav class="bnav" aria-label="Navigation">${b('accueil', 'Accueil', 'home', name === 'accueil')}${b('liste', 'Liste', 'list', name === 'liste')}${b('nouveau', 'Formulaire', 'plusb', name === 'nouveau', 1)}${b('base-de-donnees', 'Base BDD', 'db', name === 'base-de-donnees')}${b('plus', 'Plus', 'more', ['plus', 'mise-en-place', 'cadre', 'tableau', 'importer', 'admin', 'compte', 'agents'].includes(name))}</nav>`;
+  const bn = `<nav class="bnav" aria-label="Navigation">${NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 22)}<small>${n.s}</small></a>`).join('')}</nav>`;
   const banners = [];
   if (session && session.mustChange) banners.push(`<div class="warn">${ico('alert', 20)}<span>Le mot de passe par défaut est encore actif. <a href="#/compte">Le changer maintenant</a></span></div>`);
   if (isAdmin && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
   return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
-  <main>${banners.join('')}${inner}<footer class="foot"><b>Direction de Suivi des Finances Locales</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br><span>© ${new Date().getFullYear()} Direction de Suivi des Finances Locales · version ${APP_VERSION} · Stockage interne et sauvegarde Cloud</span></footer></main>${bn}`;
+  <main>${banners.join('')}${inner}</main>${bn}`;
 }
 
 /* ================= Pages ================= */
 const stat = (ic, cls, n, l) => `<div class="stat"><span class="ic ${cls}">${ico(ic, 22)}</span><div><b>${n}</b><span>${l}</span></div></div>`;
 function pAccueil() {
-  return `<section class="hero"><span class="band"></span>
-    <span class="pill">République Démocratique du Congo</span>
-    <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
-    <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
-    <p style="color:#fff;opacity:.92;margin-top:14px;font-size:15px;max-width:34em;margin-left:auto;margin-right:auto">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et gérez la base de données en lieu sûr.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>`;
+  return `<section class="welcome"><h2>Bienvenue</h2><p>Direction de Suivi des Finances Locales. Utilisez le menu pour enregistrer un agent et consulter les documents.</p></section>`;
 }
 function pLogin() {
   const first = DB.users.some(u => u.mustChange);
@@ -702,7 +697,7 @@ function pLogin() {
     <form data-f="login"><label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
     <button class="btn primary">Se connecter</button></form>
-    ${first ? '<p class="sub" style="margin-top:14px">Premier accès : identifiant <b>admin</b>, mot de passe <b>admin</b>. Vous devrez le changer ensuite.</p>' : ''}
+    ${first ? `<p class="sub" style="margin-top:14px">Premier accès : le mot de passe initial est l’identifiant écrit en minuscules (${DB.users.filter(u => u.mustChange).map(u => '<b>' + esc(u.username) + '</b>').join(', ')}). Vous devrez le changer ensuite.</p>` : ''}
     <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
@@ -711,16 +706,6 @@ function pCompte() {
     <label>Nouveau mot de passe (6 caractères minimum)<input name="n1" type="password" autocomplete="new-password" minlength="6" required></label>
     <label>Confirmer le nouveau mot de passe<input name="n2" type="password" autocomplete="new-password" minlength="6" required></label>
     <button class="btn primary">Enregistrer le mot de passe</button></form></section>`;
-}
-function pPlus() {
-  const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
-  return `<header class="ph"><h2>Menu complet</h2></header><div class="tiles">
-    ${it('mise-en-place', 'Mise en place', 'layers', 'Répartition par divisions et bureaux')}
-    ${it('cadre', 'Cadre organique', 'org', 'Postes prévus, occupés et vacants')}
-    ${it('base-de-donnees', 'Base de données', 'db', 'Stockage interne, Cloud et lieu sûr')}
-    ${session && session.role === 'admin' ? it('admin', 'Administration', 'shield', 'Utilisateurs et structure') : ''}
-    ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
-    <button class="tile" data-act="logout" style="text-align:left;font:inherit"><span class="ic">${ico('logout')}</span><div><b>Se déconnecter</b><span>Fermer ma session</span></div></button></div>`;
 }
 
 /* ---------- 7e Page : Base de données (Stockage interne, Cloud & Lieu sûr) ---------- */
@@ -764,7 +749,7 @@ function pBaseDeDonnees() {
     <div class="acts">
       <button class="btn primary" data-act="cloudbackup">${ico('cloud', 18)}Envoyer / Enregistrer sur le Cloud (.json)</button>
       <button class="btn" data-act="copyjson">${ico('file', 18)}Copier la base (Presse-papiers)</button>
-      <label class="btn">${ico('upload', 18)}<input type="file" id="impJson" accept=".json,application/json" hidden>Restaurer depuis le Cloud / un fichier</label>
+      ${session.role === 'admin' ? `<label class="btn">${ico('upload', 18)}<input type="file" id="impJson" accept=".json,application/json" hidden>Restaurer depuis le Cloud / un fichier</label>` : ''}
     </div>
   </section>
 
@@ -787,36 +772,7 @@ function pBaseDeDonnees() {
 
 /* ---------- Agents ---------- */
 const allDivisions = dir => DB.directions.filter(d => !dir || d.name === dir).flatMap(d => divOrder(d));
-function pAgents(arg) {
-  return `<header class="ph"><div><h2>Agents</h2><p class="sub" id="cnt"></p></div><div class="acts"><a class="btn" href="#/importer">${ico('upload', 18)}Importer</a><a class="btn primary" href="#/nouveau">${ico('plusb', 18)}Nouvel agent</a></div></header>
-  <div class="tools">
-    <input id="q" type="search" class="wide" placeholder="Rechercher : nom, matricule, fonction…" aria-label="Rechercher un agent">
-    <select id="fDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select>
-    <select id="fDiv" aria-label="Division"></select>
-    <select id="fSexe" aria-label="Sexe"><option value="">Tous les sexes</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
-    <select id="fEtat" aria-label="État civil"><option value="">Tous les états civils</option>${ETATS.map(e => `<option>${e}</option>`).join('')}</select>
-    <select id="fSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select>
-    <select id="fInc" aria-label="Dossiers"><option value="">Tous les dossiers</option><option value="1" ${arg === 'inc' ? 'selected' : ''}>Dossiers incomplets</option></select>
-  </div><div id="list"></div>`;
-}
-function fillDivFilter() {
-  const cur = $('#fDiv').value;
-  $('#fDiv').innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions($('#fDir').value).map(v => `<option>${esc(v)}</option>`).join('');
-  if ([...$('#fDiv').options].some(o => o.value === cur)) $('#fDiv').value = cur;
-}
-function filtered() {
-  const q = norm($('#q').value), d = $('#fDir').value, v = $('#fDiv').value, s = $('#fSexe').value, t = $('#fSit').value, inc = $('#fInc').value, ec = $('#fEtat').value;
-  return sortAgents(DB.agents.filter(a => (!d || a.direction === d) && (!v || a.division === v) && (!s || a.sexe === s) && (!t || a.situation === t) && (!ec || a.etat_civil === ec) && (!inc || incomplete(a)) &&
-    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division, a.etat_civil].join(' ')).includes(q))), 'alpha');
-}
 const agentRow = a => `<button class="arow" data-act="fiche" data-id="${a.id}">${avatar(a)}<span class="an"><b>${esc(fullName(a))}</b><small>${esc(a.grade || 'Grade non renseigné')}${a.fonction ? ' — ' + esc(a.fonction) : ''}</small></span><span class="am">${esc(a.matricule || '')}${a.bureau ? `<br><span class="badge">${esc(a.bureau)}</span>` : a.division ? `<br><span class="badge">${esc(a.division)}</span>` : ''}</span></button>`;
-function renderList() {
-  const L = filtered(), MAX = 200;
-  $('#cnt').textContent = `${L.length}${L.length !== DB.agents.length ? ' sur ' + DB.agents.length : ''} agent${L.length > 1 ? 's' : ''}`;
-  if (!DB.agents.length) { $('#list').innerHTML = `<div class="empty">Aucun agent enregistré.<br><br><a class="btn primary" href="#/nouveau">Ajouter le premier agent</a> <a class="btn" href="#/importer">Importer un fichier</a></div>`; return; }
-  if (!L.length) { $('#list').innerHTML = '<div class="empty">Aucun agent ne correspond à cette recherche.</div>'; return; }
-  $('#list').innerHTML = L.slice(0, MAX).map(agentRow).join('') + (L.length > MAX ? `<div class="empty">${MAX} premiers résultats affichés sur ${L.length}. Affinez la recherche.</div>` : '');
-}
 
 /* ---------- Fenêtres ---------- */
 function openModal(html) {
@@ -845,7 +801,7 @@ function openFiche(id) {
       <div class="badges">${a.situation ? `<span class="badge ok">${esc(a.situation)}</span>` : ''}${a.division ? `<span class="badge">${esc(a.division)}</span>` : ''}${incomplete(a) ? '<span class="badge warn">Dossier incomplet</span>' : ''}</div></div></div>
     <dl class="f">${f('Matricule', a.matricule)}${f('N° acte d’engagement', a.acte)}${f('Date d’engagement', fmtDate(a.engagement))}${f('Situation', a.situation)}
       ${f('Date de naissance', fmtDate(a.naissance) + (ag != null ? ` (${ag} ans)` : ''))}${f('Sexe', SEX[a.sexe])}${f('État civil', a.etat_civil)}${f('Diplôme', a.diplome)}
-      ${f('Grade', a.grade)}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Bureau', a.bureau)}${f('Salaire', a.salaire)}${f('Prime', a.prime)}${f('Prise en charge', a.prise_en_charge)}${f('Fiche créée le', a.created ? new Date(a.created).toLocaleDateString('fr-FR') : '')}${a.updated && a.updated !== a.created ? f('Dernière modification', new Date(a.updated).toLocaleDateString('fr-FR')) : ''}</dl>
+      ${f('Grade', canonGrade(a.grade) + (gradeCode(a.grade) !== canonGrade(a.grade) ? ' (' + gradeCode(a.grade) + ')' : ''))}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Bureau', a.bureau)}${f('Salaire', a.salaire)}${f('Montant du salaire', a.salaire_montant)}${f('Prime', a.prime)}${f('Montant de la prime', a.prime_montant)}${f('Recensé', a.recense)}${f('Observation', a.observation)}${f('Prise en charge', a.prise_en_charge)}${f('Fiche créée le', a.created ? new Date(a.created).toLocaleDateString('fr-FR') : '')}${a.updated && a.updated !== a.created ? f('Dernière modification', new Date(a.updated).toLocaleDateString('fr-FR')) : ''}</dl>
     <div class="noprint"><div class="placed">
       <a href="#/mise-en-place" data-act="close">${ico('layers', 20)}<span><b>Mise en place</b>${esc(a.division || 'Sans division')}</span></a>
       <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
@@ -873,10 +829,14 @@ function syncOrgToDirections() {
   if (!DB.org || !DB.directions[0]) return;
   DB.directions[0].divisions = DB.org.divisions.map(d => d.name);
 }
+function gradeOptions(sel) {
+  const cur = canonGrade(sel), list = GRADES.map(g => g.l); if (cur && !list.includes(cur)) list.push(cur);
+  return '<option value="">Choisir…</option>' + list.map(l => { const g = GRADES.find(x => x.l === l); return `<option value="${esc(l)}" ${l === cur ? 'selected' : ''}>${esc(l)}${g && g.c ? ' (' + g.c + ')' : ''}</option>`; }).join('');
+}
 function pForm(id) {
   const a = id ? DB.agents.find(x => x.id === id) : null;
   if (id && !a) return '<div class="empty">Agent introuvable.</div>';
-  const v = a || { situation: 'Actif', salaire: 'Non', prime: 'Non', direction: DB.directions[0].name };
+  const v = a || { situation: 'Actif', salaire: 'Non', prime: 'Non', recense: 'Non', direction: DB.directions[0].name };
   formPhoto = a ? (a.photo || '') : '';
   const opt = (arr, sel) => '<option value="">Choisir…</option>' + arr.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
   const radio = (n, list, val, req) => `<div class="radios">${list.map((o, i) => `<label class="rd"><input type="radio" name="${n}" value="${o[0]}" ${val === o[0] ? 'checked' : ''} ${req && i === 0 ? 'required' : ''}>${o[1]}</label>`).join('')}</div>`;
@@ -891,19 +851,22 @@ function pForm(id) {
       <label>Diplôme<input name="diplome" list="dl-dip" value="${esc(v.diplome)}"></label></div></fieldset>
     <fieldset class="fsec">${sec(2, 'Engagement')}<div class="grid">
       <label>Matricule<input name="matricule" value="${esc(v.matricule)}"></label><label>N° de l’acte d’engagement<input name="acte" value="${esc(v.acte)}"></label>
-      <label>Date d’engagement<input type="date" name="engagement" value="${esc(v.engagement)}"></label><label>Grade<input name="grade" list="dl-grade" value="${esc(v.grade)}"></label>
-      <label>Fonction<input name="fonction" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></fieldset>
+      <label>Date d’engagement<input type="date" name="engagement" value="${esc(v.engagement)}"></label><label>Grade<select name="grade" id="fmGrade">${gradeOptions(v.grade)}</select></label>
+      <label>Fonction<input name="fonction" id="fmFonc" list="dl-fonc" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></fieldset>
     <fieldset class="fsec">${sec(3, 'Affectation')}<div class="grid">
       <label>Direction *<select name="direction" id="fmDir" required>${DB.directions.map(d => `<option ${d.name === v.direction ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
       <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label>
       <label>Bureau *<select name="bureau" id="fmBur" required>${bureauOptions(v.division, v.bureau)}</select></label></div></fieldset>
     <fieldset class="fsec">${sec(4, 'Rémunération et suivi')}<div class="grid">
-      <div><label>Salaire</label>${radio('salaire', yn, v.salaire)}</div><div><label>Prime</label>${radio('prime', yn, v.prime)}</div>
-      <label>Prise en charge<select name="prise_en_charge">${opt(PRISE, v.prise_en_charge)}</select></label></div></fieldset>
+      <div><label>Salaire</label>${radio('salaire', yn, v.salaire)}</div><label>Montant du salaire<input name="salaire_montant" inputmode="decimal" value="${esc(v.salaire_montant)}"></label>
+      <div><label>Prime</label>${radio('prime', yn, v.prime)}</div><label>Montant de la prime<input name="prime_montant" inputmode="decimal" value="${esc(v.prime_montant)}"></label>
+      <div><label>Recensé</label>${radio('recense', yn, v.recense)}</div>
+      <label>Prise en charge<select name="prise_en_charge">${opt(PRISE, v.prise_en_charge)}</select></label>
+      <label style="grid-column:1/-1">Observation<textarea name="observation" rows="2">${esc(v.observation)}</textarea></label></div></fieldset>
     <fieldset class="fsec">${sec(5, 'Photo')}<div class="photo-box"><span class="av" id="phPrev">${formPhoto ? `<img src="${formPhoto}" alt="">` : '+'}</span>
       <div><input type="file" id="phIn" accept="image/*"><button type="button" class="btn sm" data-act="rmphoto" style="margin-top:8px">Retirer la photo</button></div></div></fieldset>
-    <datalist id="dl-dip">${DIPLOMES.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
-    <div class="formbar"><button class="btn primary">${ico('check', 18)}Enregistrer l’agent</button><a class="btn" href="#/agents">Annuler</a></div></form>`;
+    <datalist id="dl-dip">${DIPLOMES.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl-fonc">${FONCTIONS.map(x => `<option value="${x}">`).join('')}</datalist>
+    <div class="formbar"><button class="btn primary">${ico('check', 18)}Enregistrer l’agent</button><a class="btn" href="#/liste">Annuler</a></div></form>`;
 }
 function resizeImg(file, max = 240) {
   return new Promise((res, rej) => {
@@ -913,44 +876,12 @@ function resizeImg(file, max = 240) {
   });
 }
 
-/* ---------- Tableau de bord ---------- */
-function bars(title, entries, color) {
-  const tot = entries.reduce((s, e) => s + e[1], 0), max = Math.max(1, ...entries.map(e => e[1]));
-  return `<section class="card chart"><h3>${title}</h3>${entries.map(([l, n]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${Math.round(n / max * 100)}%;${color && color[l] ? 'background:' + color[l] : ''}"></i></span><span class="n">${n} (${Math.round(n / tot * 100)}%)</span></div>`).join('')}</section>`;
-}
-const donut = (m, f) => { const t = m + f || 1, r = 42, c = 2 * Math.PI * r, a = c * m / t; return `<svg viewBox="0 0 100 100" width="130" height="130" role="img" aria-label="${m} hommes, ${f} femmes"><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--red)" stroke-width="14"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--deep)" stroke-width="14" stroke-dasharray="${a} ${c - a}" transform="rotate(-90 50 50)"/><text x="50" y="56" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor">${m + f}</text></svg>`; };
-const occBars = t => { const max = Math.max(1, ...t.map(e => e[1])); return `<section class="card chart"><h3>Taux d’occupation du cadre par division</h3>${t.map(([l, n]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${n}%;background:${n >= 100 ? 'var(--green)' : n >= 70 ? 'var(--steel)' : 'var(--red)'}"></i></span><span class="n">${n} %</span></div>`).join('')}</section>`; };
-function pTableau() {
-  return `<header class="ph"><div><h2>Tableau de bord</h2><p class="sub">Vue d’ensemble des agents enregistrés</p></div><select id="dDir" style="width:auto;margin:0" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select></header><div id="dash"></div>`;
-}
-function renderDash() {
-  const dir = $('#dDir').value, L = DB.agents.filter(a => !dir || a.direction === dir);
-  if (!L.length) { $('#dash').innerHTML = '<div class="empty">Aucun agent enregistré pour l’instant.<br><br><a class="btn primary" href="#/nouveau">Ajouter le premier agent</a></div>'; return; }
-  const ages = L.map(a => age(a.naissance)).filter(x => x != null), avg = ages.length ? Math.round(ages.reduce((s, x) => s + x, 0) / ages.length) : '–';
-  const m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length, inc = L.filter(incomplete).length;
-  let vac = 0; DB.directions.filter(d => !dir || d.name === dir).forEach(d => divOrder(d).concat(['']).forEach(v => cadreRows(d.name, v).forEach(r => { vac += Math.max(0, r.prevu - r.enplace); })));
-  const bucket = a => { const x = age(a.naissance); return x == null ? '' : x < 30 ? 'Moins de 30 ans' : x < 40 ? '30 à 39 ans' : x < 50 ? '40 à 49 ans' : x < 60 ? '50 à 59 ans' : '60 ans et plus'; };
-  const AB = ['Moins de 30 ans', '30 à 39 ans', '40 à 49 ans', '50 à 59 ans', '60 ans et plus', 'Non renseigné'];
-  const years = group(L, a => (a.engagement || '').slice(0, 4)).sort((a, b) => a[0] === 'Non renseigné' ? 1 : b[0] === 'Non renseigné' ? -1 : a[0].localeCompare(b[0]));
-  const occ = [];
-  DB.directions.filter(d => !dir || d.name === dir).forEach(d => [...divOrder(d), ''].forEach(v => {
-    let p = 0, e = 0; cadreRows(d.name, v).forEach(r => { p += r.prevu; e += r.enplace; });
-    if (p > 0) occ.push([v || d.name + ' — Sans division', Math.min(100, Math.round(e / p * 100))]);
-  }));
-  $('#dash').innerHTML = `<div class="stats">${stat('users', '', L.length, 'agents')}${stat('chart', 'y', avg, 'âge moyen')}${stat('org', 'g', vac, 'postes vacants')}
-    <a href="#/agents/inc" style="text-decoration:none;color:inherit">${stat('alert', 'r', inc, 'dossiers incomplets')}</a>${stat('check', 'g', L.filter(a => a.salaire === 'Oui').length, 'avec salaire')}${stat('check', 'y', L.filter(a => a.prime === 'Oui').length, 'avec prime')}</div>
-    <div class="charts">
-      <section class="card chart"><h3>Répartition par sexe</h3><div class="dn">${donut(m, f)}<ul><li><i style="background:var(--deep)"></i>Hommes : <b>${m}</b></li><li><i style="background:var(--red)"></i>Femmes : <b>${f}</b></li>${L.length - m - f ? `<li class="muted">Non renseigné : ${L.length - m - f}</li>` : ''}</ul></div></section>
-      ${bars('Agents par division', group(L, a => a.division))}${bars('Agents par grade', group(L, a => a.grade))}${bars('État civil', group(L, a => a.etat_civil, [...ETATS, 'Non renseigné']))}
-      ${bars('Tranches d’âge', group(L, bucket, AB))}${bars('Prise en charge', group(L, a => a.prise_en_charge))}${bars('Situation', group(L, a => a.situation, [...SITU, 'Non renseigné']))}${bars('Année d’engagement', years)}${occ.length ? occBars(occ) : ''}</div>`;
-}
-
 /* ---------- Les 3 documents : Mise en place, Cadre organique, Liste déclarative ---------- */
 const selDirs = () => ui.dir ? DB.directions.filter(d => d.name === ui.dir) : DB.directions;
 const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico({ 'mise-en-place': 'layers', cadre: 'org', liste: 'list' }[r], 17)}${DOCTITLE[r].replace(' des agents', '').replace(' du personnel', '')}</a>`).join('')}</div>`;
 const printHead = kind => `<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>${esc(ui.dir || 'Direction de Suivi des Finances Locales')}<h3 style="margin-top:8px">${DOCTITLE[kind]}${kind === 'liste' ? ' – ' + DB.meta.annee : ''}</h3></div>`;
 function pDoc(kind) {
-  const desc = { 'mise-en-place': '4 divisions et 8 bureaux. Noms, CD et CB modifiables. Agents répartis automatiquement.', cadre: 'Postes prévus, occupés et vacants par division et par grade.', liste: `Liste officielle numérotée des agents – année ${DB.meta.annee}.` }[kind];
+  const desc = { 'mise-en-place': 'Secrétariat, 4 divisions et 8 bureaux. Les agents sont répartis automatiquement selon leur affectation.', cadre: 'Effectif prévu par grade et par unité, comparé aux agents en place.', liste: `Liste déclarative des agents de la Direction – année ${DB.meta.annee}.` }[kind];
   const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
   const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="mat">Tri : matricule</option></select>` : '';
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
@@ -961,22 +892,24 @@ function pDoc(kind) {
 function docRows(kind) {
   if (kind === 'mise-en-place') {
     const rows = [];
-    (DB.org && DB.org.divisions || []).forEach(div => {
-      (div.bureaux || []).forEach(bur => {
-        sortAgents(DB.agents.filter(a => a.division === div.name && a.bureau === bur.name), 'hier').forEach((a, i) =>
-          rows.push([div.name, bur.name, i + 1, a.matricule, fullName(a), a.grade, a.fonction]));
-      });
-      sortAgents(DB.agents.filter(a => a.division === div.name && !a.bureau), 'hier').forEach((a, i) =>
-        rows.push([div.name, '—', i + 1, a.matricule, fullName(a), a.grade, a.fonction]));
+    DB.org.divisions.forEach(div => {
+      const add = (bur, list) => sortAgents(list, 'hier').forEach((a, i) => rows.push([div.name, bur, i + 1, a.matricule, fullName(a), canonGrade(a.grade), a.fonction]));
+      (div.bureaux || []).forEach(bur => add(bur.name, DB.agents.filter(a => a.division === div.name && a.bureau === bur.name)));
+      add('—', DB.agents.filter(a => a.division === div.name && !(div.bureaux || []).some(b => b.name === a.bureau)));
     });
     return { header: ['Division', 'Bureau', 'N°', 'Matricule', 'Noms', 'Grade', 'Fonction'], rows };
   }
   if (kind === 'cadre') {
-    const rows = []; selDirs().forEach(d => [...divOrder(d), ''].forEach(v => cadreRows(d.name, v).forEach(r => rows.push([v || 'Sans division', r.grade, r.prevu, r.enplace, r.prevu - r.enplace])))); return { header: ['Division', 'Grade / poste', 'Effectif prévu', 'En place', 'Écart (vacants)'], rows };
+    const rows = cadreRows(DB.directions[0].name).map(r => [r.grade, r.prevu, r.enplace, r.prevu - r.enplace]);
+    rows.push([], ['Unité', 'Effectif prévu', 'En place', 'Écart']);
+    unitRows().filter(u => u.type !== 'div').forEach(u => rows.push([u.name, u.prevu, u.enplace, u.prevu - u.enplace]));
+    return { header: ['Structure', 'Effectif prévu', 'En place', 'Écart'], rows };
   }
   const L = listeAgents();
-  return { header: ['N°', 'Matricule', 'Noms', 'Sexe', 'Date de naissance', 'Grade', 'Fonction', 'Division', 'Bureau', 'Date d’engagement', 'N° acte d’engagement', 'Salaire', 'Prime', 'Situation'], rows: L.map((a, i) => [i + 1, a.matricule, fullName(a), a.sexe, fmtDate(a.naissance), a.grade, a.fonction, a.division, a.bureau, fmtDate(a.engagement), a.acte, a.salaire, a.prime, a.situation]) };
+  return { header: LISTE_HEAD, rows: L.map((a, i) => listeCells(a, i)) };
 }
+const LISTE_HEAD = ['N°', 'Noms, post-noms, prénoms', 'Date de naissance', 'Date d’engagement', 'N° d’acte d’engagement', 'Sexe', 'Matricule', 'Grade', 'Fonction', 'Service d’affectation', 'Salaire', 'Montant', 'Prime', 'Montant', 'Recensé', 'Observation'];
+const listeCells = (a, i) => [i + 1, fullName(a), fmtDate(a.naissance), fmtDate(a.engagement), a.acte, a.sexe, a.matricule, gradeCode(a.grade), a.fonction, a.direction, (a.salaire || '').toUpperCase(), a.salaire_montant, (a.prime || '').toUpperCase(), a.prime_montant, (a.recense || '').toUpperCase(), a.observation];
 function listeAgents() {
   const q = norm($('#tq') ? $('#tq').value : ''), v = $('#tDiv') ? $('#tDiv').value : '', s = $('#tSit') ? $('#tSit').value : '', sort = $('#tSort') ? $('#tSort').value : 'hier';
   return sortAgents(DB.agents.filter(a => (!ui.dir || a.direction === ui.dir) && (!v || a.division === v) && (!s || a.situation === s) &&
@@ -986,23 +919,24 @@ function renderMise() {
   const q = norm(($('#tq') && $('#tq').value) || '');
   const admin = session && session.role === 'admin';
   const org = DB.org || defaultOrg();
-  let html = '';
-  html += `<section class="card dv"><header><div><h3>Direction</h3><small>Direction de Suivi des Finances Locales</small></div></header>
-    <label class="muted" style="font-size:13px">Directeur${admin ? ' (modifiable)' : ''}</label>
-    ${admin ? `<input data-org="directeur" value="${esc(org.directeur || '')}" placeholder="Nom du Directeur" style="margin-top:6px;max-width:420px">` : `<p style="margin-top:6px;font-weight:700">${esc(org.directeur || 'Non renseigné')}</p>`}
+  const hit = a => !q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.bureau].join(' ')).includes(q);
+  const edit = (k, val, ph, extra = '') => `<input data-org="${k}" ${extra} value="${esc(val || '')}" placeholder="${ph}" style="margin-top:4px;max-width:420px;min-height:38px">`;
+  let html = `<section class="card dv"><header><div><h3>Direction</h3><small>${esc(DB.directions[0].name)}</small></div></header>
+    <label class="muted" style="font-size:13px">Directeur - Chef de service${admin ? ' (modifiable)' : ''}</label>
+    ${admin ? edit('directeur', org.directeur, 'Nom du Directeur') : `<p style="margin-top:6px;font-weight:700">${esc(org.directeur || 'Non renseigné')}</p>`}
   </section>`;
+  const MAXR = 200;
   org.divisions.forEach((div, di) => {
-    const agentsDiv = DB.agents.filter(a => a.division === div.name && (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.bureau].join(' ')).includes(q)));
+    const sec = div.kind === 'sec', role = sec ? 'Chef de bureau (CB)' : 'Chef de division (CD)';
+    const agentsDiv = DB.agents.filter(a => a.division === div.name && hit(a));
     const m = agentsDiv.filter(a => a.sexe === 'M').length, f = agentsDiv.filter(a => a.sexe === 'F').length;
     html += `<section class="card dv"><header><div>
-      ${admin ? `<input data-org="divname" data-i="${di}" value="${esc(div.name)}" style="font-weight:800;font-size:17px;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:2px 0;min-height:0;width:100%;max-width:360px">` : `<h3>${esc(div.name)}</h3>`}
-      <small style="display:block;margin-top:4px">Chef de division (CD)${admin ? ' — modifiable' : ''}</small>
-      ${admin ? `<input data-org="cd" data-i="${di}" value="${esc(div.cd || '')}" placeholder="Nom du CD" style="margin-top:4px;max-width:360px;min-height:38px">` : `<b>${esc(div.cd || 'Non renseigné')}</b>`}
+      ${admin ? `<input data-org="divname" data-i="${di}" value="${esc(div.name)}" style="font-weight:800;font-size:17px;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:2px 0;min-height:0;width:100%;max-width:560px">` : `<h3>${esc(div.name)}</h3>`}
+      <small style="display:block;margin-top:4px">${role}${admin ? ' — modifiable' : ''}</small>
+      ${admin ? edit('cd', div.cd, sec ? 'Nom du CB' : 'Nom du CD', `data-i="${di}"`) : `<b>${esc(div.cd || 'Non renseigné')}</b>`}
     </div><div class="cnt"><b>${agentsDiv.length}</b><small>agent${agentsDiv.length > 1 ? 's' : ''} · ${m} H / ${f} F</small></div></header>`;
     (div.bureaux || []).forEach((bur, bi) => {
-      let L = DB.agents.filter(a => a.division === div.name && a.bureau === bur.name);
-      if (q) L = L.filter(a => norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade].join(' ')).includes(q));
-      L = sortAgents(L, 'hier');
+      const L = sortAgents(DB.agents.filter(a => a.division === div.name && a.bureau === bur.name && hit(a)), 'hier');
       html += `<div style="margin:14px 0 8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft)">
         <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:8px">
           <div style="flex:1;min-width:180px">
@@ -1012,15 +946,17 @@ function renderMise() {
           </div>
           <div class="cnt"><b>${L.length}</b><small>agent${L.length > 1 ? 's' : ''}</small></div>
         </div>
-        ${L.length ? `<div class="alist">${L.map(agentRow).join('')}</div>` : '<p class="muted" style="font-size:13px;margin:0">Aucun agent dans ce bureau.</p>'}
+        ${L.length ? `<div class="alist">${L.slice(0, MAXR).map(agentRow).join('')}</div>${L.length > MAXR ? `<p class="muted" style="font-size:13px;margin-top:8px">${MAXR} premiers agents affichés sur ${L.length}. Utilisez la recherche pour trouver les autres.</p>` : ''}` : '<p class="muted" style="font-size:13px;margin:0">Aucun agent dans ce bureau.</p>'}
       </div>`;
     });
-    const noBur = agentsDiv.filter(a => !a.bureau);
-    if (noBur.length) {
-      html += `<div style="margin-top:10px"><p class="muted" style="font-size:13px;margin-bottom:6px">Agents de la division sans bureau renseigné</p><div class="alist">${sortAgents(noBur, 'hier').map(agentRow).join('')}</div></div>`;
-    }
+    const rest = sortAgents(agentsDiv.filter(a => sec || !(div.bureaux || []).some(b => b.name === a.bureau)), 'hier');
+    if (rest.length) html += `<div style="margin-top:10px">${sec ? '' : '<p class="muted" style="font-size:13px;margin-bottom:6px">Agents de la division sans bureau renseigné</p>'}<div class="alist">${rest.slice(0, MAXR).map(agentRow).join('')}</div>${rest.length > MAXR ? `<p class="muted" style="font-size:13px;margin-top:8px">${MAXR} premiers agents affichés sur ${rest.length}. Utilisez la recherche pour trouver les autres.</p>` : ''}</div>`;
+    else if (sec) html += '<p class="muted" style="font-size:13px;margin:10px 0 0">Aucun agent au Secrétariat.</p>';
     html += `</section>`;
   });
+  const known = new Set(org.divisions.map(x => x.name)), un = sortAgents(DB.agents.filter(a => !known.has(a.division) && hit(a)), 'hier');
+  if (un.length) html += `<section class="card dv"><header><div><h3>Agents sans affectation</h3><small>Division non renseignée : à compléter par « Modifier » sur la fiche</small></div><div class="cnt"><b>${un.length}</b><small>agent${un.length > 1 ? 's' : ''}</small></div></header>
+    <div class="alist">${un.slice(0, MAXR).map(agentRow).join('')}</div>${un.length > MAXR ? `<p class="muted" style="font-size:13px;margin-top:8px">${MAXR} premiers agents affichés sur ${un.length}. Utilisez la recherche pour trouver les autres.</p>` : ''}</section>`;
   $('#doc').innerHTML = html;
   if (admin) {
     $$('#doc [data-org]').forEach(inp => {
@@ -1031,7 +967,6 @@ function renderMise() {
           const oldN = DB.org.divisions[i].name;
           DB.org.divisions[i].name = val || oldN;
           DB.agents.forEach(a => { if (a.division === oldN) a.division = DB.org.divisions[i].name; });
-          DB.cadre.forEach(c => { if (c.division === oldN) c.division = DB.org.divisions[i].name; });
           syncOrgToDirections();
         } else if (k === 'cd') DB.org.divisions[i].cd = val;
         else if (k === 'burname') {
@@ -1046,32 +981,38 @@ function renderMise() {
   }
 }
 function renderCadre() {
-  let html = '', P = 0, E = 0, V = 0, S = 0; const admin = session && (session.role === 'admin' || session.role === 'cd');
-  selDirs().forEach(d => [...divOrder(d), ''].forEach(v => {
-    const rows = cadreRows(d.name, v); if (!v && !rows.length) return;
-    const p = rows.reduce((s, r) => s + r.prevu, 0), e = rows.reduce((s, r) => s + r.enplace, 0), vac = rows.reduce((s, r) => s + Math.max(0, r.prevu - r.enplace), 0), sur = rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0);
-    P += p; E += e; V += vac; S += sur;
-    const occ = p ? Math.min(100, Math.round((p - vac) / p * 100)) : 0, key = `data-dir="${esc(d.name)}" data-div="${esc(v)}"`;
-    const ecart = r => { const x = r.prevu - r.enplace; return r.prevu === 0 ? '<span class="badge">Hors cadre</span>' : x > 0 ? `<span class="badge warn">${x} vacant${x > 1 ? 's' : ''}</span>` : x === 0 ? '<span class="badge ok">Complet</span>' : `<span class="badge bad">+${-x} en surnombre</span>`; };
-    html += `<section class="card dv"><header><div><h3>${esc(v || 'Sans division')}</h3>${DB.directions.length > 1 ? `<small>${esc(d.name)}</small>` : ''}</div><div class="cnt"><b>${p ? occ + ' %' : '–'}</b><small>taux d’occupation</small></div></header>
-      <div class="meter"><i style="width:${occ}%"></i></div>
-      <div class="tw" style="max-height:none"><table class="tbl"><thead><tr><th>Grade / poste</th><th class="c">Prévu</th><th class="c">En place</th><th>Écart</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>
-      ${rows.map(r => `<tr style="cursor:default"><td>${esc(r.grade)}${r.note ? `<br><small class="muted">${esc(r.note)}</small>` : ''}</td>
-        <td class="c">${admin ? `<input class="num" type="number" min="0" inputmode="numeric" value="${r.prevu}" data-prevu ${key} data-grade="${esc(r.grade)}" aria-label="Effectif prévu">` : r.prevu}</td>
-        <td class="c">${r.enplace ? `<button class="linkbtn" data-act="enplace" ${key} data-grade="${esc(r.grade)}">${r.enplace}</button>` : 0}</td><td>${ecart(r)}</td>
-        ${admin ? `<td>${r.id ? `<button class="btn sm danger" data-act="cadrerm" data-id="${r.id}" aria-label="Retirer ce poste">×</button>` : ''}</td>` : ''}</tr>`).join('') || `<tr style="cursor:default"><td colspan="5" class="muted">Aucun poste défini. ${admin ? 'Ajoutez un poste ci-dessous.' : ''}</td></tr>`}</tbody>
-      <tfoot><tr><td>Total</td><td class="c">${p}</td><td class="c">${e}</td><td>${vac ? vac + ' vacant' + (vac > 1 ? 's' : '') : ''}${vac && sur ? ' · ' : ''}${sur ? sur + ' en surnombre' : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
-      ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade / poste" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}</section>`;
-  }));
-  const kp = `<div class="stats">${stat('org', '', P, 'postes prévus')}${stat('users', 'g', E, 'agents en place')}${stat('alert', 'y', V, 'postes vacants')}${stat('chart', 'r', S, 'en surnombre / hors cadre')}</div>`;
-  $('#doc').innerHTML = kp + (html || '<div class="empty">Aucune donnée. Importez un fichier du cadre organique ou ajoutez des agents.</div>') + `<datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x)}">`).join('')}</datalist>`;
+  const admin = session && (session.role === 'admin' || session.role === 'cd'), dir = DB.directions[0].name;
+  const rows = cadreRows(dir), P = rows.reduce((s, r) => s + r.prevu, 0), E = rows.reduce((s, r) => s + r.enplace, 0);
+  const ecart = (p, e) => { const x = p - e; return p === 0 && e > 0 ? '<span class="badge">Hors cadre</span>' : x > 0 ? `<span class="badge warn">${x} vacant${x > 1 ? 's' : ''}</span>` : x === 0 ? '<span class="badge ok">Complet</span>' : `<span class="badge bad">+${-x} en surnombre</span>`; };
+  const key = `data-dir="${esc(dir)}" data-div=""`;
+  const gr = rows.map(r => `<tr style="cursor:default"><td>${esc(r.grade)}${GRADES.find(g => g.l === r.grade && g.c) ? ` <span class="muted">(${GRADES.find(g => g.l === r.grade).c})</span>` : ''}</td>
+    <td class="c">${admin ? `<input class="num" type="number" min="0" inputmode="numeric" value="${r.prevu}" data-prevu ${key} data-grade="${esc(r.grade)}" aria-label="Effectif prévu">` : r.prevu}</td>
+    <td class="c">${r.enplace}</td><td>${ecart(r.prevu, r.enplace)}</td>${admin ? `<td>${r.id ? `<button class="btn sm danger" data-act="cadrerm" data-id="${r.id}" aria-label="Retirer ce grade">×</button>` : ''}</td>` : ''}</tr>`).join('');
+  const units = unitRows(); let UP = 0, UE = 0;
+  const ur = units.map(u => {
+    if (u.type === 'div') return `<tr style="cursor:default"><td colspan="${admin ? 5 : 4}" style="background:var(--soft);font-weight:700">${esc(u.name)}<span class="muted" style="font-weight:500"> — CD : ${esc(u.resp || 'non renseigné')}</span></td></tr>`;
+    UP += u.prevu; UE += u.enplace;
+    const inp = u.type === 'none' ? '' : `<input class="num" type="number" min="0" inputmode="numeric" value="${u.prevu}" data-uprevu data-i="${u.i}" data-j="${u.j ?? ''}" aria-label="Effectif prévu">`;
+    return `<tr style="cursor:default"><td>${esc(u.name)}<br><small class="muted">${u.type === 'none' ? 'Division non renseignée' : (u.type === 'sec' ? 'CB' : 'CB') + ' : ' + esc(u.resp || 'non renseigné')}</small></td><td class="c">${u.type === 'none' ? '–' : admin ? inp : u.prevu}</td><td class="c">${u.enplace}</td><td>${u.type === 'none' ? '' : ecart(u.prevu, u.enplace)}</td>${admin ? '<td></td>' : ''}</tr>`;
+  }).join('');
+  const kp = `<div class="stats">${stat('org', '', P, 'effectif prévu')}${stat('users', 'g', E, 'agents en place')}${stat('alert', 'y', rows.reduce((t, r) => t + Math.max(0, r.prevu - r.enplace), 0), 'postes vacants')}${stat('chart', 'r', rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0), 'en surnombre / hors cadre')}</div>`;
+  $('#doc').innerHTML = kp + `<section class="card dv"><header><div><h3>Cadre organique de la Direction</h3><small>${esc(dir)}</small></div><div class="cnt"><b>${P ? Math.min(100, Math.round(E / P * 100)) + ' %' : '–'}</b><small>taux d’occupation</small></div></header>
+    <div class="meter"><i style="width:${P ? Math.min(100, Math.round(E / P * 100)) : 0}%"></i></div>
+    <div class="tw" style="max-height:none"><table class="tbl"><thead><tr><th>Structure</th><th class="c">Effectif prévu</th><th class="c">En place</th><th>Écart</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${gr}</tbody>
+    <tfoot><tr><td>Total</td><td class="c">${P}</td><td class="c">${E}</td><td>${P > E ? (P - E) + ' vacant' + (P - E > 1 ? 's' : '') : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
+    ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}</section>
+    <section class="card dv"><header><div><h3>Effectif par unité</h3><small>Secrétariat, divisions et bureaux</small></div></header>
+    <div class="tw" style="max-height:none"><table class="tbl"><thead><tr><th>Unité</th><th class="c">Effectif prévu</th><th class="c">En place</th><th>Écart</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${ur}</tbody>
+    <tfoot><tr><td>Total</td><td class="c">${UP}</td><td class="c">${UE}</td><td></td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div></section>
+    <datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x.l)}">`).join('')}</datalist>`;
 }
 function renderListe() {
   const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
   if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer">Importer un fichier</a></div>'; return; }
-  $('#doc').innerHTML = `<div class="tw"><table class="tbl"><thead><tr><th class="s1 c">N°</th><th class="s2">Noms</th><th>Matricule</th><th class="c">Sexe</th><th>Date de naissance</th><th>Grade</th><th>Fonction</th><th>Division</th><th>Bureau</th><th>Date d’engagement</th><th>N° acte</th><th class="c">Salaire</th><th class="c">Prime</th><th>Situation</th></tr></thead><tbody>
-    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="s1 c">${i + 1}</td><td class="s2">${esc(fullName(a))}</td><td>${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td><td>${fmtDate(a.naissance)}</td><td>${esc(a.grade)}</td><td>${esc(a.fonction)}</td><td>${esc(a.division)}</td><td>${esc(a.bureau)}</td><td>${fmtDate(a.engagement)}</td><td>${esc(a.acte)}</td><td class="c">${esc(a.salaire)}</td><td class="c">${esc(a.prime)}</td><td>${esc(a.situation)}</td></tr>`).join('')}</tbody>
-    <tfoot><tr><td class="s1"></td><td class="s2">Effectif : ${L.length}</td><td colspan="12">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
+  const ctr = new Set([0, 5, 10, 12, 14]);
+  $('#doc').innerHTML = `<div class="tw"><table class="tbl"><thead><tr>${LISTE_HEAD.map((h, k) => `<th class="${k === 0 ? 's1 c' : k === 1 ? 's2' : ctr.has(k) ? 'c' : ''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>
+    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}">${listeCells(a, i).map((v, k) => `<td class="${k === 0 ? 's1 c' : k === 1 ? 's2' : ctr.has(k) ? 'c' : ''}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tfoot><tr><td class="s1"></td><td class="s2">Effectif : ${L.length}</td><td colspan="14">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
 }
 const renderDoc = kind => ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])();
 function fillTDiv() { const s = $('#tDiv'); if (!s) return; const cur = s.value; s.innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions(ui.dir).map(v => `<option>${esc(v)}</option>`).join(''); s.value = cur; }
@@ -1165,19 +1106,25 @@ function setupTables() {
 
 /* ---------- Administration ---------- */
 function pAdmin() {
-  if (session.role !== 'admin') return '<div class="empty">Cet espace est réservé aux administrateurs.</div>';
-  const roleLabel = r => ({admin:'Adm1 — Directeur (DR)',cd:'Adm2 — Chef de division (CD)',cb:'Adm3 — Secrétaire / CB'})[r] || r;
-  const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${roleLabel(u.role)}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
+  const dr = session.role === 'admin';
+  const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
+  const head = `<header class="ph"><div><h2>Administration</h2><p class="sub">${ROLES[session.role] || session.role} · version ${APP_VERSION}</p></div></header>`;
+  const tiles = `<div class="tiles">
+    ${it('importer', 'Importer un fichier', 'upload', 'Excel, Word ou PDF : agents et cadre organique')}
+    ${it('base-de-donnees', 'Base de données', 'db', 'Sauvegarde, copie Cloud et archive')}
+    ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}</div>`;
+  if (!dr) return head + tiles + '<p class="note">La gestion des utilisateurs, de la structure et des suppressions est réservée à l’Adm1 (DR).</p>';
+  const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${ROLES[u.role] || u.role}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
     <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
-  return `<header class="ph"><div><h2>Administration</h2><p class="sub">Structure, utilisateurs et paramètres · version ${APP_VERSION}</p></div><a class="btn primary" href="#/base-de-donnees">${ico('db', 18)}Gérer la base de données</a></header>
-  <section class="card"><h3>Liste déclarative</h3><form class="inline" data-f="year" style="margin-top:10px;max-width:340px"><input name="y" type="number" min="2000" max="2100" value="${DB.meta.annee}" required aria-label="Année"><button class="btn">Enregistrer l’année</button></form></section>
+  return head + tiles + `
+  <section class="card sec2"><h3>Liste déclarative</h3><form class="inline" data-f="year" style="margin-top:10px;max-width:340px"><input name="y" type="number" min="2000" max="2100" value="${DB.meta.annee}" required aria-label="Année"><button class="btn">Enregistrer l’année</button></form></section>
   <section class="card sec2"><h3>Directions et divisions</h3><p class="sub" style="margin-bottom:12px">Touchez le nom d’une division pour la renommer. Une division qui contient des agents ne peut pas être supprimée.</p>${dirs}
     <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>
   <section class="card sec2"><h3>Utilisateurs</h3><ul class="list" style="margin:12px 0 14px">${users}</ul>
     <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (6 caractères minimum)<input name="p" type="password" minlength="6" required></label>
-    <label>Rôle<select name="r"><option value="cb">Adm3 — Secrétaire / Chef de bureau (CB)</option><option value="cd">Adm2 — Chef de division (CD)</option><option value="admin">Adm1 — Directeur (DR)</option></select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
+    <label>Rôle<select name="r">${['cb', 'cd', 'admin'].map(r => `<option value="${r}">${ROLES[r]}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
   <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Efface tous les agents de cet appareil. Pensez à sauvegarder sur la page <a href="#/base-de-donnees">Base de données</a> avant.</p><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></section>`;
 }
 
@@ -1187,16 +1134,10 @@ function route() {
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (name === 'login' && session) { location.hash = '#/accueil'; return; }
   closeModal();
-  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, plus: pPlus, agents: () => pAgents(arg), nouveau: () => pForm(arg), tableau: pTableau, importer: pImport, admin: pAdmin, 'base-de-donnees': pBaseDeDonnees };
+  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: pImport, admin: pAdmin, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
-  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? name : 'accueil');
+  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
-  if (name === 'agents') {
-    fillDivFilter(); renderList();
-    $('#q').addEventListener('input', renderList); $('#fDir').addEventListener('change', () => { fillDivFilter(); renderList(); });
-    ['fDiv', 'fSexe', 'fEtat', 'fSit', 'fInc'].forEach(i => $('#' + i).addEventListener('change', renderList));
-  }
-  if (name === 'tableau') { renderDash(); $('#dDir').addEventListener('change', renderDash); }
   if (DOCS.includes(name)) {
     fillTDiv(); const rd = () => renderDoc(name);
     ['tq', 'tDiv', 'tSit', 'tSort'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', rd); });
@@ -1204,8 +1145,10 @@ function route() {
     rd();
   }
   if (name === 'nouveau') {
-    $('#fmDir').addEventListener('change', e => { $('#fmDiv').innerHTML = divOptions(e.target.value, ''); $('#fmBur').innerHTML = bureauOptions('', ''); });
-    $('#fmDiv').addEventListener('change', e => { $('#fmBur').innerHTML = bureauOptions(e.target.value, ''); });
+    const needBur = () => { $('#fmBur').required = $('#fmBur').options.length > 1; }; needBur();
+    $('#fmDir').addEventListener('change', e => { $('#fmDiv').innerHTML = divOptions(e.target.value, ''); $('#fmBur').innerHTML = bureauOptions('', ''); needBur(); });
+    $('#fmDiv').addEventListener('change', e => { $('#fmBur').innerHTML = bureauOptions(e.target.value, ''); needBur(); });
+    $('#fmGrade').addEventListener('change', e => { const g = GRADES.find(x => x.l === e.target.value); if (g && g.a && !$('#fmFonc').value.trim()) $('#fmFonc').value = g.a; });
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
   if (name === 'importer') imp = { tables: [], mode: 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
@@ -1266,7 +1209,7 @@ const A = {
   exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee }[k] + '_DFL_' + today(), r.header, r.rows); },
   template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Situation'], []),
   openfolder: () => window.dflDesktop && window.dflDesktop.open(),
-  wipe: async () => { if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; save(); toast('Tous les agents ont été supprimés'); route(); } },
+  wipe: async () => { if (!session || session.role !== 'admin') return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; save(); toast('Tous les agents ont été supprimés'); route(); } },
   enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
   cadrerm: t => { DB.cadre = DB.cadre.filter(c => c.id !== t.dataset.id); save(); renderCadre(); },
   impapply: () => {
@@ -1307,7 +1250,7 @@ const F = {
     const oldOK = user.pass.length === 64 ? user.pass === await sha256(f.old.value) : user.pass === hash(f.old.value);
     if (!oldOK) return toast('Le mot de passe actuel est incorrect', true);
     if (f.n1.value !== f.n2.value) return toast('Les deux nouveaux mots de passe sont différents', true);
-    if (f.n1.value.length < 6 || f.n1.value.toLowerCase() === 'admin') return toast('Choisissez un mot de passe d’au moins 6 caractères, différent de « admin »', true);
+    if (f.n1.value.length < 6 || ['admin', user.username.toLowerCase()].includes(f.n1.value.toLowerCase())) return toast('Choisissez un mot de passe d’au moins 6 caractères, différent de votre identifiant', true);
     user.pass = await sha256(f.n1.value); user.mustChange = false; session.mustChange = false;
     try { localStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
     save(); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
@@ -1317,15 +1260,15 @@ const F = {
   adddiv(f) { const d = DB.directions[+f.dataset.i], v = f.v.value.trim(); if (d.divisions.includes(v)) return toast('Cette division existe déjà', true); d.divisions.push(v); save(); route(); },
   year(f) { DB.meta.annee = parseInt(f.y.value, 10) || DB.meta.annee; save(); toast('Année enregistrée'); },
   addpost(f) {
-    const dir = f.dataset.dir, div = f.dataset.div, g = f.g.value.trim(), p = Math.max(0, parseInt(f.p.value, 10) || 0), ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(c.grade) === norm(g));
+    const dir = f.dataset.dir, div = f.dataset.div || '', g = canonGrade(f.g.value.trim()), p = Math.max(0, parseInt(f.p.value, 10) || 0), ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(c.grade) === norm(g));
     if (ex) ex.prevu = p; else DB.cadre.push({ id: uid(), direction: dir, division: div, grade: g, prevu: p, note: '' });
     save(); renderCadre();
   },
   agent(f) {
     const g = n => (f.elements[n] ? f.elements[n].value : '').trim(), id = f.dataset.id, o = {};
-    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'bureau', 'prise_en_charge', 'situation'].forEach(k => o[k] = g(k));
-    ['sexe', 'salaire', 'prime'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
-    const dup = o.matricule && DB.agents.find(a => a.matricule && a.id !== id && a.matricule.toLowerCase() === o.matricule.toLowerCase());
+    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'bureau', 'prise_en_charge', 'situation', 'salaire_montant', 'prime_montant', 'observation'].forEach(k => o[k] = g(k));
+    ['sexe', 'salaire', 'prime', 'recense'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
+    const dup = isMat(o.matricule) && DB.agents.find(a => a.matricule && a.id !== id && a.matricule.toLowerCase() === o.matricule.toLowerCase());
     if (dup) return toast(`Ce matricule existe déjà : ${fullName(dup)}`, true);
     let a;
     if (id) { a = DB.agents.find(x => x.id === id); Object.assign(a, o, { updated: Date.now() }); } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o }; DB.agents.push(a); }
@@ -1354,8 +1297,13 @@ document.addEventListener('change', async e => {
   const t = e.target;
   if (t.matches('input[data-prevu]')) {
     const v = Math.max(0, parseInt(t.value, 10) || 0), dir = t.dataset.dir, div = t.dataset.div, g = t.dataset.grade;
-    const ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(c.grade) === norm(g));
+    const ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(canonGrade(c.grade)) === norm(g));
     if (ex) ex.prevu = v; else DB.cadre.push({ id: uid(), direction: dir, division: div, grade: g, prevu: v, note: '' });
+    save(); renderCadre(); return;
+  }
+  if (t.matches('input[data-uprevu]')) {
+    const v = Math.max(0, parseInt(t.value, 10) || 0), dv = DB.org.divisions[+t.dataset.i];
+    if (t.dataset.j === '') dv.prevu = v; else dv.bureaux[+t.dataset.j].prevu = v;
     save(); renderCadre(); return;
   }
   if (t.name === 'impMode' && imp) { imp.mode = t.value; setupTables(); renderPreview(); return; }
