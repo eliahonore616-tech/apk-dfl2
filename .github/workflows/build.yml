@@ -20,6 +20,12 @@ jobs:
           java-version: 17
       - run: npm install
       - run: npx cap add android
+      - name: Icône de l'application
+        run: |
+          mkdir -p assets
+          cp icon-only.png icon-foreground.png icon-background.png assets/
+          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#0B3C9E' --iconBackgroundColorDark '#0B3C9E'
+        continue-on-error: true
       - run: npx cap sync android
       - run: chmod +x android/gradlew
       - run: ./gradlew assembleDebug
