@@ -208,8 +208,17 @@ table.xl{border-collapse:collapse;width:100%;font-size:13px}
 .tbl.xl th,.tbl.xl td{border:1px solid var(--xl);padding:6px 9px;white-space:nowrap}
 .tbl.xl th{background:var(--xlh);color:var(--ink);text-align:center;font-weight:700;position:sticky;top:0;z-index:2}
 .tbl.xl th.s1,.tbl.xl th.s2{background:var(--xlh);z-index:4}
-.tbl.xl thead tr:first-child th.t{position:static;background:var(--card);font-size:15px;font-weight:800;white-space:normal;padding:12px 8px;line-height:1.35}
-.tbl.xl thead tr:first-child th.t.sub2{font-size:13px;font-weight:700;padding:4px 8px 12px;border-top:0}
+.tbl.xl thead th.t{position:static;background:var(--card);font-size:15px;font-weight:800;white-space:normal;padding:7px 8px;line-height:1.35;border-top:0;border-bottom:0}
+.tbl.xl thead th.t.sm{font-size:12.5px;font-weight:700;padding:3px 8px}
+.tbl.xl thead th.t.last{border-bottom:1px solid var(--xl);padding-bottom:12px}
+.tbl.xl thead th.t.lft{text-align:left}
+.tbl.xl input{margin:0;min-height:32px;padding:3px 8px;font-size:13px;min-width:190px;border-radius:6px}
+.stk{position:sticky;left:0;width:min(900px,calc(100vw - 48px));text-align:center}
+.tbl.xl.wrap .stk{width:auto}
+.tbl.xl.wrap td,.tbl.xl.wrap th{white-space:normal}
+.tbl.xl.wrap input{min-width:0;width:100%}
+.tbl.xl tbody.ag td{padding:4px 8px;font-size:12.5px}
+.tbl.xl tr.bh td{background:var(--soft);font-weight:700;text-align:left}
 .tbl.xl tfoot td{background:var(--xlh);font-weight:800}
 .tbl.xl td.l,.tbl.xl th.l{text-align:left}
 .tbl.xl tr.grp td{background:var(--soft);font-weight:700}
@@ -640,7 +649,7 @@ const Store = {
 };
 const save = () => Store.set(DB);
 
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.7.1';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
 const seed = () => migrate({
@@ -907,7 +916,8 @@ function resizeImg(file, max = 240) {
 /* ---------- Les 3 documents : Mise en place, Cadre organique, Liste déclarative ---------- */
 const selDirs = () => ui.dir ? DB.directions.filter(d => d.name === ui.dir) : DB.directions;
 const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico({ 'mise-en-place': 'layers', cadre: 'org', liste: 'list' }[r], 17)}${DOCTITLE[r].replace(' des agents', '').replace(' du personnel', '')}</a>`).join('')}</div>`;
-const printHead = kind => `<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>${esc(ui.dir || 'Direction de Suivi des Finances Locales')}<h3 style="margin-top:8px">${DOCTITLE[kind]}${kind === 'liste' ? ' – ' + DB.meta.annee : ''}</h3></div>`;
+const LETTER = n => ['RÉPUBLIQUE DÉMOCRATIQUE DU CONGO', 'MINISTÈRE DE L’INTÉRIEUR, SÉCURITÉ, DÉCENTRALISATION ET AFFAIRES COUTUMIÈRES', 'DIRECTION DE SUIVI DES FINANCES LOCALES'].map(t => `<tr><th class="t sm" colspan="${n}"><div class="stk">${t}</div></th></tr>`).join('');
+const printHead = kind => '';
 function pDoc(kind) {
   const desc = { 'mise-en-place': 'Secrétariat, 4 divisions et 8 bureaux. Les agents sont répartis automatiquement selon leur affectation.', cadre: 'Effectif prévu par grade et par unité, comparé aux agents en place.', liste: `Liste déclarative des agents de la Direction – année ${DB.meta.annee}.` }[kind];
   const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
@@ -944,69 +954,48 @@ function listeAgents() {
     (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division].join(' ')).includes(q))), sort);
 }
 function renderMise() {
-  const q = norm(($('#tq') && $('#tq').value) || '');
-  const admin = session && session.role === 'admin';
-  const org = DB.org || defaultOrg();
+  const q = norm(($('#tq') && $('#tq').value) || ''), admin = session && session.role === 'admin', org = DB.org || defaultOrg();
   const hit = a => !q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.bureau].join(' ')).includes(q);
-  const edit = (k, val, ph, extra = '') => `<input data-org="${k}" ${extra} value="${esc(val || '')}" placeholder="${ph}" style="margin-top:4px;max-width:420px;min-height:38px">`;
-  let html = `<section class="card dv"><header><div><h3>Direction</h3><small>${esc(DB.directions[0].name)}</small></div></header>
-    <label class="muted" style="font-size:13px">Directeur - Chef de service${admin ? ' (modifiable)' : ''}</label>
-    ${admin ? edit('directeur', org.directeur, 'Nom du Directeur') : `<p style="margin-top:6px;font-weight:700">${esc(org.directeur || 'Non renseigné')}</p>`}
-  </section>`;
-  const MAXR = 200;
+  const inp = (k, val, ph, at = '') => admin ? `<input data-org="${k}" ${at} value="${esc(val || '')}" placeholder="${ph}">` : esc(val || 'Non renseigné');
+  const cnt = (a, b) => DB.agents.filter(x => x.division === a && (b === undefined || x.bureau === b)).length;
+  let html = `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead>${LETTER(3)}<tr><th class="t last" colspan="3">MISE EN PLACE DU PERSONNEL DE LA DIRECTION</th></tr>
+    <tr><th class="l">FONCTION</th><th class="l" colspan="2">NOM</th></tr></thead><tbody><tr style="cursor:default"><td class="l"><b>Directeur - Chef de service</b></td><td class="l" colspan="2">${inp('directeur', org.directeur, 'Nom du Directeur')}</td></tr></tbody></table></div>`;
   org.divisions.forEach((div, di) => {
-    const sec = div.kind === 'sec', role = sec ? 'Chef de bureau (CB)' : 'Chef de division (CD)';
-    const agentsDiv = DB.agents.filter(a => a.division === div.name && hit(a));
-    const m = agentsDiv.filter(a => a.sexe === 'M').length, f = agentsDiv.filter(a => a.sexe === 'F').length;
-    html += `<section class="card dv"><header><div>
-      ${admin ? `<input data-org="divname" data-i="${di}" value="${esc(div.name)}" style="font-weight:800;font-size:17px;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:2px 0;min-height:0;width:100%;max-width:560px">` : `<h3>${esc(div.name)}</h3>`}
-      <small style="display:block;margin-top:4px">${role}${admin ? ' — modifiable' : ''}</small>
-      ${admin ? edit('cd', div.cd, sec ? 'Nom du CB' : 'Nom du CD', `data-i="${di}"`) : `<b>${esc(div.cd || 'Non renseigné')}</b>`}
-    </div><div class="cnt"><b>${agentsDiv.length}</b><small>agent${agentsDiv.length > 1 ? 's' : ''} · ${m} H / ${f} F</small></div></header>`;
-    (div.bureaux || []).forEach((bur, bi) => {
-      const L = sortAgents(DB.agents.filter(a => a.division === div.name && a.bureau === bur.name && hit(a)), 'hier');
-      html += `<div style="margin:14px 0 8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft)">
-        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:8px">
-          <div style="flex:1;min-width:180px">
-            ${admin ? `<input data-org="burname" data-i="${di}" data-j="${bi}" value="${esc(bur.name)}" style="font-weight:700;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:2px 0;min-height:0;width:100%">` : `<b>${esc(bur.name)}</b>`}
-            <small class="muted" style="display:block;margin-top:4px">Chef de bureau (CB)</small>
-            ${admin ? `<input data-org="cb" data-i="${di}" data-j="${bi}" value="${esc(bur.cb || '')}" placeholder="Nom du CB" style="margin-top:4px;min-height:36px">` : `<span style="font-weight:600">${esc(bur.cb || 'Non renseigné')}</span>`}
-          </div>
-          <div class="cnt"><b>${L.length}</b><small>agent${L.length > 1 ? 's' : ''}</small></div>
-        </div>
-        ${L.length ? `<div class="alist">${L.slice(0, MAXR).map(agentRow).join('')}</div>${L.length > MAXR ? `<p class="muted" style="font-size:13px;margin-top:8px">${MAXR} premiers agents affichés sur ${L.length}. Utilisez la recherche pour trouver les autres.</p>` : ''}` : '<p class="muted" style="font-size:13px;margin:0">Aucun agent dans ce bureau.</p>'}
-      </div>`;
-    });
-    const rest = sortAgents(agentsDiv.filter(a => sec || !(div.bureaux || []).some(b => b.name === a.bureau)), 'hier');
-    if (rest.length) html += `<div style="margin-top:10px">${sec ? '' : '<p class="muted" style="font-size:13px;margin-bottom:6px">Agents de la division sans bureau renseigné</p>'}<div class="alist">${rest.slice(0, MAXR).map(agentRow).join('')}</div>${rest.length > MAXR ? `<p class="muted" style="font-size:13px;margin-top:8px">${MAXR} premiers agents affichés sur ${rest.length}. Utilisez la recherche pour trouver les autres.</p>` : ''}</div>`;
-    else if (sec) html += '<p class="muted" style="font-size:13px;margin:10px 0 0">Aucun agent au Secrétariat.</p>';
-    html += `</section>`;
+    const sec = div.kind === 'sec', title = sec ? 'SECRÉTARIAT DE DIRECTION' : `DIVISION ${di + 1}`;
+    html += `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead><tr><th class="t lft last" colspan="3">${title}${sec ? '' : ' : ' + esc(div.name.toUpperCase())}</th></tr>
+      <tr><th class="l">UNITÉ</th><th class="l">RESPONSABLE</th><th>EFFECTIF EN PLACE</th></tr></thead><tbody>
+      <tr class="grp" style="cursor:default"><td class="l">${sec ? 'Secrétariat' : 'Division'}${admin ? `<br>${inp('divname', div.name, 'Nom', `data-i="${di}"`)}` : ''}</td><td class="l">${sec ? 'CB' : 'CD'} : ${inp('cd', div.cd, sec ? 'Nom du CB' : 'Nom du CD', `data-i="${di}"`)}</td><td class="c">${cnt(div.name)}</td></tr>
+      ${(div.bureaux || []).map((b, bi) => `<tr style="cursor:default"><td class="l">${admin ? inp('burname', b.name, 'Bureau', `data-i="${di}" data-j="${bi}"`) : esc(b.name)}</td><td class="l">CB : ${inp('cb', b.cb, 'Nom du CB', `data-i="${di}" data-j="${bi}"`)}</td><td class="c">${cnt(div.name, b.name)}</td></tr>`).join('')}</tbody></table></div>`;
   });
-  const known = new Set(org.divisions.map(x => x.name)), un = sortAgents(DB.agents.filter(a => !known.has(a.division) && hit(a)), 'hier');
-  if (un.length) html += `<section class="card dv"><header><div><h3>Agents sans affectation</h3><small>Division non renseignée : à compléter par « Modifier » sur la fiche</small></div><div class="cnt"><b>${un.length}</b><small>agent${un.length > 1 ? 's' : ''}</small></div></header>
-    <div class="alist">${un.slice(0, MAXR).map(agentRow).join('')}</div>${un.length > MAXR ? `<p class="muted" style="font-size:13px;margin-top:8px">${MAXR} premiers agents affichés sur ${un.length}. Utilisez la recherche pour trouver les autres.</p>` : ''}</section>`;
+  /* Listes d'agents, en bas */
+  html += `<h3 class="sec2" style="margin:22px 0 10px">Liste des agents par division et par bureau</h3>`;
+  const rowsOf = (list, n0 = 0) => list.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="c">${i + 1}</td><td class="l"><b>${esc(fullName(a))}</b></td><td class="l">${esc(gradeCode(a.grade))}</td><td class="c">${esc(a.fonction)}</td><td class="l">${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td></tr>`).join('');
+  const head = '<tr><th style="width:46px">N°</th><th class="l">NOMS, POST-NOMS, PRÉNOMS</th><th>GRADE</th><th>FONCTION</th><th class="l">MATRICULE</th><th>SEXE</th></tr>';
+  const MAXR = 300;
+  const block = (label, list) => {
+    const L = sortAgents(list, 'hier').slice(0, MAXR);
+    return `<tr class="bh"><td colspan="6">${esc(label)} — ${list.length} agent${list.length > 1 ? 's' : ''}</td></tr>${list.length ? rowsOf(L) : '<tr style="cursor:default"><td colspan="6" class="l muted">Aucun agent.</td></tr>'}${list.length > MAXR ? `<tr style="cursor:default"><td colspan="6" class="l muted">${MAXR} premiers agents affichés. Utilisez la recherche pour trouver les autres.</td></tr>` : ''}`;
+  };
+  org.divisions.forEach((div, di) => {
+    const sec = div.kind === 'sec', all = DB.agents.filter(a => a.division === div.name && hit(a));
+    let body = '';
+    (div.bureaux || []).forEach(b => body += block(b.name, all.filter(a => a.bureau === b.name)));
+    const rest = all.filter(a => sec || !(div.bureaux || []).some(b => b.name === a.bureau));
+    if (sec) body += block('Secrétariat de Direction', rest); else if (rest.length) body += block('Agents de la division sans bureau', rest);
+    html += `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead><tr><th class="t lft last" colspan="6">${sec ? 'SECRÉTARIAT DE DIRECTION' : `DIVISION ${di + 1} : ${esc(div.name.toUpperCase())}`} — ${all.length} agent${all.length > 1 ? 's' : ''}</th></tr>${head}</thead><tbody class="ag">${body}</tbody></table></div>`;
+  });
+  const known = new Set(org.divisions.map(x => x.name)), un = DB.agents.filter(a => !known.has(a.division) && hit(a));
+  if (un.length) html += `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead><tr><th class="t lft last" colspan="6">AGENTS SANS AFFECTATION — ${un.length}</th></tr>${head}</thead><tbody class="ag">${block('Division non renseignée (à compléter par « Modifier » sur la fiche)', un)}</tbody></table></div>`;
   $('#doc').innerHTML = html;
-  if (admin) {
-    $$('#doc [data-org]').forEach(inp => {
-      inp.addEventListener('change', () => {
-        const k = inp.dataset.org, i = +inp.dataset.i, j = +inp.dataset.j, val = inp.value.trim();
-        if (k === 'directeur') DB.org.directeur = val;
-        else if (k === 'divname') {
-          const oldN = DB.org.divisions[i].name;
-          DB.org.divisions[i].name = val || oldN;
-          DB.agents.forEach(a => { if (a.division === oldN) a.division = DB.org.divisions[i].name; });
-          syncOrgToDirections();
-        } else if (k === 'cd') DB.org.divisions[i].cd = val;
-        else if (k === 'burname') {
-          const oldN = DB.org.divisions[i].bureaux[j].name;
-          DB.org.divisions[i].bureaux[j].name = val || oldN;
-          DB.agents.forEach(a => { if (a.division === DB.org.divisions[i].name && a.bureau === oldN) a.bureau = DB.org.divisions[i].bureaux[j].name; });
-        } else if (k === 'cb') DB.org.divisions[i].bureaux[j].cb = val;
-        save();
-        toast('Structure mise à jour');
-      });
-    });
-  }
+  if (admin) $$('#doc [data-org]').forEach(el => el.addEventListener('change', () => {
+    const k = el.dataset.org, i = +el.dataset.i, j = +el.dataset.j, val = el.value.trim();
+    if (k === 'directeur') DB.org.directeur = val;
+    else if (k === 'divname') { const o = DB.org.divisions[i].name; DB.org.divisions[i].name = val || o; DB.agents.forEach(a => { if (a.division === o) a.division = DB.org.divisions[i].name; }); syncOrgToDirections(); }
+    else if (k === 'cd') DB.org.divisions[i].cd = val;
+    else if (k === 'burname') { const o = DB.org.divisions[i].bureaux[j].name; DB.org.divisions[i].bureaux[j].name = val || o; DB.agents.forEach(a => { if (a.division === DB.org.divisions[i].name && a.bureau === o) a.bureau = DB.org.divisions[i].bureaux[j].name; }); }
+    else if (k === 'cb') DB.org.divisions[i].bureaux[j].cb = val;
+    save(); toast('Structure mise à jour'); renderMise();
+  }));
 }
 function renderCadre() {
   const admin = session && (session.role === 'admin' || session.role === 'cd'), dir = DB.directions[0].name;
@@ -1024,7 +1013,7 @@ function renderCadre() {
     return `<tr style="cursor:default"><td class="l">${esc(u.name)}<br><small class="muted">${u.type === 'none' ? 'Division non renseignée' : (u.type === 'sec' ? 'CB' : 'CB') + ' : ' + esc(u.resp || 'non renseigné')}</small></td><td class="c">${u.type === 'none' ? '–' : admin ? inp : u.prevu}</td><td class="c">${u.enplace}</td><td>${u.type === 'none' ? '' : ecart(u.prevu, u.enplace)}</td>${admin ? '<td></td>' : ''}</tr>`;
   }).join('');
   const kp = `<div class="stats">${stat('org', '', P, 'effectif prévu')}${stat('users', 'g', E, 'agents en place')}${stat('alert', 'y', rows.reduce((t, r) => t + Math.max(0, r.prevu - r.enplace), 0), 'postes vacants')}${stat('chart', 'r', rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0), 'en surnombre / hors cadre')}</div>`;
-  const titre = t2 => `<tr><th class="t" colspan="${admin ? 5 : 4}">DIRECTION DE SUIVI DES FINANCES LOCALES</th></tr><tr><th class="t sub2" colspan="${admin ? 5 : 4}">${t2}</th></tr>`;
+  const titre = t2 => LETTER(admin ? 5 : 4) + `<tr><th class="t last" colspan="${admin ? 5 : 4}">${t2}</th></tr>`;
   $('#doc').innerHTML = kp + `<div class="xlwrap"><table class="tbl xl"><thead>${titre('CADRE ORGANIQUE (mis à jour)')}<tr><th class="l">STRUCTURE</th><th>EFFECTIF PRÉVU</th><th>EN PLACE</th><th>ÉCART</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${gr}</tbody>
     <tfoot><tr><td class="l">Total</td><td class="c">${P}</td><td class="c">${E}</td><td>${P > E ? (P - E) + ' vacant' + (P - E > 1 ? 's' : '') : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
     ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}
@@ -1036,7 +1025,7 @@ function renderListe() {
   const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
   if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer/agents">Importer un fichier</a></div>'; return; }
   const ctr = new Set([0, 5, 10, 12, 14]), cl = k => k === 0 ? 's1 c' : k === 1 ? 's2 l' : ctr.has(k) ? 'c' : 'l';
-  $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl"><thead><tr><th class="t" colspan="${LISTE_HEAD.length}">LISTE DÉCLARATIVE DES AGENTS DE LA DIRECTION DE SUIVI DES FINANCES LOCALES ${DB.meta.annee}</th></tr>
+  $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl"><thead>${LETTER(LISTE_HEAD.length)}<tr><th class="t last" colspan="${LISTE_HEAD.length}"><div class="stk">LISTE DÉCLARATIVE DES AGENTS DE LA DIRECTION DE SUIVI DES FINANCES LOCALES ${DB.meta.annee}</div></th></tr>
     <tr>${LISTE_HEAD.map((h, k) => `<th class="${k === 0 ? 's1' : k === 1 ? 's2' : ''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>
     ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}">${listeCells(a, i).map((v, k) => `<td class="${cl(k)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
     <tfoot><tr><td class="s1"></td><td class="s2 l">Effectif : ${L.length}</td><td colspan="${LISTE_HEAD.length - 2}" class="l">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
