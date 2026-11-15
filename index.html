@@ -56,7 +56,7 @@ button{cursor:pointer}
 .bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;padding:0 2px;color:var(--muted);text-decoration:none;font-size:10px;font-weight:600;text-align:center;line-height:1.15}
 .bnav a[aria-current="page"]{color:var(--blue)}
 .bnav a[aria-current="page"]{box-shadow:inset 0 3px 0 var(--sky)}
-.ava{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--sky);color:var(--deep);font-weight:800;flex:none}
+.sy{margin-left:auto;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;text-decoration:none;white-space:nowrap}.sy.ok{background:#dcfce7;color:#166534}.sy.wt{background:#fef3c7;color:#92400e}.sy.er{background:#fee2e2;color:#991b1b}.ava{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--sky);color:var(--deep);font-weight:800;flex:none}
 .top .ava{width:32px;height:32px;text-decoration:none;font-size:14px}
 main{padding:16px 14px 104px;max-width:1120px;margin:0 auto}
 @media (min-width:900px){
@@ -85,7 +85,7 @@ main{padding:16px 14px 104px;max-width:1120px;margin:0 auto}
 .btn svg{width:18px;height:18px}
 .btn.primary{background:var(--btn);border-color:var(--btn);color:#fff}
 .btn.primary:hover{background:var(--deep);border-color:var(--deep)}
-.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.btn.danger{color:var(--red);border-color:#E0A0A8}
 .btn.sm{min-height:36px;padding:0 13px;font-size:13px;border-radius:8px}
 .btn:hover{filter:brightness(.97)}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
@@ -212,6 +212,7 @@ table.xl{border-collapse:collapse;width:100%;font-size:13px}
 .tbl.xl thead th.t.sm{font-size:12.5px;font-weight:700;padding:3px 8px}
 .tbl.xl thead th.t.last{border-bottom:1px solid var(--xl);padding-bottom:12px}
 .tbl.xl thead th.t.lft{text-align:left}
+.tbl.xl.editing th{white-space:nowrap}.tbl.xl.editing th input{min-width:120px;width:calc(100% - 34px);display:inline-block;font-weight:700}.tbl.xl.editing td input{min-width:110px;width:100%}.tbl.xl.editing th .btn{padding:0 8px;min-height:30px;margin-left:4px;vertical-align:middle}.xl td input[data-org=burname]{width:calc(100% - 42px);display:inline-block;vertical-align:middle}
 .tbl.xl input{margin:0;min-height:32px;padding:3px 8px;font-size:13px;min-width:190px;border-radius:6px}
 .stk{position:sticky;left:0;width:min(900px,calc(100vw - 48px));text-align:center}
 .tbl.xl.wrap .stk{width:auto}
@@ -287,7 +288,12 @@ details.map .grid{margin-top:12px}
 /*PURE-START*/
 /* ================= Utilitaires et logique pure ================= */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+const _nc = new Map();
+const norm = s => {
+  const k = String(s ?? ''); let v = _nc.get(k);
+  if (v === undefined) { v = k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, ''); if (_nc.size > 20000) _nc.clear(); _nc.set(k, v); }
+  return v;
+};
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const hash = s => {
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57; const str = 'dfl|' + s;
@@ -313,7 +319,9 @@ const GRADES = [
   { c: '', l: 'Agent Auxiliaire de 1ère Classe', a: '', p: 0 }, { c: '', l: 'Agent Auxiliaire de 2ème Classe', a: '', p: 0 }, { c: '', l: 'Huissier', a: 'HUISSIER', p: 2 }
 ];
 const FONCTIONS = ['DIR', 'CD', 'CB', 'ATA1', 'ATA2', 'AGA1', 'AGA2', 'HUISSIER'];
-const canonGrade = g => {
+const _cg = new Map();
+const canonGrade = g => { const k = String(g ?? ''); let v = _cg.get(k); if (v === undefined) { v = canonGrade0(k); _cg.set(k, v); } return v; };
+const canonGrade0 = g => {
   let s = String(g ?? '').trim(); if (!s) return '';
   const m = s.match(/\((\d{3})\)/), n = norm(m ? m[1] : s);
   const f = GRADES.find(x => (x.c && x.c === n) || norm(x.l) === n || (x.a && norm(x.a) === n) || (n === 'directeur' && x.c === '120'));
@@ -647,11 +655,132 @@ const Store = {
     return Promise.resolve(this.kind === 'idb' ? 'Stockage interne local de l’appareil (IndexedDB sécurisé)' : 'Mémoire temporaire');
   }
 };
-const save = () => Store.set(DB);
+const save = () => { Store.set(DB); Sync.schedule(); };
 
-const APP_VERSION = '2.7.1';
+/* ================= Synchronisation entre appareils (Supabase, gratuit) ================= */
+const Sync = {
+  cfg: null, st: { init: false, last: 0, snap: {} }, tok: null, exp: 0, rt: '', timer: null, busy: false, status: 'off', msg: '', again: false,
+  load() {
+    try { this.cfg = JSON.parse(localStorage.getItem('dfl_sync_cfg') || 'null'); } catch (e) {}
+    try { const x = JSON.parse(localStorage.getItem('dfl_sync_st') || 'null'); if (x && x.snap) this.st = x; } catch (e) {}
+    this.status = this.cfg ? 'wait' : 'off';
+  },
+  persist() { try { localStorage.setItem('dfl_sync_st', JSON.stringify(this.st)); } catch (e) {} },
+  hs(t) { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t.length + ':' + h; },
+  items() {
+    const m = new Map();
+    DB.agents.forEach(a => m.set('a:' + a.id, JSON.stringify(a)));
+    ['users', 'directions', 'org', 'cadre'].forEach(k => m.set('c:' + k, JSON.stringify(DB[k])));
+    return m;
+  },
+  set(status, msg) {
+    this.status = status; this.msg = msg || '';
+    const e = document.getElementById('syncchip'); if (e) e.outerHTML = this.chip();
+    const p = document.getElementById('syncinfo'); if (p) p.innerHTML = this.info();
+  },
+  chip() {
+    if (!this.cfg) return '<span id="syncchip"></span>';
+    const T = { ok: ['Synchronisé', 'ok'], wait: ['Synchronisation…', 'wt'], off: ['', ''], offline: ['Hors ligne', 'wt'], err: ['Erreur de synchro', 'er'] }[this.status] || ['', ''];
+    return `<a id="syncchip" class="sy ${T[1]}" href="#/sync" title="${esc(this.msg)}">${T[0]}</a>`;
+  },
+  info() {
+    if (!this.cfg) return 'Synchronisation non configurée sur cet appareil.';
+    const n = this.pending();
+    return ({ ok: '✔ Synchronisé', wait: 'Synchronisation en cours…', offline: 'Hors ligne : les modifications seront envoyées au retour d’Internet', err: '✖ ' + esc(this.msg) }[this.status] || '') + (n ? ` · ${n} modification(s) en attente` : '') + (this.last ? ` · dernière synchro ${new Date(this.last).toLocaleTimeString('fr-FR')}` : '');
+  },
+  pending() { try { const cur = this.items(); let n = 0; cur.forEach((t, id) => { if (this.st.snap[id] !== this.hs(t)) n++; }); Object.keys(this.st.snap).forEach(id => { if (!cur.has(id)) n++; }); return n; } catch (e) { return 0; } },
+  schedule(ms) { if (!this.cfg) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.run(), ms == null ? 2500 : ms); },
+  async auth() {
+    if (this.tok && Date.now() < this.exp - 60000) return;
+    const c = this.cfg, body = this.rt ? { refresh_token: this.rt } : { email: c.e, password: c.p };
+    let r = await fetch(`${c.u}/auth/v1/token?grant_type=${this.rt ? 'refresh_token' : 'password'}`, { method: 'POST', headers: { apikey: c.k, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok && this.rt) { this.rt = ''; r = await fetch(`${c.u}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: c.k, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: c.e, password: c.p }) }); }
+    if (!r.ok) throw new Error(r.status === 400 ? 'Identifiants de synchronisation refusés' : 'Connexion au serveur impossible (' + r.status + ')');
+    const j = await r.json(); this.tok = j.access_token; this.rt = j.refresh_token || ''; this.exp = Date.now() + (j.expires_in || 3600) * 1000;
+  },
+  hd(extra) { return Object.assign({ apikey: this.cfg.k, Authorization: 'Bearer ' + this.tok, 'Content-Type': 'application/json' }, extra || {}); },
+  async run() {
+    if (!this.cfg || !DB) return;
+    if (this.busy) { this.again = true; return; }
+    if (!navigator.onLine) { this.set('offline'); return; }
+    this.busy = true; if (this.status !== 'ok') this.set('wait');
+    try {
+      await this.auth();
+      const chg = await this.pull();
+      await this.push();
+      this.last = Date.now(); this.set('ok');
+      if (chg) this.refresh();
+    } catch (e) { this.set(navigator.onLine ? 'err' : 'offline', e.message === 'Failed to fetch' ? 'Serveur injoignable' : e.message); }
+    this.busy = false;
+    if (this.again) { this.again = false; this.schedule(500); }
+  },
+  async pull() {
+    const first = !this.st.init, cur = this.items(), idx = new Map(DB.agents.map((a, i) => [a.id, i]));
+    let last = this.st.last, changed = false; const applied = [], dels = new Set();
+    for (;;) {
+      const r = await fetch(`${this.cfg.u}/rest/v1/dfl_items?rev=gt.${last}&order=rev.asc&limit=300&select=id,data,rev,deleted`, { headers: this.hd() });
+      if (!r.ok) throw new Error('Lecture impossible (' + r.status + ') — table dfl_items créée ?');
+      const rows = await r.json(); if (!rows.length) break;
+      for (const x of rows) {
+        last = Math.max(last, x.rev);
+        const loc = cur.get(x.id), snap = this.st.snap[x.id];
+        const delPending = snap !== undefined && loc === undefined;
+        let dirty = loc !== undefined && snap !== this.hs(loc);
+        if (x.id.startsWith('c:')) { if (first) dirty = false; }
+        else if (first && loc !== undefined && !x.deleted) dirty = !(x.data && (x.data.updated || 0) > (idx.has(x.id.slice(2)) ? DB.agents[idx.get(x.id.slice(2))].updated || 0 : 0));
+        else if (first && x.deleted) dirty = loc !== undefined;
+        if (dirty || delPending) continue;
+        if (x.id.startsWith('a:')) {
+          const id = x.id.slice(2);
+          if (x.deleted) { if (idx.has(id)) { dels.add(id); changed = true; } applied.push(x.id); }
+          else if (x.data) { if (idx.has(id)) DB.agents[idx.get(id)] = x.data; else { idx.set(id, DB.agents.length); DB.agents.push(x.data); } applied.push(x.id); changed = true; }
+        } else if (x.id.startsWith('c:') && x.data) {
+          const k = x.id.slice(2); DB[k] = x.data; if (k === 'cadre') DB.meta.cadreInit = true; applied.push(x.id); changed = true;
+        }
+      }
+      if (rows.length < 300) break;
+    }
+    if (dels.size) DB.agents = DB.agents.filter(a => !dels.has(a.id));
+    if (changed) { DB = migrate(DB); Store.set(DB); }
+    const now = this.items();
+    applied.forEach(id => { if (now.has(id)) this.st.snap[id] = this.hs(now.get(id)); else delete this.st.snap[id]; });
+    this.st.last = last; this.st.init = true; this.persist();
+    if (session && DB.users && !DB.users.some(u => u.id === session.id)) { A.logout(); toast('Votre compte a été modifié : reconnectez-vous', true); }
+    return changed;
+  },
+  async push() {
+    const cur = this.items(), out = [], hh = {};
+    cur.forEach((t, id) => { const h = this.hs(t); if (this.st.snap[id] !== h) { out.push({ id, body: `{"id":${JSON.stringify(id)},"data":${t},"deleted":false}`, h }); } });
+    Object.keys(this.st.snap).forEach(id => { if (!cur.has(id)) out.push({ id, body: `{"id":${JSON.stringify(id)},"data":null,"deleted":true}`, del: true }); });
+    for (let i = 0; i < out.length; i += 100) {
+      const b = out.slice(i, i + 100);
+      const r = await fetch(`${this.cfg.u}/rest/v1/dfl_items?on_conflict=id`, { method: 'POST', headers: this.hd({ Prefer: 'resolution=merge-duplicates,return=minimal' }), body: '[' + b.map(x => x.body).join(',') + ']' });
+      if (!r.ok) throw new Error('Envoi impossible (' + r.status + ')');
+      b.forEach(x => { if (x.del) delete this.st.snap[x.id]; else this.st.snap[x.id] = x.h; });
+      this.persist();
+    }
+  },
+  refresh() {
+    const a = document.activeElement;
+    if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+    if (document.querySelector('.mb') || /#\/(nouveau|importer|compte|login|sync)/.test(location.hash)) return;
+    if (session) route();
+  },
+  start() {
+    this.load(); if (!this.cfg) return;
+    this.schedule(800);
+    setInterval(() => { if (!document.hidden) this.run(); }, 20000);
+    window.addEventListener('online', () => this.run());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.run(); });
+  },
+  code() { return btoa(unescape(encodeURIComponent(JSON.stringify(this.cfg)))); },
+  parseCode(t) { try { const c = JSON.parse(decodeURIComponent(escape(atob(t.trim())))); if (c.u && c.k && c.e && c.p) return c; } catch (e) {} return null; }
+};
+
+
+const APP_VERSION = '2.9.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
-const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
+const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
   users: [
     { id: uid(), username: 'Adm1', pass: hash('adm1'), role: 'admin', mustChange: true },
@@ -712,7 +841,7 @@ function shell(inner, name) {
   if (session && session.mustChange) banners.push(`<div class="warn">${ico('alert', 20)}<span>Le mot de passe par défaut est encore actif. <a href="#/compte">Le changer maintenant</a></span></div>`);
   if (isAdmin && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
-  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
+  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
   <main>${banners.join('')}${inner}</main>${bn}`;
 }
@@ -727,6 +856,24 @@ function pAccueil() {
     <p class="msg">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
     <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>`;
 }
+
+function pSync() {
+  const c = Sync.cfg, ok = !c || (session && session.role === 'admin');
+  if (!ok) return `<section class="card narrow"><h2>Synchronisation</h2><p class="sub" id="syncinfo">${Sync.info()}</p><p class="note">Seul l’Adm1 (DR) peut modifier la configuration. <a href="#/login">Se connecter</a></p><div class="acts"><button class="btn primary" data-act="syncnow">Synchroniser maintenant</button></div></section>`;
+  return `<section class="card narrow"><h2>Synchronisation entre appareils</h2>
+    <p class="sub" id="syncinfo" style="margin-bottom:12px">${Sync.info()}</p>
+    <p class="sub" style="margin-bottom:12px">Chaque agent enregistré est envoyé automatiquement sur le serveur de la Direction puis reçu par tous les autres appareils (ordinateurs et téléphones). Sans Internet, l’application continue de fonctionner et envoie les changements plus tard.</p>
+    <form data-f="syncsave">
+      <label>Code de connexion (si un autre appareil est déjà configuré)<input name="code" placeholder="Collez le code ici" autocapitalize="none" autocomplete="off"></label>
+      <p class="sub" style="margin:4px 0 10px;text-align:center">— ou saisissez les informations —</p>
+      <label>Adresse du projet (URL)<input name="u" placeholder="https://xxxx.supabase.co" value="${esc(c ? c.u : '')}" autocapitalize="none"></label>
+      <label>Clé publique (anon / publishable)<input name="k" value="${esc(c ? c.k : '')}" autocapitalize="none" autocomplete="off"></label>
+      <label>Compte de synchronisation (e-mail)<input name="e" type="email" value="${esc(c ? c.e : '')}" autocapitalize="none"></label>
+      <label>Mot de passe du compte<input name="p" type="password" value="${esc(c ? c.p : '')}" autocomplete="off"></label>
+      <button class="btn primary">Enregistrer et synchroniser</button></form>
+    ${c ? `<div class="acts" style="margin-top:12px"><button class="btn" data-act="syncnow">Synchroniser maintenant</button><button class="btn" data-act="synccode">Code pour un autre appareil</button><button class="btn danger" data-act="syncoff">Désactiver</button></div>` : ''}
+    <p class="sub" style="margin-top:14px;font-size:12px">Le code de connexion contient le mot de passe du compte de synchronisation : ne le partagez qu’avec les appareils de la Direction.</p></section>`;
+}
 function pLogin() {
   const first = DB.users.some(u => u.mustChange);
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
@@ -734,6 +881,7 @@ function pLogin() {
     <form data-f="login"><label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
     <button class="btn primary">Se connecter</button></form>
+    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/sync">${Sync.cfg ? 'Synchronisation' : 'Nouvel appareil ? Configurer la synchronisation'}</a></p>
     ${first ? `<p class="sub" style="margin-top:14px">Premier accès : le mot de passe initial est l’identifiant écrit en minuscules (${DB.users.filter(u => u.mustChange).map(u => '<b>' + esc(u.username) + '</b>').join(', ')}). Vous devrez le changer ensuite.</p>` : ''}
     <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
@@ -925,7 +1073,7 @@ function pDoc(kind) {
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
   return `${printHead(kind)}<header class="ph"><div><h2>${DOCTITLE[kind]}</h2><p class="sub">${desc}</p></div>
     <div class="acts noprint"><a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents' }[kind]}">${ico('upload', 18)}Importer</a><button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
-    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}</div><div id="doc"></div>`;
+    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}</div><div id="docbar" class="acts noprint" style="margin:10px 0"></div><div id="doc"></div>`;
 }
 function docRows(kind) {
   if (kind === 'mise-en-place') {
@@ -944,7 +1092,8 @@ function docRows(kind) {
     return { header: ['Structure', 'Effectif prévu', 'En place', 'Écart'], rows };
   }
   const L = listeAgents();
-  return { header: LISTE_HEAD, rows: L.map((a, i) => listeCells(a, i)) };
+  const cols = listeCols();
+  return { header: cols.map(c => c.label), rows: L.map((a, i) => colVals(cols, a, i)) };
 }
 const LISTE_HEAD = ['N°', 'Noms, post-noms, prénoms', 'Date de naissance', 'Date d’engagement', 'N° d’acte d’engagement', 'Sexe', 'Matricule', 'Grade', 'Fonction', 'Service d’affectation', 'Salaire', 'Montant', 'Prime', 'Montant', 'Recensé', 'Observation'];
 const listeCells = (a, i) => [i + 1, fullName(a), fmtDate(a.naissance), fmtDate(a.engagement), a.acte, a.sexe, a.matricule, gradeCode(a.grade), a.fonction, a.direction, (a.salaire || '').toUpperCase(), a.salaire_montant, (a.prime || '').toUpperCase(), a.prime_montant, (a.recense || '').toUpperCase(), a.observation];
@@ -965,16 +1114,15 @@ function renderMise() {
     html += `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead><tr><th class="t lft last" colspan="3">${title}${sec ? '' : ' : ' + esc(div.name.toUpperCase())}</th></tr>
       <tr><th class="l">UNITÉ</th><th class="l">RESPONSABLE</th><th>EFFECTIF EN PLACE</th></tr></thead><tbody>
       <tr class="grp" style="cursor:default"><td class="l">${sec ? 'Secrétariat' : 'Division'}${admin ? `<br>${inp('divname', div.name, 'Nom', `data-i="${di}"`)}` : ''}</td><td class="l">${sec ? 'CB' : 'CD'} : ${inp('cd', div.cd, sec ? 'Nom du CB' : 'Nom du CD', `data-i="${di}"`)}</td><td class="c">${cnt(div.name)}</td></tr>
-      ${(div.bureaux || []).map((b, bi) => `<tr style="cursor:default"><td class="l">${admin ? inp('burname', b.name, 'Bureau', `data-i="${di}" data-j="${bi}"`) : esc(b.name)}</td><td class="l">CB : ${inp('cb', b.cb, 'Nom du CB', `data-i="${di}" data-j="${bi}"`)}</td><td class="c">${cnt(div.name, b.name)}</td></tr>`).join('')}</tbody></table></div>`;
+      ${(div.bureaux || []).map((b, bi) => `<tr style="cursor:default"><td class="l">${admin ? inp('burname', b.name, 'Bureau', `data-i="${di}" data-j="${bi}"`) + `<button class="btn sm danger noprint" style="margin-left:6px" data-act="delbur" data-i="${di}" data-j="${bi}" aria-label="Supprimer ce bureau">×</button>` : esc(b.name)}</td><td class="l">CB : ${inp('cb', b.cb, 'Nom du CB', `data-i="${di}" data-j="${bi}"`)}</td><td class="c">${cnt(div.name, b.name)}</td></tr>`).join('')}${admin && !sec ? `<tr class="noprint" style="cursor:default"><td colspan="3" class="l"><button class="btn sm" data-act="addbur" data-i="${di}">+ Ajouter un bureau</button></td></tr>` : ''}</tbody></table></div>`;
   });
   /* Listes d'agents, en bas */
   html += `<h3 class="sec2" style="margin:22px 0 10px">Liste des agents par division et par bureau</h3>`;
   const rowsOf = (list, n0 = 0) => list.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="c">${i + 1}</td><td class="l"><b>${esc(fullName(a))}</b></td><td class="l">${esc(gradeCode(a.grade))}</td><td class="c">${esc(a.fonction)}</td><td class="l">${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td></tr>`).join('');
   const head = '<tr><th style="width:46px">N°</th><th class="l">NOMS, POST-NOMS, PRÉNOMS</th><th>GRADE</th><th>FONCTION</th><th class="l">MATRICULE</th><th>SEXE</th></tr>';
-  const MAXR = 300;
   const block = (label, list) => {
-    const L = sortAgents(list, 'hier').slice(0, MAXR);
-    return `<tr class="bh"><td colspan="6">${esc(label)} — ${list.length} agent${list.length > 1 ? 's' : ''}</td></tr>${list.length ? rowsOf(L) : '<tr style="cursor:default"><td colspan="6" class="l muted">Aucun agent.</td></tr>'}${list.length > MAXR ? `<tr style="cursor:default"><td colspan="6" class="l muted">${MAXR} premiers agents affichés. Utilisez la recherche pour trouver les autres.</td></tr>` : ''}`;
+    const L = sortAgents(list, 'hier');
+    return `<tr class="bh"><td colspan="6">${esc(label)} — ${list.length} agent${list.length > 1 ? 's' : ''}</td></tr>${list.length ? rowsOf(L) : '<tr style="cursor:default"><td colspan="6" class="l muted">Aucun agent.</td></tr>'}`;
   };
   org.divisions.forEach((div, di) => {
     const sec = div.kind === 'sec', all = DB.agents.filter(a => a.division === div.name && hit(a));
@@ -1013,24 +1161,55 @@ function renderCadre() {
     return `<tr style="cursor:default"><td class="l">${esc(u.name)}<br><small class="muted">${u.type === 'none' ? 'Division non renseignée' : (u.type === 'sec' ? 'CB' : 'CB') + ' : ' + esc(u.resp || 'non renseigné')}</small></td><td class="c">${u.type === 'none' ? '–' : admin ? inp : u.prevu}</td><td class="c">${u.enplace}</td><td>${u.type === 'none' ? '' : ecart(u.prevu, u.enplace)}</td>${admin ? '<td></td>' : ''}</tr>`;
   }).join('');
   const kp = `<div class="stats">${stat('org', '', P, 'effectif prévu')}${stat('users', 'g', E, 'agents en place')}${stat('alert', 'y', rows.reduce((t, r) => t + Math.max(0, r.prevu - r.enplace), 0), 'postes vacants')}${stat('chart', 'r', rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0), 'en surnombre / hors cadre')}</div>`;
+  const H = (k, d) => ui.edit ? `<input data-hd="${k}" value="${esc(((DB.org.heads || {})[k]) || d)}" aria-label="En-tête">` : esc(((DB.org.heads || {})[k]) || d);
   const titre = t2 => LETTER(admin ? 5 : 4) + `<tr><th class="t last" colspan="${admin ? 5 : 4}">${t2}</th></tr>`;
-  $('#doc').innerHTML = kp + `<div class="xlwrap"><table class="tbl xl"><thead>${titre('CADRE ORGANIQUE (mis à jour)')}<tr><th class="l">STRUCTURE</th><th>EFFECTIF PRÉVU</th><th>EN PLACE</th><th>ÉCART</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${gr}</tbody>
+  $('#doc').innerHTML = kp + `<div class="xlwrap"><table class="tbl xl"><thead>${titre(H('t1', 'CADRE ORGANIQUE (mis à jour)'))}<tr><th class="l">${H('hs', 'STRUCTURE')}</th><th>${H('hp', 'EFFECTIF PRÉVU')}</th><th>${H('he', 'EN PLACE')}</th><th>${H('hx', 'ÉCART')}</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${gr}</tbody>
     <tfoot><tr><td class="l">Total</td><td class="c">${P}</td><td class="c">${E}</td><td>${P > E ? (P - E) + ' vacant' + (P - E > 1 ? 's' : '') : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
     ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}
-    <div class="xlwrap" style="margin-top:16px"><table class="tbl xl"><thead>${titre('EFFECTIF PAR UNITÉ')}<tr><th class="l">UNITÉ</th><th>EFFECTIF PRÉVU</th><th>EN PLACE</th><th>ÉCART</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${ur}</tbody>
+    <div class="xlwrap" style="margin-top:16px"><table class="tbl xl"><thead>${titre(H('t2', 'EFFECTIF PAR UNITÉ'))}<tr><th class="l">${H('hu', 'UNITÉ')}</th><th>${H('hp', 'EFFECTIF PRÉVU')}</th><th>${H('he', 'EN PLACE')}</th><th>${H('hx', 'ÉCART')}</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${ur}</tbody>
     <tfoot><tr><td class="l">Total</td><td class="c">${UP}</td><td class="c">${UE}</td><td></td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
     <datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x.l)}">`).join('')}</datalist>`;
 }
-function renderListe() {
-  const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
-  if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer/agents">Importer un fichier</a></div>'; return; }
-  const ctr = new Set([0, 5, 10, 12, 14]), cl = k => k === 0 ? 's1 c' : k === 1 ? 's2 l' : ctr.has(k) ? 'c' : 'l';
-  $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl"><thead>${LETTER(LISTE_HEAD.length)}<tr><th class="t last" colspan="${LISTE_HEAD.length}"><div class="stk">LISTE DÉCLARATIVE DES AGENTS DE LA DIRECTION DE SUIVI DES FINANCES LOCALES ${DB.meta.annee}</div></th></tr>
-    <tr>${LISTE_HEAD.map((h, k) => `<th class="${k === 0 ? 's1' : k === 1 ? 's2' : ''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>
-    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}">${listeCells(a, i).map((v, k) => `<td class="${cl(k)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
-    <tfoot><tr><td class="s1"></td><td class="s2 l">Effectif : ${L.length}</td><td colspan="${LISTE_HEAD.length - 2}" class="l">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
+const LF = { 4: 'acte', 6: 'matricule', 8: 'fonction', 11: 'salaire_montant', 13: 'prime_montant', 15: 'observation' };
+const lcfgW = () => { const o = DB.org; if (!o.lcfg) o.lcfg = {}; const c = o.lcfg; c.heads = c.heads || {}; c.hidden = c.hidden || []; c.extra = c.extra || []; return c; };
+function listeCols() {
+  const c = (DB.org && DB.org.lcfg) || {}, hd = c.heads || {}, hid = c.hidden || [], cols = [];
+  LISTE_HEAD.forEach((h, k) => { if (!hid.includes(k)) cols.push({ k, label: hd[k] || h }); });
+  (c.extra || []).forEach(x => cols.push({ k: x.id, label: x.label, extra: true }));
+  return cols;
 }
-const renderDoc = kind => ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])();
+const colVals = (cols, a, i) => { const c = listeCells(a, i); return cols.map(o => o.extra ? ((a.x || {})[o.k] || '') : c[o.k]); };
+function renderListe() {
+  const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length, ed = !!ui.edit;
+  if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer/agents">Importer un fichier</a></div>'; return; }
+  const cols = listeCols(), n = cols.length, ctr = new Set([0, 5, 10, 12, 14]);
+  const cl = (o, p) => p === 0 ? 's1 c' : p === 1 ? 's2 l' : ctr.has(o.k) ? 'c' : 'l';
+  const th = (o, p) => `<th class="${p === 0 ? 's1' : p === 1 ? 's2' : ''}">${ed ? `<input ${o.extra ? 'data-lx' : 'data-lh'}="${o.k}" value="${esc(o.label)}" style="min-width:90px" aria-label="En-tête">${p > 1 ? `<button class="btn sm danger" data-act="lcoldel" data-k="${o.k}" aria-label="Supprimer la colonne" title="Supprimer la colonne">×</button>` : ''}` : esc(o.label)}</th>`;
+  const td = (o, p, a, v) => {
+    if (ed && o.extra) return `<td class="l"><input data-cx="${o.k}" data-id="${a.id}" value="${esc(v)}" aria-label="${esc(o.label)}"></td>`;
+    if (ed && LF[o.k]) return `<td class="${cl(o, p)}"><input data-cf="${LF[o.k]}" data-id="${a.id}" value="${esc(a[LF[o.k]] || '')}" aria-label="${esc(o.label)}"></td>`;
+    return `<td class="${cl(o, p)}">${esc(v)}</td>`;
+  };
+  $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl${ed ? ' editing' : ''}"><thead>${LETTER(n)}<tr><th class="t last" colspan="${n}"><div class="stk">LISTE DÉCLARATIVE DES AGENTS DE LA DIRECTION DE SUIVI DES FINANCES LOCALES ${DB.meta.annee}</div></th></tr>
+    <tr>${cols.map(th).join('')}</tr></thead><tbody>
+    ${L.slice(0, ui.max).map((a, i) => { const v = colVals(cols, a, i); return `<tr ${ed ? '' : `data-act="fiche" data-id="${a.id}"`}>${cols.map((o, p) => td(o, p, a, v[p])).join('')}</tr>`; }).join('')}</tbody>
+    <tfoot><tr><td class="s1"></td><td class="s2 l">Effectif : ${L.length}</td><td colspan="${Math.max(1, n - 2)}" class="l">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>
+    ${L.length > ui.max ? `<div class="acts noprint" style="justify-content:center;margin:14px 0"><span class="muted" style="align-self:center">${Math.min(ui.max, L.length)} sur ${L.length} agents affichés</span><button class="btn" data-act="more">Afficher 100 de plus</button><button class="btn" data-act="moreall">Tout afficher</button></div>` : ''}`;
+}
+const renderDoc = kind => { ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])(); docBar(kind); };
+function docBar(kind) {
+  const e = $('#docbar'); if (!e || !session) return;
+  const adm = session.role === 'admin', ed = adm || session.role === 'cd';
+  let h = '';
+  if ((kind === 'liste' || kind === 'cadre') && ed) {
+    h += `<button class="btn sm${ui.edit ? ' primary' : ''}" data-act="tedit">${ui.edit ? 'Terminer la modification' : (kind === 'liste' ? 'Modifier le tableau' : 'Modifier les en-têtes')}</button>`;
+    if (ui.edit && kind === 'liste') h += '<button class="btn sm" data-act="lcoladd">+ Ajouter une colonne</button><button class="btn sm" data-act="lcolreset">Rétablir les colonnes d’origine</button>';
+    if (ui.edit && kind === 'cadre') h += '<button class="btn sm" data-act="hdreset">Rétablir les en-têtes d’origine</button>';
+  }
+  if (adm) h += `<button class="btn sm danger" data-act="delimp" data-k="${kind}">Supprimer le fichier importé</button>`;
+  e.innerHTML = h;
+}
+const curKind = () => location.hash.replace(/^#\//, '').split('/')[0];
 function fillTDiv() { const s = $('#tDiv'); if (!s) return; const cur = s.value; s.innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions(ui.dir).map(v => `<option>${esc(v)}</option>`).join(''); s.value = cur; }
 
 /* ---------- Importer un fichier ---------- */
@@ -1250,7 +1429,8 @@ function pAdmin() {
   const tiles = `<div class="tiles">
     ${it('importer', 'Importer un fichier', 'upload', 'Excel, Word ou PDF : agents et cadre organique')}
     ${it('base-de-donnees', 'Base de données', 'db', 'Sauvegarde, copie Cloud et archive')}
-    ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}</div>`;
+    ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
+    ${it('sync', 'Synchronisation', 'db', 'Envoi automatique des agents vers tous les appareils')}</div>`;
   if (!dr) return head + tiles + '<p class="note">La gestion des utilisateurs, de la structure et des suppressions est réservée à l’Adm1 (DR).</p>';
   const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${ROLES[u.role] || u.role}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
@@ -1272,13 +1452,13 @@ function route() {
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (name === 'login' && session) { location.hash = '#/accueil'; return; }
   closeModal();
-  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, 'base-de-donnees': pBaseDeDonnees };
+  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
   $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
   if (DOCS.includes(name)) {
-    fillTDiv(); const rd = () => renderDoc(name);
-    ['tq', 'tDiv', 'tSit', 'tSort'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', rd); });
+    fillTDiv(); ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
+    ['tq', 'tDiv', 'tSit', 'tSort'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', () => { ui.max = 100; if (i === 'tq') { clearTimeout(tm); tm = setTimeout(rd, 250); } else rd(); }); });
     if ($('#tDir')) $('#tDir').addEventListener('change', e => { ui.dir = e.target.value; fillTDiv(); rd(); });
     rd();
   }
@@ -1294,9 +1474,47 @@ function route() {
   if (afterRoute) { const f = afterRoute; afterRoute = null; f(); }
 }
 
+function onDocEdit(e) {
+  const t = e.target, d = t.dataset, v = t.value.trim();
+  const ag = () => DB.agents.find(z => z.id === d.id);
+  if (d.lh !== undefined) { lcfgW().heads[d.lh] = v || LISTE_HEAD[+d.lh]; save(); }
+  else if (d.lx !== undefined) { const x = lcfgW().extra.find(z => z.id === d.lx); if (x) { x.label = v || x.label; save(); } }
+  else if (d.hd !== undefined) { DB.org.heads = DB.org.heads || {}; DB.org.heads[d.hd] = v; save(); }
+  else if (d.cx !== undefined) { const a = ag(); if (a) { a.x = a.x || {}; a.x[d.cx] = t.value; a.updated = Date.now(); save(); } }
+  else if (d.cf !== undefined) { const a = ag(); if (a) { a[d.cf] = v; a.updated = Date.now(); save(); } }
+}
+
 /* ================= Actions ================= */
 const A = {
+  more: () => { ui.max += 100; const y = window.scrollY; renderListe(); window.scrollTo(0, y); },
+  moreall: () => { ui.max = 1e9; const y = window.scrollY; renderListe(); window.scrollTo(0, y); },
   close: () => closeModal(),
+  tedit: () => { ui.edit = !ui.edit; renderDoc(curKind()); },
+  lcoladd: async () => { const n = await ask('Nom de la nouvelle colonne :'); if (!n || !n.trim()) return; lcfgW().extra.push({ id: 'x' + uid(), label: n.trim() }); save(); renderListe(); toast('Colonne ajoutée'); },
+  lcoldel: t => { const k = t.dataset.k, c = lcfgW(), x = c.extra.find(z => z.id === k); if (!confirm(x ? `Supprimer la colonne « ${x.label} » et ses valeurs ?` : 'Masquer cette colonne ?')) return; if (x) { c.extra = c.extra.filter(z => z.id !== k); DB.agents.forEach(a => { if (a.x && k in a.x) { delete a.x[k]; a.updated = Date.now(); } }); } else c.hidden.push(+k); save(); renderListe(); },
+  lcolreset: () => { if (!confirm('Rétablir les en-têtes et les colonnes d’origine ? Les colonnes ajoutées sont conservées.')) return; const c = lcfgW(); c.heads = {}; c.hidden = []; save(); renderListe(); },
+  hdreset: () => { DB.org.heads = {}; save(); renderCadre(); docBar('cadre'); },
+  addbur: async t => { const div = DB.org.divisions[+t.dataset.i]; const n = await ask(`Nom du nouveau bureau de « ${div.name} » :`); if (!n || !n.trim()) return; const nm = n.trim(); if (div.bureaux.some(b => norm(b.name) === norm(nm))) return toast('Ce bureau existe déjà dans cette division', true); div.bureaux.push({ id: div.id + 'b' + uid(), name: nm, cb: '', prevu: 0 }); save(); toast('Bureau ajouté'); renderMise(); docBar('mise-en-place'); },
+  delbur: t => { const div = DB.org.divisions[+t.dataset.i], b = div.bureaux[+t.dataset.j]; const k = DB.agents.filter(a => a.division === div.name && a.bureau === b.name).length; if (!confirm(`Supprimer le bureau « ${b.name} » ?${k ? ` Ses ${k} agent(s) resteront dans la division, sans bureau.` : ''}`)) return; DB.agents.forEach(a => { if (a.division === div.name && a.bureau === b.name) { a.bureau = ''; a.updated = Date.now(); } }); div.bureaux.splice(+t.dataset.j, 1); save(); toast('Bureau supprimé'); renderMise(); docBar('mise-en-place'); },
+  delimp: async t => {
+    if (!session || session.role !== 'admin') return; const k = t.dataset.k;
+    if (k === 'liste') {
+      if (!DB.agents.length) return toast('La liste est déjà vide');
+      if ((await ask(`Supprimer la liste importée : les ${DB.agents.length} agents seront effacés (sur tous les appareils synchronisés). Pensez à sauvegarder avant (page Base de données). Tapez SUPPRIMER pour confirmer :`)) !== 'SUPPRIMER') return;
+      DB.agents = []; save(); toast('Liste déclarative supprimée'); route();
+    } else if (k === 'mise-en-place') {
+      if (!confirm('Supprimer la mise en place importée ? La structure revient à celle d’origine et les agents n’ont plus de division ni de bureau (les agents ne sont pas supprimés).')) return;
+      const keep = { lcfg: DB.org.lcfg, heads: DB.org.heads }; DB.org = Object.assign(defaultOrg(), keep);
+      DB.agents.forEach(a => { a.division = ''; a.bureau = ''; a.updated = Date.now(); }); syncOrgToDirections(); save(); toast('Mise en place supprimée'); route();
+    } else {
+      if (!confirm('Supprimer le cadre organique importé ? Tous les effectifs prévus (grades et unités) seront remis à zéro.')) return;
+      DB.cadre = []; DB.meta.cadreInit = true;
+      DB.org.divisions.forEach(d => { d.prevu = 0; (d.bureaux || []).forEach(b => { b.prevu = 0; }); }); save(); toast('Cadre organique supprimé'); route();
+    }
+  },
+  syncnow: () => { Sync.tok = null; Sync.run(); },
+  synccode: () => { const c = Sync.code(); if (navigator.clipboard) navigator.clipboard.writeText(c).then(() => toast('Code copié'), () => {}); openModal(`<h3 style="margin-bottom:8px">Code de connexion</h3><p class="sub" style="margin-bottom:10px">Sur l’autre appareil : Connexion → Configurer la synchronisation → collez ce code.</p><textarea readonly rows="5" style="width:100%" onclick="this.select()">${c}</textarea><div class="acts" style="margin-top:12px"><button class="btn" data-act="close">Fermer</button></div>`); },
+  syncoff: () => { if (!confirm('Désactiver la synchronisation sur cet appareil ? Les agents déjà reçus restent ici.')) return; try { localStorage.removeItem('dfl_sync_cfg'); localStorage.removeItem('dfl_sync_st'); } catch (e) {} Sync.cfg = null; Sync.st = { init: false, last: 0, snap: {} }; Sync.tok = null; Sync.rt = ''; clearTimeout(Sync.timer); toast('Synchronisation désactivée'); route(); },
   logout: () => { session = null; try { localStorage.removeItem('dfl_s'); } catch (e) {}; if (location.hash === '#/accueil' || !location.hash) route(); else location.hash = '#/accueil'; },
   fiche: t => openFiche(t.dataset.id),
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
@@ -1374,6 +1592,15 @@ const A = {
 
 /* ================= Formulaires ================= */
 const F = {
+  async syncsave(f) {
+    let c = f.code.value.trim() ? Sync.parseCode(f.code.value) : { u: f.u.value.trim().replace(/\/+$/, ''), k: f.k.value.trim(), e: f.e.value.trim(), p: f.p.value };
+    if (!c || !c.u || !c.k || !c.e || !c.p) return toast('Code ou informations incomplets', true);
+    if (!/^https:\/\//.test(c.u)) return toast('L’adresse doit commencer par https://', true);
+    const old = Sync.cfg; Sync.cfg = c; Sync.tok = null; Sync.rt = '';
+    if (!old || old.u !== c.u) Sync.st = { init: false, last: 0, snap: {} };
+    try { localStorage.setItem('dfl_sync_cfg', JSON.stringify(c)); } catch (e) {}
+    if (!old) Sync.start(); toast('Synchronisation en cours…'); await Sync.run(); route();
+  },
   async login(f) {
     const u = f.u.value.trim().toLowerCase(), user = DB.users.find(x => x.username.toLowerCase() === u);
     if (!user) return toast('Identifiant ou mot de passe incorrect', true);
@@ -1478,6 +1705,8 @@ document.addEventListener('change', async e => {
   }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/liste/.test(location.hash)) { ui._prev = ui.max; ui.max = 1e9; renderListe(); } });
+window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/liste/.test(location.hash)) renderListe(); } });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
 window.addEventListener('hashchange', route);
 document.addEventListener('visibilitychange', () => { if (document.hidden) Store.flush(); });
@@ -1494,7 +1723,7 @@ const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { 
   let d = await Store.get();
   DB = (d && Array.isArray(d.agents)) ? migrate(d) : seed();
   if ((Store.kind === 'native' || Store.kind === 'desktop') && DB.meta.lastAuto !== today()) { try { await Store.writeRaw(AUXFILE, JSON.stringify(DB)); DB.meta.lastAuto = today(); } catch (e) {} save(); }
-  save();
+  Store.set(DB); Sync.start();
   try { const s = localStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
   route(); bump();
 })();
