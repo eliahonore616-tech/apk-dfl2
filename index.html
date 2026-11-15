@@ -28,6 +28,8 @@
   --soft:#0F2749;--green:#44C48C;--gsoft:#0E2F25;--rsoft:#3A1519;--asoft:#3A3000;--aink:#FFE08A;--shadow:none}
 }
 *{box-sizing:border-box}
+:root{--xl:#a9b8cf;--xlh:#dbe7f7}
+@media (prefers-color-scheme:dark){:root{--xl:#2f4f7d;--xlh:#16345f}}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em;line-height:1.25}
@@ -200,6 +202,19 @@ table.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 .tbl td.c,.tbl th.c{text-align:center}
 .tbl input.num{width:76px;min-height:38px;margin:0;text-align:center;padding:4px}
 
+/* ---------- Tableaux façon Excel ---------- */
+.xlwrap{overflow:auto;border:1px solid var(--xl);background:var(--card);max-height:72vh;margin-bottom:16px}
+table.xl{border-collapse:collapse;width:100%;font-size:13px}
+.tbl.xl th,.tbl.xl td{border:1px solid var(--xl);padding:6px 9px;white-space:nowrap}
+.tbl.xl th{background:var(--xlh);color:var(--ink);text-align:center;font-weight:700;position:sticky;top:0;z-index:2}
+.tbl.xl th.s1,.tbl.xl th.s2{background:var(--xlh);z-index:4}
+.tbl.xl thead tr:first-child th.t{position:static;background:var(--card);font-size:15px;font-weight:800;white-space:normal;padding:12px 8px;line-height:1.35}
+.tbl.xl thead tr:first-child th.t.sub2{font-size:13px;font-weight:700;padding:4px 8px 12px;border-top:0}
+.tbl.xl tfoot td{background:var(--xlh);font-weight:800}
+.tbl.xl td.l,.tbl.xl th.l{text-align:left}
+.tbl.xl tr.grp td{background:var(--soft);font-weight:700}
+.tbl.xl td.s1,.tbl.xl td.s2{background:var(--card)}
+.tbl.xl tbody tr:hover td{background:var(--soft)}
 /* ---------- Mise en place / cadre ---------- */
 .dv{margin-bottom:12px}
 .dv>header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
@@ -625,7 +640,7 @@ const Store = {
 };
 const save = () => Store.set(DB);
 
-const APP_VERSION = '2.6.3';
+const APP_VERSION = '2.7.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier' };
 const seed = () => migrate({
@@ -899,7 +914,7 @@ function pDoc(kind) {
   const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="mat">Tri : matricule</option></select>` : '';
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
   return `${printHead(kind)}<header class="ph"><div><h2>${DOCTITLE[kind]}</h2><p class="sub">${desc}</p></div>
-    <div class="acts noprint"><button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
+    <div class="acts noprint"><a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents' }[kind]}">${ico('upload', 18)}Importer</a><button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
     ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}</div><div id="doc"></div>`;
 }
 function docRows(kind) {
@@ -998,45 +1013,45 @@ function renderCadre() {
   const rows = cadreRows(dir), P = rows.reduce((s, r) => s + r.prevu, 0), E = rows.reduce((s, r) => s + r.enplace, 0);
   const ecart = (p, e) => { const x = p - e; return p === 0 && e > 0 ? '<span class="badge">Hors cadre</span>' : x > 0 ? `<span class="badge warn">${x} vacant${x > 1 ? 's' : ''}</span>` : x === 0 ? '<span class="badge ok">Complet</span>' : `<span class="badge bad">+${-x} en surnombre</span>`; };
   const key = `data-dir="${esc(dir)}" data-div=""`;
-  const gr = rows.map(r => `<tr style="cursor:default"><td>${esc(r.grade)}${GRADES.find(g => g.l === r.grade && g.c) ? ` <span class="muted">(${GRADES.find(g => g.l === r.grade).c})</span>` : ''}</td>
+  const gr = rows.map(r => `<tr style="cursor:default"><td class="l">${esc(r.grade)}${GRADES.find(g => g.l === r.grade && g.c) ? ` <span class="muted">(${GRADES.find(g => g.l === r.grade).c})</span>` : ''}</td>
     <td class="c">${admin ? `<input class="num" type="number" min="0" inputmode="numeric" value="${r.prevu}" data-prevu ${key} data-grade="${esc(r.grade)}" aria-label="Effectif prévu">` : r.prevu}</td>
     <td class="c">${r.enplace}</td><td>${ecart(r.prevu, r.enplace)}</td>${admin ? `<td>${r.id ? `<button class="btn sm danger" data-act="cadrerm" data-id="${r.id}" aria-label="Retirer ce grade">×</button>` : ''}</td>` : ''}</tr>`).join('');
   const units = unitRows(); let UP = 0, UE = 0;
   const ur = units.map(u => {
-    if (u.type === 'div') return `<tr style="cursor:default"><td colspan="${admin ? 5 : 4}" style="background:var(--soft);font-weight:700">${esc(u.name)}<span class="muted" style="font-weight:500"> — CD : ${esc(u.resp || 'non renseigné')}</span></td></tr>`;
+    if (u.type === 'div') return `<tr class="grp" style="cursor:default"><td class="l" colspan="${admin ? 5 : 4}">${esc(u.name)}<span class="muted" style="font-weight:500"> — CD : ${esc(u.resp || 'non renseigné')}</span></td></tr>`;
     UP += u.prevu; UE += u.enplace;
     const inp = u.type === 'none' ? '' : `<input class="num" type="number" min="0" inputmode="numeric" value="${u.prevu}" data-uprevu data-i="${u.i}" data-j="${u.j ?? ''}" aria-label="Effectif prévu">`;
-    return `<tr style="cursor:default"><td>${esc(u.name)}<br><small class="muted">${u.type === 'none' ? 'Division non renseignée' : (u.type === 'sec' ? 'CB' : 'CB') + ' : ' + esc(u.resp || 'non renseigné')}</small></td><td class="c">${u.type === 'none' ? '–' : admin ? inp : u.prevu}</td><td class="c">${u.enplace}</td><td>${u.type === 'none' ? '' : ecart(u.prevu, u.enplace)}</td>${admin ? '<td></td>' : ''}</tr>`;
+    return `<tr style="cursor:default"><td class="l">${esc(u.name)}<br><small class="muted">${u.type === 'none' ? 'Division non renseignée' : (u.type === 'sec' ? 'CB' : 'CB') + ' : ' + esc(u.resp || 'non renseigné')}</small></td><td class="c">${u.type === 'none' ? '–' : admin ? inp : u.prevu}</td><td class="c">${u.enplace}</td><td>${u.type === 'none' ? '' : ecart(u.prevu, u.enplace)}</td>${admin ? '<td></td>' : ''}</tr>`;
   }).join('');
   const kp = `<div class="stats">${stat('org', '', P, 'effectif prévu')}${stat('users', 'g', E, 'agents en place')}${stat('alert', 'y', rows.reduce((t, r) => t + Math.max(0, r.prevu - r.enplace), 0), 'postes vacants')}${stat('chart', 'r', rows.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0), 'en surnombre / hors cadre')}</div>`;
-  $('#doc').innerHTML = kp + `<section class="card dv"><header><div><h3>Cadre organique de la Direction</h3><small>${esc(dir)}</small></div><div class="cnt"><b>${P ? Math.min(100, Math.round(E / P * 100)) + ' %' : '–'}</b><small>taux d’occupation</small></div></header>
-    <div class="meter"><i style="width:${P ? Math.min(100, Math.round(E / P * 100)) : 0}%"></i></div>
-    <div class="tw" style="max-height:none"><table class="tbl"><thead><tr><th>Structure</th><th class="c">Effectif prévu</th><th class="c">En place</th><th>Écart</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${gr}</tbody>
-    <tfoot><tr><td>Total</td><td class="c">${P}</td><td class="c">${E}</td><td>${P > E ? (P - E) + ' vacant' + (P - E > 1 ? 's' : '') : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
-    ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}</section>
-    <section class="card dv"><header><div><h3>Effectif par unité</h3><small>Secrétariat, divisions et bureaux</small></div></header>
-    <div class="tw" style="max-height:none"><table class="tbl"><thead><tr><th>Unité</th><th class="c">Effectif prévu</th><th class="c">En place</th><th>Écart</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${ur}</tbody>
-    <tfoot><tr><td>Total</td><td class="c">${UP}</td><td class="c">${UE}</td><td></td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div></section>
+  const titre = t2 => `<tr><th class="t" colspan="${admin ? 5 : 4}">DIRECTION DE SUIVI DES FINANCES LOCALES</th></tr><tr><th class="t sub2" colspan="${admin ? 5 : 4}">${t2}</th></tr>`;
+  $('#doc').innerHTML = kp + `<div class="xlwrap"><table class="tbl xl"><thead>${titre('CADRE ORGANIQUE (mis à jour)')}<tr><th class="l">STRUCTURE</th><th>EFFECTIF PRÉVU</th><th>EN PLACE</th><th>ÉCART</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${gr}</tbody>
+    <tfoot><tr><td class="l">Total</td><td class="c">${P}</td><td class="c">${E}</td><td>${P > E ? (P - E) + ' vacant' + (P - E > 1 ? 's' : '') : ''}</td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
+    ${admin ? `<form class="addpost noprint" data-f="addpost" ${key}><input name="g" list="dl-grade" placeholder="Ajouter un grade" required aria-label="Grade"><input name="p" type="number" min="0" value="1" style="width:86px" aria-label="Effectif prévu"><button class="btn sm primary">Ajouter</button></form>` : ''}
+    <div class="xlwrap" style="margin-top:16px"><table class="tbl xl"><thead>${titre('EFFECTIF PAR UNITÉ')}<tr><th class="l">UNITÉ</th><th>EFFECTIF PRÉVU</th><th>EN PLACE</th><th>ÉCART</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${ur}</tbody>
+    <tfoot><tr><td class="l">Total</td><td class="c">${UP}</td><td class="c">${UE}</td><td></td>${admin ? '<td></td>' : ''}</tr></tfoot></table></div>
     <datalist id="dl-grade">${GRADES.map(x => `<option value="${esc(x.l)}">`).join('')}</datalist>`;
 }
 function renderListe() {
   const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length;
-  if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer">Importer un fichier</a></div>'; return; }
-  const ctr = new Set([0, 5, 10, 12, 14]);
-  $('#doc').innerHTML = `<div class="tw"><table class="tbl"><thead><tr>${LISTE_HEAD.map((h, k) => `<th class="${k === 0 ? 's1 c' : k === 1 ? 's2' : ctr.has(k) ? 'c' : ''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>
-    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}">${listeCells(a, i).map((v, k) => `<td class="${k === 0 ? 's1 c' : k === 1 ? 's2' : ctr.has(k) ? 'c' : ''}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
-    <tfoot><tr><td class="s1"></td><td class="s2">Effectif : ${L.length}</td><td colspan="14">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
+  if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer/agents">Importer un fichier</a></div>'; return; }
+  const ctr = new Set([0, 5, 10, 12, 14]), cl = k => k === 0 ? 's1 c' : k === 1 ? 's2 l' : ctr.has(k) ? 'c' : 'l';
+  $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl"><thead><tr><th class="t" colspan="${LISTE_HEAD.length}">LISTE DÉCLARATIVE DES AGENTS DE LA DIRECTION DE SUIVI DES FINANCES LOCALES ${DB.meta.annee}</th></tr>
+    <tr>${LISTE_HEAD.map((h, k) => `<th class="${k === 0 ? 's1' : k === 1 ? 's2' : ''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>
+    ${L.map((a, i) => `<tr data-act="fiche" data-id="${a.id}">${listeCells(a, i).map((v, k) => `<td class="${cl(k)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tfoot><tr><td class="s1"></td><td class="s2 l">Effectif : ${L.length}</td><td colspan="${LISTE_HEAD.length - 2}" class="l">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>`;
 }
 const renderDoc = kind => ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])();
 function fillTDiv() { const s = $('#tDiv'); if (!s) return; const cur = s.value; s.innerHTML = '<option value="">Toutes les divisions</option>' + allDivisions(ui.dir).map(v => `<option>${esc(v)}</option>`).join(''); s.value = cur; }
 
 /* ---------- Importer un fichier ---------- */
-function pImport() {
-  return `<header class="ph"><div><h2>Importer un fichier</h2><p class="sub">Excel, Word, PDF ou CSV : les agents sont placés automatiquement dans la mise en place, le cadre organique et la liste déclarative.</p></div></header>
+function pImport(arg) {
+  const md = arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents';
+  return `<header class="ph"><div><h2>Importer un fichier</h2><p class="sub">Excel (.xlsx), Word (.docx) ou CSV. Choisissez ce que contient le fichier, vérifiez l’aperçu, puis importez.</p></div></header>
   <section class="card"><h3 style="margin-bottom:12px">1. Choisir le fichier</h3>
     <label class="drop" for="impFile">${ico('upload')}<b>Toucher pour choisir un fichier</b><span>.xlsx, .xls, .csv, .docx, .pdf</span></label>
     <input id="impFile" type="file" accept=".xlsx,.xls,.xlsm,.csv,.txt,.docx,.pdf" hidden>
-    <div class="grid sec2"><div><label>Le fichier contient</label><div class="radios"><label class="rd"><input type="radio" name="impMode" value="agents" checked>Des agents</label><label class="rd"><input type="radio" name="impMode" value="cadre">Le cadre organique (postes prévus)</label></div></div>
+    <div class="grid sec2"><div><label>Le fichier contient</label><div class="radios"><label class="rd"><input type="radio" name="impMode" value="agents" ${md === 'agents' ? 'checked' : ''}>Liste déclarative (agents)</label><label class="rd"><input type="radio" name="impMode" value="mise" ${md === 'mise' ? 'checked' : ''}>Mise en place (tableau Word par bureau)</label><label class="rd"><input type="radio" name="impMode" value="cadre" ${md === 'cadre' ? 'checked' : ''}>Cadre organique (postes prévus)</label></div></div>
       <label>Direction par défaut<select id="impDir">${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select></label></div>
     <label class="rd sec2" style="display:flex"><input type="checkbox" id="impSheet">Utiliser le nom de la feuille / du tableau comme division (si le fichier n’a pas de colonne « Division »)</label>
     <p class="sub sec2">Pas de fichier prêt ? <button class="linkbtn" data-act="template">Télécharger un modèle Excel</button></p></section>
@@ -1081,6 +1096,70 @@ function htmlTables(html) {
   if (!out.length) out.push({ name: 'Texte', aoa: [...doc.querySelectorAll('p')].map(p => p.textContent.trim()).filter(Boolean).map(l => l.split(/\t| {2,}|;/).map(s => s.trim())) });
   return out;
 }
+/* Lecteur intégré : xlsx et docx fonctionnent sans bibliothèque externe */
+async function inflateRaw(data) {
+  const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(data); w.close();
+  return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+}
+async function unzip(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf), td = new TextDecoder(); let e = u8.length - 22;
+  while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('Fichier illisible (archive invalide).');
+  const n = dv.getUint16(e + 10, true); let off = dv.getUint32(e + 16, true); const files = {};
+  for (let i = 0; i < n; i++) {
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true), nl = dv.getUint16(off + 28, true), el = dv.getUint16(off + 30, true), cl = dv.getUint16(off + 32, true), lho = dv.getUint32(off + 42, true);
+    files[td.decode(u8.subarray(off + 46, off + 46 + nl))] = { method, csize, lho }; off += 46 + nl + el + cl;
+  }
+  return async name => {
+    const f = files[name]; if (!f) return null;
+    const nl = dv.getUint16(f.lho + 26, true), el = dv.getUint16(f.lho + 28, true), st = f.lho + 30 + nl + el, data = u8.subarray(st, st + f.csize);
+    return td.decode(f.method === 0 ? data : await inflateRaw(data));
+  };
+}
+const xmlDoc = t => new DOMParser().parseFromString(t, 'application/xml');
+const kids = (el, ln) => [...el.childNodes].filter(c => c.localName === ln);
+const colIdx = ref => { let n = 0; for (const ch of ref.replace(/[^A-Z]/g, '')) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+async function parseXlsxLite(buf) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('lib');
+  const rd = await unzip(buf), wb = xmlDoc(await rd('xl/workbook.xml')), rels = xmlDoc(await rd('xl/_rels/workbook.xml.rels')), relMap = {};
+  [...rels.getElementsByTagName('Relationship')].forEach(r => relMap[r.getAttribute('Id')] = r.getAttribute('Target'));
+  const ss = []; const sst = await rd('xl/sharedStrings.xml');
+  if (sst) [...xmlDoc(sst).getElementsByTagName('si')].forEach(si => ss.push([...si.getElementsByTagName('t')].map(t => t.textContent).join('')));
+  const out = [];
+  for (const sh of [...wb.getElementsByTagName('sheet')]) {
+    const rid = sh.getAttribute('r:id') || sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    let tg = relMap[rid] || ''; tg = tg.startsWith('/') ? tg.slice(1) : 'xl/' + tg;
+    const x = await rd(tg); if (!x) continue; const aoa = [];
+    [...xmlDoc(x).getElementsByTagName('row')].forEach(row => {
+      const r = (+row.getAttribute('r') || aoa.length + 1) - 1, arr = []; 
+      [...row.getElementsByTagName('c')].forEach(c => {
+        const ci = colIdx(c.getAttribute('r') || ''), t = c.getAttribute('t'), v = c.getElementsByTagName('v')[0];
+        let val = '';
+        if (t === 'inlineStr') val = [...c.getElementsByTagName('t')].map(z => z.textContent).join('');
+        else if (v) val = t === 's' ? (ss[+v.textContent] ?? '') : (t === 'str' || t === 'e' || t === 'b') ? v.textContent : (isNaN(+v.textContent) ? v.textContent : +v.textContent);
+        arr[ci] = val;
+      });
+      for (let k = 0; k < arr.length; k++) if (arr[k] === undefined) arr[k] = '';
+      while (aoa.length < r) aoa.push([]); aoa[r] = arr;
+    });
+    out.push({ name: sh.getAttribute('name'), aoa });
+  }
+  return out;
+}
+async function parseDocxLite(buf) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('lib');
+  const rd = await unzip(buf), x = await rd('word/document.xml'); if (!x) throw new Error('Fichier Word illisible.');
+  const doc = xmlDoc(x), body = doc.getElementsByTagName('w:body')[0] || doc.documentElement, out = [];
+  const ptxt = p => [...p.getElementsByTagName('*')].map(n => n.localName === 't' ? n.textContent : (n.localName === 'tab' || n.localName === 'br') ? ' ' : '').join('');
+  const cellText = tc => kids(tc, 'p').map(ptxt).join('\n').trim();
+  kids(body, 'tbl').forEach((tb, i) => {
+    const aoa = kids(tb, 'tr').map(tr => kids(tr, 'tc').map(cellText));
+    if (aoa.length) out.push({ name: 'Tableau ' + (i + 1), aoa });
+  });
+  if (!out.length) out.push({ name: 'Texte', aoa: kids(body, 'p').map(ptxt).map(t => t.trim()).filter(Boolean).map(l => l.split(/\t| {2,}|;/).map(z => z.trim())) });
+  return out;
+}
 async function parsePdf(buf) {
   await loadLib('pdf'); pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise, lines = [];
@@ -1105,12 +1184,69 @@ async function parsePdf(buf) {
 }
 async function parseFile(file) {
   const ext = (file.name.split('.').pop() || '').toLowerCase(), buf = await file.arrayBuffer();
+  if (['xlsx', 'xlsm'].includes(ext)) { try { return await parseXlsxLite(buf); } catch (e) { if (e.message !== 'lib' && !/DecompressionStream/.test(String(e))) throw e; } }
+  if (ext === 'docx') { try { return await parseDocxLite(buf); } catch (e) { if (e.message !== 'lib') throw e; } }
   if (['xlsx', 'xls', 'xlsm', 'ods'].includes(ext)) { await loadLib('xlsx'); const wb = XLSX.read(buf, { type: 'array' }); return wb.SheetNames.map(n => ({ name: n, aoa: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' }) })); }
   if (ext === 'csv' || ext === 'txt') { let t; try { t = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { t = new TextDecoder('windows-1252').decode(buf); } return [{ name: file.name, aoa: parseCSV(t) }]; }
   if (ext === 'docx') { await loadLib('mammoth'); return htmlTables((await mammoth.convertToHtml({ arrayBuffer: buf })).value); }
   if (ext === 'pdf') return parsePdf(buf);
   if (ext === 'doc') throw new Error('Ancien format Word (.doc) non pris en charge. Ouvrez-le dans Word et enregistrez-le en .docx.');
   throw new Error('Format non pris en charge. Utilisez Excel, Word (.docx), PDF ou CSV.');
+}
+const GRADE_RX = /(ATA\s?\.?\s?[12]|AGA\s?\.?\s?[12]|HUISSIER)/i;
+const ntoks = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(new RegExp(GRADE_RX.source, 'gi'), ' ').replace(/[^A-Z ]/g, ' ').split(/\s+/).filter(Boolean);
+function misUnits() {
+  const u = []; DB.org.divisions.forEach(d => { if (d.kind === 'sec') u.push({ div: d.name, bur: '' }); else d.bureaux.forEach(b => u.push({ div: d.name, bur: b.name })); });
+  return u.sort((a, b) => (a.bur === '') - (b.bur === ''));
+}
+function buildMise() {
+  const units = misUnits(), isHead = r => r.some(c => /division|secretariat|pool|exam|stat\.|^\s*c\.?\s?[db]\b/i.test(String(c || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+  const t = imp.tables.find(x => (x.aoa[0] || []).length === units.length && x.aoa.length > 5);
+  if (!t) return null;
+  let st = 0; while (st < 8 && st < t.aoa.length && isHead(t.aoa[st])) st++;
+  const idx = new Map(); DB.agents.forEach(a => { const k = ntoks(a.nom + ' ' + a.postnom + ' ' + a.prenom).sort().join(' '); if (!idx.has(k)) idx.set(k, []); idx.get(k).push(a); });
+  const used = new Set(), items = [];
+  t.aoa.slice(st).forEach(r => r.forEach((cell, ci) => {
+    const txt = String(cell || '').replace(/\s+/g, ' ').trim(); if (!txt || !units[ci]) return;
+    const tk = ntoks(txt); if (tk.length < 1) return;
+    let ag = (idx.get([...tk].sort().join(' ')) || []).find(a => !used.has(a.id));
+    if (!ag) { const ts = new Set(tk), c = DB.agents.filter(a => !used.has(a.id) && (() => { const at = ntoks(a.nom + ' ' + a.postnom + ' ' + a.prenom), as = new Set(at), com = at.filter(z => ts.has(z)).length; return com >= 2 && (at.every(z => ts.has(z)) || tk.every(z => as.has(z))); })()); if (c.length === 1) ag = c[0]; }
+    const gm = txt.match(GRADE_RX), fonc = gm ? gm[0].toUpperCase().replace(/[\s.]/g, '') : '';
+    if (ag) used.add(ag.id);
+    items.push({ unit: units[ci], txt, tk, ag, fonc });
+  }));
+  return { items, units };
+}
+function prepMise() {
+  const box = $('#impPreview'); if (!imp.tables.length) { box.innerHTML = ''; return; }
+  const g = imp.grid = buildMise();
+  if (!g) { box.innerHTML = `<div class="warn">${ico('alert', 20)}<span>Aucun tableau de mise en place reconnu (il faut un tableau Word de ${misUnits().length} colonnes : un bureau par colonne). Pour un fichier Excel avec une colonne « Division » et « Bureau », choisissez « Liste déclarative ».</span></div>`; return; }
+  const ok = g.items.filter(i => i.ag), ko = g.items.filter(i => !i.ag);
+  box.innerHTML = `<section class="card"><h3 style="margin-bottom:10px">2. Vérifier avant d’importer</h3>
+    <p><span class="badge ok">${ico('check', 14)} ${ok.length} agent${ok.length > 1 ? 's' : ''} retrouvé${ok.length > 1 ? 's' : ''}</span> <span class="badge ${ko.length ? 'warn' : 'ok'}">${ko.length} non retrouvé${ko.length > 1 ? 's' : ''}</span></p>
+    <p class="sub">Les agents retrouvés sont rangés dans leur division et leur bureau. Importez d’abord la liste déclarative pour que les noms soient connus.</p>
+    <div class="xlwrap" style="max-height:260px;margin-top:12px"><table class="tbl xl"><thead><tr><th class="l">Agent (mise en place)</th><th class="l">Bureau</th><th>État</th></tr></thead><tbody>
+    ${g.items.slice(0, 40).map(i => `<tr style="cursor:default"><td class="l">${esc(i.txt)}</td><td class="l">${esc(i.unit.bur || i.unit.div)}</td><td class="c">${i.ag ? '<span class="badge ok">retrouvé</span>' : '<span class="badge warn">non retrouvé</span>'}</td></tr>`).join('')}</tbody></table></div>
+    ${ko.length ? `<label class="rd sec2" style="display:flex"><input type="checkbox" id="impCreate">Créer aussi les ${ko.length} agents non retrouvés (nom, fonction, bureau)</label>` : ''}
+    <div class="acts sec2"><button class="btn primary" data-act="impapply" ${ok.length || ko.length ? '' : 'disabled'}>${ico('check', 18)}Appliquer la mise en place</button></div></section>`;
+}
+function applyMise() {
+  const g = imp.grid; if (!g) return; const cr = $('#impCreate') && $('#impCreate').checked; let n = 0, c = 0; const dir = DB.directions[0].name;
+  g.items.forEach(i => {
+    if (i.ag) {
+      i.ag.division = i.unit.div; i.ag.bureau = i.unit.bur; i.ag.updated = Date.now();
+      if (i.fonc && !i.ag.fonction) i.ag.fonction = i.fonc; if (i.fonc && !i.ag.grade) i.ag.grade = canonGrade(i.fonc); n++;
+    } else if (cr) {
+      const t = i.txt.replace(new RegExp(GRADE_RX.source, 'gi'), ' ').replace(/[\/]/g, ' ').split(/\s+/).filter(Boolean);
+      DB.agents.push({ id: uid(), photo: '', created: Date.now(), updated: Date.now(), nom: t[0] || '', postnom: t[1] || '', prenom: t.slice(2).join(' '), naissance: '', sexe: '', etat_civil: '', diplome: '', matricule: '', acte: '', engagement: '', grade: canonGrade(i.fonc), fonction: i.fonc, direction: dir, division: i.unit.div, bureau: i.unit.bur, salaire: 'Non', salaire_montant: '', prime: 'Non', prime_montant: '', recense: 'Non', prise_en_charge: '', situation: 'Actif', observation: '' }); c++;
+    }
+  });
+  save(); toast(`Mise en place : ${n} agent(s) rangé(s)${c ? ', ' + c + ' créé(s)' : ''}`); location.hash = '#/mise-en-place'; route();
+}
+function afterParse() {
+  if (!imp) return;
+  if (imp.mode === 'mise') { prepMise(); return; }
+  if (imp.tables.length) { setupTables(); renderPreview(); } else $('#impPreview').innerHTML = '';
 }
 function setupTables() {
   const keys = imp.mode === 'agents' ? AKEYS : CKEYS;
@@ -1147,7 +1283,7 @@ function route() {
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (name === 'login' && session) { location.hash = '#/accueil'; return; }
   closeModal();
-  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: pImport, admin: pAdmin, 'base-de-donnees': pBaseDeDonnees };
+  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
   $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
@@ -1164,7 +1300,7 @@ function route() {
     $('#fmGrade').addEventListener('change', e => { const g = GRADES.find(x => x.l === e.target.value); if (g && g.a && !$('#fmFonc').value.trim()) $('#fmFonc').value = g.a; });
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
-  if (name === 'importer') imp = { tables: [], mode: 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
+  if (name === 'importer') imp = { tables: [], mode: arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
   if (name === 'base-de-donnees') Store.where().then(w => { const e = $('#whereDb'); if (e) e.textContent = w; });
   if (afterRoute) { const f = afterRoute; afterRoute = null; f(); }
 }
@@ -1226,6 +1362,7 @@ const A = {
   enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
   cadrerm: t => { DB.cadre = DB.cadre.filter(c => c.id !== t.dataset.id); save(); renderCadre(); },
   impapply: () => {
+    if (imp.mode === 'mise') return applyMise();
     const res = buildImport(); let nw = 0, up = 0;
     const dirOf = n => { let d = DB.directions.find(x => norm(x.name) === norm(n || imp.dir)); if (!d) { d = { name: n || imp.dir, divisions: [] }; DB.directions.push(d); } return d; };
     if (imp.mode === 'agents') {
@@ -1319,10 +1456,10 @@ document.addEventListener('change', async e => {
     if (t.dataset.j === '') dv.prevu = v; else dv.bureaux[+t.dataset.j].prevu = v;
     save(); renderCadre(); return;
   }
-  if (t.name === 'impMode' && imp) { imp.mode = t.value; setupTables(); renderPreview(); return; }
-  if (t.id === 'impDir' && imp) { imp.dir = t.value; renderPreview(); return; }
-  if (t.id === 'impSheet' && imp) { imp.sheetAsDiv = t.checked; renderPreview(); return; }
-  if (t.dataset && t.dataset.imp && imp) {
+  if (t.name === 'impMode' && imp) { imp.mode = t.value; afterParse(); return; }
+  if (t.id === 'impDir' && imp) { imp.dir = t.value; afterParse(); return; }
+  if (t.id === 'impSheet' && imp) { imp.sheetAsDiv = t.checked; afterParse(); return; }
+  if (t.dataset && t.dataset.imp && imp && imp.mode !== 'mise') {
     const [ti, k] = t.dataset.imp.split('|'), tb = imp.tables[+ti], keys = imp.mode === 'agents' ? AKEYS : CKEYS;
     if (k === 'hi') { tb.hi = Math.max(0, (parseInt(t.value, 10) || 1) - 1); tb.map = autoMap(tb.aoa[tb.hi] || [], keys); } else if (t.value === '') delete tb.map[k]; else tb.map[k] = +t.value;
     renderPreview(); const d = $$('#impPreview details')[+ti]; if (d) d.open = true; return;
@@ -1332,9 +1469,9 @@ document.addEventListener('change', async e => {
     $('#impPreview').innerHTML = '<div class="card"><p>Lecture du fichier…</p></div>';
     try {
       imp.tables = (await parseFile(file)).filter(x => x.aoa.length); imp.mode = ($('input[name=impMode]:checked') || {}).value || 'agents'; imp.dir = $('#impDir').value; imp.sheetAsDiv = $('#impSheet').checked;
-      if (!imp.tables.length) throw new Error('Le fichier est vide.'); setupTables(); renderPreview();
+      if (!imp.tables.length) throw new Error('Le fichier est vide.'); afterParse();
     } catch (err) {
-      imp.tables = []; $('#impPreview').innerHTML = `<div class="warn">${ico('alert', 20)}<span>${esc(err.message === 'lib' ? 'Module de lecture indisponible dans cette version.' : err.message)}</span></div>`;
+      imp.tables = []; $('#impPreview').innerHTML = `<div class="warn">${ico('alert', 20)}<span>${esc(err.message === 'lib' ? 'Ce format n’est pas lisible dans cette version. Utilisez un fichier Excel (.xlsx), Word (.docx) ou CSV.' : err.message)}</span></div>`;
     }
     t.value = '';
   }
