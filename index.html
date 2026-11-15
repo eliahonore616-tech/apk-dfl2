@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#0A3C98">
@@ -212,6 +214,9 @@ table.xl{border-collapse:collapse;width:100%;font-size:13px}
 .tbl.xl thead th.t.sm{font-size:12.5px;font-weight:700;padding:3px 8px}
 .tbl.xl thead th.t.last{border-bottom:1px solid var(--xl);padding-bottom:12px}
 .tbl.xl thead th.t.lft{text-align:left}
+@media (max-width:760px){.tbl .s2,.tbl.xl td.s2,.tbl.xl th.s2{position:static;min-width:200px;left:auto}.tbl .s1,.tbl.xl td.s1,.tbl.xl th.s1{min-width:40px}.tbl.xl td,.tbl.xl th{font-size:14px}}
+body.priv #app{filter:blur(22px);pointer-events:none}
+.tbl.xl tr.nw td{background:#ecfdf3}.tbl.xl tr.nw td.s2,.tbl.xl tr.nw td.s1{background:#ecfdf3}.nwb{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;background:#16a34a;color:#fff;font-size:10px;font-weight:800;vertical-align:middle}
 .tbl.xl.editing th{white-space:nowrap}.tbl.xl.editing th input{min-width:120px;width:calc(100% - 34px);display:inline-block;font-weight:700}.tbl.xl.editing td input{min-width:110px;width:100%}.tbl.xl.editing th .btn{padding:0 8px;min-height:30px;margin-left:4px;vertical-align:middle}.xl td input[data-org=burname]{width:calc(100% - 42px);display:inline-block;vertical-align:middle}
 .tbl.xl input{margin:0;min-height:32px;padding:3px 8px;font-size:13px;min-width:190px;border-radius:6px}
 .stk{position:sticky;left:0;width:min(900px,calc(100vw - 48px));text-align:center}
@@ -276,6 +281,7 @@ details.map .grid{margin-top:12px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
 </head>
 <body>
 <div id="app"></div>
@@ -464,6 +470,7 @@ function sortAgents(list, mode) {
   const c = {
     hier: (a, b) => di(a) - di(b) || vi(a) - vi(b) || gradeRank(a.grade) - gradeRank(b.grade) || nm(a).localeCompare(nm(b), 'fr'),
     alpha: (a, b) => nm(a).localeCompare(nm(b), 'fr'),
+    recent: (a, b) => (b.created || 0) - (a.created || 0),
     mat: (a, b) => String(a.matricule || '~').localeCompare(String(b.matricule || '~'), 'fr', { numeric: true })
   }[mode || 'hier'];
   return [...list].sort(c);
@@ -778,7 +785,26 @@ const Sync = {
 };
 
 
-const APP_VERSION = '2.9.0';
+
+/* ================= Sécurité ================= */
+const PBK = 120000;
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+async function kdf(p, salt) { const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(p), 'PBKDF2', false, ['deriveBits']); return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations: PBK }, k, 256)); }
+async function makePass(p) { try { const salt = hex(crypto.getRandomValues(new Uint8Array(16))); return 'p2$' + salt + '$' + await kdf(p, salt); } catch (e) { return sha256(p); } }
+async function checkPass(u, p) {
+  const x = u.pass || '';
+  if (x.startsWith('p2$')) { const [, salt, h] = x.split('$'); return (await kdf(p, salt)) === h; }
+  return x.length === 64 ? x === await sha256(p) : x === hash(p);
+}
+const strongPw = (p, user) => p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p) && !['admin', (user || '').toLowerCase()].includes(p.toLowerCase());
+const PWMSG = 'Mot de passe : 8 caractères minimum, avec au moins une lettre et un chiffre, différent de l’identifiant.';
+function audit(action, detail) {
+  try { const a = DB.meta.audit = DB.meta.audit || []; a.push({ t: Date.now(), u: session ? session.username : '—', a: action, d: detail || '' }); if (a.length > 400) a.splice(0, a.length - 400); save(); } catch (e) {}
+}
+const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
+const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
+
+const APP_VERSION = '3.2.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -848,13 +874,18 @@ function shell(inner, name) {
 
 /* ================= Pages ================= */
 const stat = (ic, cls, n, l) => `<div class="stat"><span class="ic ${cls}">${ico(ic, 22)}</span><div><b>${n}</b><span>${l}</span></div></div>`;
+function lastAgents() {
+  const L = [...DB.agents].filter(a => a.created).sort((a, b) => b.created - a.created).slice(0, 8);
+  if (!L.length) return '';
+  return `<section class="card sec2" style="margin-top:16px"><h3>Derniers agents enregistrés</h3><div class="alist" style="margin-top:10px">${L.map(a => `<button class="arow" data-act="fiche" data-id="${a.id}" style="width:100%;min-width:0">${avatar(a)}<span class="an" style="min-width:0"><b>${esc(fullName(a))}</b><small>${esc(gradeCode(a.grade) || 'Grade non renseigné')}${a.created ? ' · ajouté le ' + new Date(a.created).toLocaleDateString('fr-FR') : ''}${isNew(a) && DB.agents.filter(isNew).length <= 30 ? ' <span class="nwb">NOUVEAU</span>' : ''}</small></span></button>`).join('')}</div><div class="acts" style="margin-top:12px"><a class="btn" href="#/liste" data-act="gonew">Voir toute la liste (les plus récents d’abord)</a></div></section>`;
+}
 function pAccueil() {
   return `<section class="hero"><span class="band"></span>
     <span class="pill">République Démocratique du Congo</span>
     <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
     <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
     <p class="msg">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>`;
+    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p>`;
 }
 
 function pSync() {
@@ -874,6 +905,7 @@ function pSync() {
     ${c ? `<div class="acts" style="margin-top:12px"><button class="btn" data-act="syncnow">Synchroniser maintenant</button><button class="btn" data-act="synccode">Code pour un autre appareil</button><button class="btn danger" data-act="syncoff">Désactiver</button></div>` : ''}
     <p class="sub" style="margin-top:14px;font-size:12px">Le code de connexion contient le mot de passe du compte de synchronisation : ne le partagez qu’avec les appareils de la Direction.</p></section>`;
 }
+const canPlace = () => !!session && ['admin', 'cd'].includes(session.role);
 function pLogin() {
   const first = DB.users.some(u => u.mustChange);
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
@@ -888,8 +920,8 @@ function pLogin() {
 function pCompte() {
   return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
     <form data-f="pw"><label>Mot de passe actuel<input name="old" type="password" autocomplete="current-password" required></label>
-    <label>Nouveau mot de passe (6 caractères minimum)<input name="n1" type="password" autocomplete="new-password" minlength="6" required></label>
-    <label>Confirmer le nouveau mot de passe<input name="n2" type="password" autocomplete="new-password" minlength="6" required></label>
+    <label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Confirmer le nouveau mot de passe<input name="n2" type="password" autocomplete="new-password" minlength="8" required></label>
     <button class="btn primary">Enregistrer le mot de passe</button></form></section>`;
 }
 
@@ -1040,8 +1072,8 @@ function pForm(id) {
       <label>Fonction<input name="fonction" id="fmFonc" list="dl-fonc" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></fieldset>
     <fieldset class="fsec">${sec(3, 'Affectation')}<div class="grid">
       <label>Direction *<select name="direction" id="fmDir" required>${DB.directions.map(d => `<option ${d.name === v.direction ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
-      <label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label>
-      <label>Bureau *<select name="bureau" id="fmBur" required>${bureauOptions(v.division, v.bureau)}</select></label></div></fieldset>
+      ${canPlace() ? `<label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label>
+      <label>Bureau *<select name="bureau" id="fmBur" required>${bureauOptions(v.division, v.bureau)}</select></label>` : `<p class="note" style="grid-column:1/-1">La division, le bureau et le placement dans la mise en place et le cadre organique sont attribués par l’Adm1 ou l’Adm2.${v.division ? ' Affectation actuelle : <b>' + esc(v.division) + (v.bureau ? ' / ' + esc(v.bureau) : '') + '</b>.' : ''}</p>`}</div></fieldset>
     <fieldset class="fsec">${sec(4, 'Rémunération et suivi')}<div class="grid">
       <div><label>Salaire</label>${radio('salaire', yn, v.salaire)}</div><label>Montant du salaire<input name="salaire_montant" inputmode="decimal" value="${esc(v.salaire_montant)}"></label>
       <div><label>Prime</label>${radio('prime', yn, v.prime)}</div><label>Montant de la prime<input name="prime_montant" inputmode="decimal" value="${esc(v.prime_montant)}"></label>
@@ -1069,10 +1101,10 @@ const printHead = kind => '';
 function pDoc(kind) {
   const desc = { 'mise-en-place': 'Secrétariat, 4 divisions et 8 bureaux. Les agents sont répartis automatiquement selon leur affectation.', cadre: 'Effectif prévu par grade et par unité, comparé aux agents en place.', liste: `Liste déclarative des agents de la Direction – année ${DB.meta.annee}.` }[kind];
   const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
-  const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="mat">Tri : matricule</option></select>` : '';
+  const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="recent">Tri : derniers enregistrés</option><option value="mat">Tri : matricule</option></select>` : '';
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
   return `${printHead(kind)}<header class="ph"><div><h2>${DOCTITLE[kind]}</h2><p class="sub">${desc}</p></div>
-    <div class="acts noprint"><a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents' }[kind]}">${ico('upload', 18)}Importer</a><button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
+    <div class="acts noprint">${kind === 'liste' || canPlace() ? `<a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents' }[kind]}">${ico('upload', 18)}Importer</a>` : ''}<button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
     ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}</div><div id="docbar" class="acts noprint" style="margin:10px 0"></div><div id="doc"></div>`;
 }
 function docRows(kind) {
@@ -1103,7 +1135,7 @@ function listeAgents() {
     (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.acte, a.division].join(' ')).includes(q))), sort);
 }
 function renderMise() {
-  const q = norm(($('#tq') && $('#tq').value) || ''), admin = session && session.role === 'admin', org = DB.org || defaultOrg();
+  const q = norm(($('#tq') && $('#tq').value) || ''), admin = canPlace(), org = DB.org || defaultOrg();
   const hit = a => !q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction, a.grade, a.bureau].join(' ')).includes(q);
   const inp = (k, val, ph, at = '') => admin ? `<input data-org="${k}" ${at} value="${esc(val || '')}" placeholder="${ph}">` : esc(val || 'Non renseigné');
   const cnt = (a, b) => DB.agents.filter(x => x.division === a && (b === undefined || x.bureau === b)).length;
@@ -1179,8 +1211,9 @@ function listeCols() {
   return cols;
 }
 const colVals = (cols, a, i) => { const c = listeCells(a, i); return cols.map(o => o.extra ? ((a.x || {})[o.k] || '') : c[o.k]); };
+const isNew = a => Date.now() - (a.created || 0) < 864e5;
 function renderListe() {
-  const L = listeAgents(), m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length, ed = !!ui.edit;
+  const L = listeAgents(), NW = DB.agents.filter(isNew).length <= 30, m = L.filter(a => a.sexe === 'M').length, f = L.filter(a => a.sexe === 'F').length, ed = !!ui.edit;
   if (!L.length) { $('#doc').innerHTML = '<div class="empty">Aucun agent à afficher.<br><br><a class="btn primary" href="#/nouveau">Ajouter un agent</a> <a class="btn" href="#/importer/agents">Importer un fichier</a></div>'; return; }
   const cols = listeCols(), n = cols.length, ctr = new Set([0, 5, 10, 12, 14]);
   const cl = (o, p) => p === 0 ? 's1 c' : p === 1 ? 's2 l' : ctr.has(o.k) ? 'c' : 'l';
@@ -1188,11 +1221,11 @@ function renderListe() {
   const td = (o, p, a, v) => {
     if (ed && o.extra) return `<td class="l"><input data-cx="${o.k}" data-id="${a.id}" value="${esc(v)}" aria-label="${esc(o.label)}"></td>`;
     if (ed && LF[o.k]) return `<td class="${cl(o, p)}"><input data-cf="${LF[o.k]}" data-id="${a.id}" value="${esc(a[LF[o.k]] || '')}" aria-label="${esc(o.label)}"></td>`;
-    return `<td class="${cl(o, p)}">${esc(v)}</td>`;
+    return `<td class="${cl(o, p)}">${esc(v)}${p === 1 && NW && isNew(a) ? '<span class="nwb">NOUVEAU</span>' : ''}</td>`;
   };
   $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl${ed ? ' editing' : ''}"><thead>${LETTER(n)}<tr><th class="t last" colspan="${n}"><div class="stk">LISTE DÉCLARATIVE DES AGENTS DE LA DIRECTION DE SUIVI DES FINANCES LOCALES ${DB.meta.annee}</div></th></tr>
     <tr>${cols.map(th).join('')}</tr></thead><tbody>
-    ${L.slice(0, ui.max).map((a, i) => { const v = colVals(cols, a, i); return `<tr ${ed ? '' : `data-act="fiche" data-id="${a.id}"`}>${cols.map((o, p) => td(o, p, a, v[p])).join('')}</tr>`; }).join('')}</tbody>
+    ${L.slice(0, ui.max).map((a, i) => { const v = colVals(cols, a, i); return `<tr ${NW && isNew(a) ? 'class="nw" ' : ''}${ed ? '' : `data-act="fiche" data-id="${a.id}"`}>${cols.map((o, p) => td(o, p, a, v[p]) + (p === 1 && NW && isNew(a) ? '' : '')).join('')}</tr>`; }).join('')}</tbody>
     <tfoot><tr><td class="s1"></td><td class="s2 l">Effectif : ${L.length}</td><td colspan="${Math.max(1, n - 2)}" class="l">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>
     ${L.length > ui.max ? `<div class="acts noprint" style="justify-content:center;margin:14px 0"><span class="muted" style="align-self:center">${Math.min(ui.max, L.length)} sur ${L.length} agents affichés</span><button class="btn" data-act="more">Afficher 100 de plus</button><button class="btn" data-act="moreall">Tout afficher</button></div>` : ''}`;
 }
@@ -1206,7 +1239,7 @@ function docBar(kind) {
     if (ui.edit && kind === 'liste') h += '<button class="btn sm" data-act="lcoladd">+ Ajouter une colonne</button><button class="btn sm" data-act="lcolreset">Rétablir les colonnes d’origine</button>';
     if (ui.edit && kind === 'cadre') h += '<button class="btn sm" data-act="hdreset">Rétablir les en-têtes d’origine</button>';
   }
-  if (adm) h += `<button class="btn sm danger" data-act="delimp" data-k="${kind}">Supprimer le fichier importé</button>`;
+  if (ed) h += `<button class="btn sm danger" data-act="delimp" data-k="${kind}">Supprimer le fichier importé</button>`;
   e.innerHTML = h;
 }
 const curKind = () => location.hash.replace(/^#\//, '').split('/')[0];
@@ -1441,8 +1474,9 @@ function pAdmin() {
   <section class="card sec2"><h3>Directions et divisions</h3><p class="sub" style="margin-bottom:12px">Touchez le nom d’une division pour la renommer. Une division qui contient des agents ne peut pas être supprimée.</p>${dirs}
     <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>
   <section class="card sec2"><h3>Utilisateurs</h3><ul class="list" style="margin:12px 0 14px">${users}</ul>
-    <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (6 caractères minimum)<input name="p" type="password" minlength="6" required></label>
+    <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (8 caractères minimum, lettres et chiffres)<input name="p" type="password" minlength="8" required></label>
     <label>Rôle<select name="r">${['cb', 'cd', 'admin'].map(r => `<option value="${r}">${ROLES[r]}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
+  <section class="card sec2"><h3>Journal d’activité</h3><p class="sub" style="margin:6px 0 10px">Connexions, échecs de connexion, ajouts, modifications et suppressions sur cet appareil (400 dernières actions).</p><details><summary class="btn sm" style="display:inline-block">Afficher le journal</summary><div class="tw" style="max-height:340px;margin-top:10px"><table class="tbl"><thead><tr><th class="l">Date</th><th class="l">Utilisateur</th><th class="l">Action</th></tr></thead><tbody>${[...(DB.meta.audit || [])].reverse().slice(0, 150).map(e => `<tr style="cursor:default"><td class="l">${new Date(e.t).toLocaleString('fr-FR')}</td><td class="l">${esc(e.u)}</td><td class="l">${esc(e.a)}${e.d ? ' — ' + esc(e.d) : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="l muted">Aucune action enregistrée.</td></tr>'}</tbody></table></div></details></section>
   <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Efface tous les agents de cet appareil. Pensez à sauvegarder sur la page <a href="#/base-de-donnees">Base de données</a> avant.</p><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></section>`;
 }
 
@@ -1450,6 +1484,8 @@ function pAdmin() {
 function route() {
   const h = location.hash.replace(/^#\//, '') || 'accueil', [name, arg] = h.split('/');
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
+  if (session && session.mustChange && name !== 'compte') { location.hash = '#/compte'; return; }
+  if (name === 'importer' && session && !canPlace() && arg !== 'agents' && arg) { location.hash = '#/importer/agents'; return; }
   if (name === 'login' && session) { location.hash = '#/accueil'; return; }
   closeModal();
   const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, 'base-de-donnees': pBaseDeDonnees };
@@ -1457,15 +1493,15 @@ function route() {
   $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
   if (DOCS.includes(name)) {
-    fillTDiv(); ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
+    fillTDiv(); if (ui.nextSort && $('#tSort')) { $('#tSort').value = ui.nextSort; ui.nextSort = ''; } ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
     ['tq', 'tDiv', 'tSit', 'tSort'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', () => { ui.max = 100; if (i === 'tq') { clearTimeout(tm); tm = setTimeout(rd, 250); } else rd(); }); });
     if ($('#tDir')) $('#tDir').addEventListener('change', e => { ui.dir = e.target.value; fillTDiv(); rd(); });
     rd();
   }
   if (name === 'nouveau') {
-    const needBur = () => { $('#fmBur').required = $('#fmBur').options.length > 1; }; needBur();
-    $('#fmDir').addEventListener('change', e => { $('#fmDiv').innerHTML = divOptions(e.target.value, ''); $('#fmBur').innerHTML = bureauOptions('', ''); needBur(); });
-    $('#fmDiv').addEventListener('change', e => { $('#fmBur').innerHTML = bureauOptions(e.target.value, ''); needBur(); });
+    const needBur = () => { if ($('#fmBur')) $('#fmBur').required = $('#fmBur').options.length > 1; }; needBur();
+    $('#fmDir').addEventListener('change', e => { if ($('#fmDiv')) $('#fmDiv').innerHTML = divOptions(e.target.value, ''); if ($('#fmBur')) $('#fmBur').innerHTML = bureauOptions('', ''); needBur(); });
+    if ($('#fmDiv')) $('#fmDiv').addEventListener('change', e => { $('#fmBur').innerHTML = bureauOptions(e.target.value, ''); needBur(); });
     $('#fmGrade').addEventListener('change', e => { const g = GRADES.find(x => x.l === e.target.value); if (g && g.a && !$('#fmFonc').value.trim()) $('#fmFonc').value = g.a; });
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
@@ -1475,6 +1511,7 @@ function route() {
 }
 
 function onDocEdit(e) {
+  if (!canPlace()) return;
   const t = e.target, d = t.dataset, v = t.value.trim();
   const ag = () => DB.agents.find(z => z.id === d.id);
   if (d.lh !== undefined) { lcfgW().heads[d.lh] = v || LISTE_HEAD[+d.lh]; save(); }
@@ -1489,39 +1526,40 @@ const A = {
   more: () => { ui.max += 100; const y = window.scrollY; renderListe(); window.scrollTo(0, y); },
   moreall: () => { ui.max = 1e9; const y = window.scrollY; renderListe(); window.scrollTo(0, y); },
   close: () => closeModal(),
+  gonew: () => { ui.nextSort = 'recent'; },
   tedit: () => { ui.edit = !ui.edit; renderDoc(curKind()); },
-  lcoladd: async () => { const n = await ask('Nom de la nouvelle colonne :'); if (!n || !n.trim()) return; lcfgW().extra.push({ id: 'x' + uid(), label: n.trim() }); save(); renderListe(); toast('Colonne ajoutée'); },
-  lcoldel: t => { const k = t.dataset.k, c = lcfgW(), x = c.extra.find(z => z.id === k); if (!confirm(x ? `Supprimer la colonne « ${x.label} » et ses valeurs ?` : 'Masquer cette colonne ?')) return; if (x) { c.extra = c.extra.filter(z => z.id !== k); DB.agents.forEach(a => { if (a.x && k in a.x) { delete a.x[k]; a.updated = Date.now(); } }); } else c.hidden.push(+k); save(); renderListe(); },
-  lcolreset: () => { if (!confirm('Rétablir les en-têtes et les colonnes d’origine ? Les colonnes ajoutées sont conservées.')) return; const c = lcfgW(); c.heads = {}; c.hidden = []; save(); renderListe(); },
+  lcoladd: async () => { if (!canPlace()) return; const n = await ask('Nom de la nouvelle colonne :'); if (!n || !n.trim()) return; lcfgW().extra.push({ id: 'x' + uid(), label: n.trim() }); save(); renderListe(); toast('Colonne ajoutée'); },
+  lcoldel: t => { if (!canPlace()) return; const k = t.dataset.k, c = lcfgW(), x = c.extra.find(z => z.id === k); if (!confirm(x ? `Supprimer la colonne « ${x.label} » et ses valeurs ?` : 'Masquer cette colonne ?')) return; if (x) { c.extra = c.extra.filter(z => z.id !== k); DB.agents.forEach(a => { if (a.x && k in a.x) { delete a.x[k]; a.updated = Date.now(); } }); } else c.hidden.push(+k); save(); renderListe(); },
+  lcolreset: () => { if (!canPlace()) return; if (!confirm('Rétablir les en-têtes et les colonnes d’origine ? Les colonnes ajoutées sont conservées.')) return; const c = lcfgW(); c.heads = {}; c.hidden = []; save(); renderListe(); },
   hdreset: () => { DB.org.heads = {}; save(); renderCadre(); docBar('cadre'); },
-  addbur: async t => { const div = DB.org.divisions[+t.dataset.i]; const n = await ask(`Nom du nouveau bureau de « ${div.name} » :`); if (!n || !n.trim()) return; const nm = n.trim(); if (div.bureaux.some(b => norm(b.name) === norm(nm))) return toast('Ce bureau existe déjà dans cette division', true); div.bureaux.push({ id: div.id + 'b' + uid(), name: nm, cb: '', prevu: 0 }); save(); toast('Bureau ajouté'); renderMise(); docBar('mise-en-place'); },
-  delbur: t => { const div = DB.org.divisions[+t.dataset.i], b = div.bureaux[+t.dataset.j]; const k = DB.agents.filter(a => a.division === div.name && a.bureau === b.name).length; if (!confirm(`Supprimer le bureau « ${b.name} » ?${k ? ` Ses ${k} agent(s) resteront dans la division, sans bureau.` : ''}`)) return; DB.agents.forEach(a => { if (a.division === div.name && a.bureau === b.name) { a.bureau = ''; a.updated = Date.now(); } }); div.bureaux.splice(+t.dataset.j, 1); save(); toast('Bureau supprimé'); renderMise(); docBar('mise-en-place'); },
+  addbur: async t => { if (!canPlace()) return; const div = DB.org.divisions[+t.dataset.i]; const n = await ask(`Nom du nouveau bureau de « ${div.name} » :`); if (!n || !n.trim()) return; const nm = n.trim(); if (div.bureaux.some(b => norm(b.name) === norm(nm))) return toast('Ce bureau existe déjà dans cette division', true); div.bureaux.push({ id: div.id + 'b' + uid(), name: nm, cb: '', prevu: 0 }); save(); toast('Bureau ajouté'); renderMise(); docBar('mise-en-place'); },
+  delbur: t => { if (!canPlace()) return; const div = DB.org.divisions[+t.dataset.i], b = div.bureaux[+t.dataset.j]; const k = DB.agents.filter(a => a.division === div.name && a.bureau === b.name).length; if (!confirm(`Supprimer le bureau « ${b.name} » ?${k ? ` Ses ${k} agent(s) resteront dans la division, sans bureau.` : ''}`)) return; DB.agents.forEach(a => { if (a.division === div.name && a.bureau === b.name) { a.bureau = ''; a.updated = Date.now(); } }); div.bureaux.splice(+t.dataset.j, 1); save(); toast('Bureau supprimé'); renderMise(); docBar('mise-en-place'); },
   delimp: async t => {
-    if (!session || session.role !== 'admin') return; const k = t.dataset.k;
+    if (!canPlace()) return; const k = t.dataset.k;
     if (k === 'liste') {
       if (!DB.agents.length) return toast('La liste est déjà vide');
       if ((await ask(`Supprimer la liste importée : les ${DB.agents.length} agents seront effacés (sur tous les appareils synchronisés). Pensez à sauvegarder avant (page Base de données). Tapez SUPPRIMER pour confirmer :`)) !== 'SUPPRIMER') return;
-      DB.agents = []; save(); toast('Liste déclarative supprimée'); route();
+      DB.agents = []; audit('Liste déclarative supprimée'); toast('Liste déclarative supprimée'); route();
     } else if (k === 'mise-en-place') {
       if (!confirm('Supprimer la mise en place importée ? La structure revient à celle d’origine et les agents n’ont plus de division ni de bureau (les agents ne sont pas supprimés).')) return;
       const keep = { lcfg: DB.org.lcfg, heads: DB.org.heads }; DB.org = Object.assign(defaultOrg(), keep);
-      DB.agents.forEach(a => { a.division = ''; a.bureau = ''; a.updated = Date.now(); }); syncOrgToDirections(); save(); toast('Mise en place supprimée'); route();
+      DB.agents.forEach(a => { a.division = ''; a.bureau = ''; a.updated = Date.now(); }); syncOrgToDirections(); audit('Mise en place supprimée'); toast('Mise en place supprimée'); route();
     } else {
       if (!confirm('Supprimer le cadre organique importé ? Tous les effectifs prévus (grades et unités) seront remis à zéro.')) return;
       DB.cadre = []; DB.meta.cadreInit = true;
-      DB.org.divisions.forEach(d => { d.prevu = 0; (d.bureaux || []).forEach(b => { b.prevu = 0; }); }); save(); toast('Cadre organique supprimé'); route();
+      DB.org.divisions.forEach(d => { d.prevu = 0; (d.bureaux || []).forEach(b => { b.prevu = 0; }); }); audit('Cadre organique supprimé'); toast('Cadre organique supprimé'); route();
     }
   },
   syncnow: () => { Sync.tok = null; Sync.run(); },
   synccode: () => { const c = Sync.code(); if (navigator.clipboard) navigator.clipboard.writeText(c).then(() => toast('Code copié'), () => {}); openModal(`<h3 style="margin-bottom:8px">Code de connexion</h3><p class="sub" style="margin-bottom:10px">Sur l’autre appareil : Connexion → Configurer la synchronisation → collez ce code.</p><textarea readonly rows="5" style="width:100%" onclick="this.select()">${c}</textarea><div class="acts" style="margin-top:12px"><button class="btn" data-act="close">Fermer</button></div>`); },
   syncoff: () => { if (!confirm('Désactiver la synchronisation sur cet appareil ? Les agents déjà reçus restent ici.')) return; try { localStorage.removeItem('dfl_sync_cfg'); localStorage.removeItem('dfl_sync_st'); } catch (e) {} Sync.cfg = null; Sync.st = { init: false, last: 0, snap: {} }; Sync.tok = null; Sync.rt = ''; clearTimeout(Sync.timer); toast('Synchronisation désactivée'); route(); },
-  logout: () => { session = null; try { localStorage.removeItem('dfl_s'); } catch (e) {}; if (location.hash === '#/accueil' || !location.hash) route(); else location.hash = '#/accueil'; },
+  logout: () => { audit('Déconnexion'); session = null; try { sessionStorage.removeItem('dfl_s'); } catch (e) {}; if (location.hash === '#/accueil' || !location.hash) route(); else location.hash = '#/accueil'; },
   fiche: t => openFiche(t.dataset.id),
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
-  delagent: t => { const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); save(); closeModal(); toast('Fiche supprimée'); route(); } },
-  resetpw: async t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`, '', 'password'); if (p == null) return; if (p.length < 6) return toast('Mot de passe trop court', true); u.pass = await sha256(p); u.mustChange = false; save(); toast('Mot de passe modifié'); },
-  deluser: t => { const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); save(); route(); } },
+  delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); audit('Fiche supprimée', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
+  resetpw: async t => { if (!session || session.role !== 'admin') return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (8 caractères minimum, lettres et chiffres) :`, '', 'password'); if (p == null) return; if (!strongPw(p, u.username)) return toast(PWMSG, true); u.pass = await makePass(p); u.mustChange = false; audit('Mot de passe réinitialisé', u.username); toast('Mot de passe modifié'); },
+  deluser: t => { if (!session || session.role !== 'admin') return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); audit('Utilisateur supprimé', u.username); route(); } },
   rendir: async t => {
     const d = DB.directions[+t.dataset.i], n = ((await ask('Nouveau nom de la direction :', d.name)) || '').trim(); if (!n || n === d.name) return;
     if (DB.directions.some(x => x.name === n)) return toast('Ce nom existe déjà', true);
@@ -1565,7 +1603,7 @@ const A = {
   exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee }[k] + '_DFL_' + today(), r.header, r.rows); },
   template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Situation'], []),
   openfolder: () => window.dflDesktop && window.dflDesktop.open(),
-  wipe: async () => { if (!session || session.role !== 'admin') return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; save(); toast('Tous les agents ont été supprimés'); route(); } },
+  wipe: async () => { if (!session || session.role !== 'admin') return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; audit('Tous les agents supprimés'); toast('Tous les agents ont été supprimés'); route(); } },
   enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
   cadrerm: t => { DB.cadre = DB.cadre.filter(c => c.id !== t.dataset.id); save(); renderCadre(); },
   impapply: () => {
@@ -1574,11 +1612,12 @@ const A = {
     const dirOf = n => { let d = DB.directions.find(x => norm(x.name) === norm(n || imp.dir)); if (!d) { d = { name: n || imp.dir, divisions: [] }; DB.directions.push(d); } return d; };
     if (imp.mode === 'agents') {
       res.items.forEach(c => {
+        if (!canPlace()) { delete c.division; delete c.bureau; }
         const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
         const ex = DB.agents.find(a => agentKey(a) === agentKey(c));
         if (ex) { for (const k in c) if (c[k]) ex[k] = c[k]; ex.updated = Date.now(); up++; } else { DB.agents.push({ id: uid(), photo: '', created: Date.now(), updated: Date.now(), ...c, situation: c.situation || 'Actif' }); nw++; }
       });
-      save(); toast(`Import terminé : ${nw} ajouté(s), ${up} mis à jour`); afterRoute = null; location.hash = '#/liste'; route();
+      audit('Import', `${nw} ajouté(s), ${up} mis à jour`); toast(`Import terminé : ${nw} ajouté(s), ${up} mis à jour`); afterRoute = null; location.hash = '#/liste'; route();
     } else {
       res.items.forEach(c => {
         const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
@@ -1602,26 +1641,31 @@ const F = {
     if (!old) Sync.start(); toast('Synchronisation en cours…'); await Sync.run(); route();
   },
   async login(f) {
+    const lk = lockInfo(); if (lk.until && lk.until <= Date.now() && lk.n >= 10) { lk.n = 0; lk.until = 0; lockSet(lk); }
+    if (lk.until > Date.now()) return toast(`Trop de tentatives. Réessayez dans ${Math.ceil((lk.until - Date.now()) / 60000)} minute(s).`, true);
     const u = f.u.value.trim().toLowerCase(), user = DB.users.find(x => x.username.toLowerCase() === u);
-    if (!user) return toast('Identifiant ou mot de passe incorrect', true);
-    const p = f.p.value, ok = user.pass.length === 64 ? user.pass === await sha256(p) : user.pass === hash(p);
-    if (!ok) return toast('Identifiant ou mot de passe incorrect', true);
-    if (user.pass.length !== 64) { user.pass = await sha256(p); save(); }
+    const ok = user ? await checkPass(user, f.p.value) : (await kdf('x', 'y').catch(() => 0), false);
+    if (!ok) {
+      const n = lk.n + 1; lockSet({ n, until: n >= 10 ? Date.now() + 2 * 60000 : 0 });
+      audit('Échec de connexion', u.slice(0, 30)); return toast(n >= 10 ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Identifiant ou mot de passe incorrect', true);
+    }
+    lockSet({ n: 0, until: 0 });
+    if (!(user.pass || '').startsWith('p2$')) { user.pass = await makePass(f.p.value); }
     session = { id: user.id, username: user.username, role: user.role, mustChange: !!user.mustChange };
-    try { localStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    audit('Connexion'); 
     const n = user.mustChange ? 'compte' : (nextRoute || 'accueil'); nextRoute = ''; location.hash = '#/' + n; route();
   },
   async pw(f) {
     const user = DB.users.find(x => x.id === session.id);
-    const oldOK = user.pass.length === 64 ? user.pass === await sha256(f.old.value) : user.pass === hash(f.old.value);
-    if (!oldOK) return toast('Le mot de passe actuel est incorrect', true);
+    if (!(await checkPass(user, f.old.value))) return toast('Le mot de passe actuel est incorrect', true);
     if (f.n1.value !== f.n2.value) return toast('Les deux nouveaux mots de passe sont différents', true);
-    if (f.n1.value.length < 6 || ['admin', user.username.toLowerCase()].includes(f.n1.value.toLowerCase())) return toast('Choisissez un mot de passe d’au moins 6 caractères, différent de votre identifiant', true);
-    user.pass = await sha256(f.n1.value); user.mustChange = false; session.mustChange = false;
-    try { localStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
-    save(); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
+    if (!strongPw(f.n1.value, user.username)) return toast(PWMSG, true);
+    user.pass = await makePass(f.n1.value); user.mustChange = false; session.mustChange = false;
+    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    audit('Mot de passe modifié'); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
   },
-  async adduser(f) { const u = f.u.value.trim(); if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: await sha256(f.p.value), role: f.r.value, mustChange: false }); save(); toast('Utilisateur ajouté'); route(); },
+  async adduser(f) { if (!session || session.role !== 'admin') return; const u = f.u.value.trim(); if (!strongPw(f.p.value, u)) return toast(PWMSG, true); if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: await makePass(f.p.value), role: f.r.value, mustChange: false }); audit('Utilisateur ajouté', u); toast('Utilisateur ajouté'); route(); },
   adddir(f) { const v = f.v.value.trim(); if (DB.directions.some(d => d.name === v)) return toast('Cette direction existe déjà', true); DB.directions.push({ name: v, divisions: [] }); save(); route(); },
   adddiv(f) { const d = DB.directions[+f.dataset.i], v = f.v.value.trim(); if (d.divisions.includes(v)) return toast('Cette division existe déjà', true); d.divisions.push(v); save(); route(); },
   year(f) { DB.meta.annee = parseInt(f.y.value, 10) || DB.meta.annee; save(); toast('Année enregistrée'); },
@@ -1634,17 +1678,20 @@ const F = {
     const g = n => (f.elements[n] ? f.elements[n].value : '').trim(), id = f.dataset.id, o = {};
     ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'bureau', 'prise_en_charge', 'situation', 'salaire_montant', 'prime_montant', 'observation'].forEach(k => o[k] = g(k));
     ['sexe', 'salaire', 'prime', 'recense'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
+    if (!canPlace()) { if (id) { delete o.division; delete o.bureau; } else { o.division = ''; o.bureau = ''; } }
     const dup = isMat(o.matricule) && DB.agents.find(a => a.matricule && a.id !== id && a.matricule.toLowerCase() === o.matricule.toLowerCase());
     if (dup) return toast(`Ce matricule existe déjà : ${fullName(dup)}`, true);
     let a;
     if (id) { a = DB.agents.find(x => x.id === id); Object.assign(a, o, { updated: Date.now() }); } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o }; DB.agents.push(a); }
-    const dv = o.division; if (dv) { const d = DB.directions.find(x => x.name === o.direction); if (d && !d.divisions.includes(dv)) d.divisions.push(dv); }
-    if (o.division && o.bureau && DB.org) {
+    const dv = o.division; if (dv && canPlace()) { const d = DB.directions.find(x => x.name === o.direction); if (d && !d.divisions.includes(dv)) d.divisions.push(dv); }
+    if (canPlace() && o.division && o.bureau && DB.org) {
       const od = DB.org.divisions.find(x => x.name === o.division);
       if (od && !od.bureaux.some(b => b.name === o.bureau)) od.bureaux.push({ id: uid(), name: o.bureau, cb: '' });
     }
     syncOrgToDirections();
     save();
+    audit(id ? 'Fiche modifiée' : 'Agent enregistré', fullName(a));
+    ui.nextSort = 'recent'; ui.max = 100;
     if (id) { toast('Fiche modifiée'); location.hash = '#/liste'; return; }
     const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;
     afterRoute = () => openModal(`<div class="okhead"><span class="ic">${ico('check', 24)}</span><div><h3>Agent enregistré</h3><span class="muted" style="font-size:13px">${esc(fullName(a))}</span></div></div>
@@ -1696,7 +1743,8 @@ document.addEventListener('change', async e => {
       const d = JSON.parse(await file.text());
       if (!d || !Array.isArray(d.agents) || !Array.isArray(d.users) || !Array.isArray(d.directions)) throw 0;
       if (!confirm(`Remplacer toutes les données actuelles par cette sauvegarde (${d.agents.length} agents) ?`)) return;
-      DB = migrate(d); save();
+      if (!session || session.role !== 'admin') return toast('Restauration réservée à l’Adm1', true);
+      DB = migrate(d); audit('Sauvegarde restaurée', d.agents.length + ' agents');
       const me = DB.users.find(u => u.id === session.id) || DB.users.find(u => u.username === session.username);
       if (me) session = { id: me.id, username: me.username, role: me.role, mustChange: !!me.mustChange }; else { session = null; location.hash = '#/login'; }
       toast('Sauvegarde restaurée'); route();
@@ -1709,7 +1757,7 @@ window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/liste/.te
 window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/liste/.test(location.hash)) renderListe(); } });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
 window.addEventListener('hashchange', route);
-document.addEventListener('visibilitychange', () => { if (document.hidden) Store.flush(); });
+document.addEventListener('visibilitychange', () => { document.body.classList.toggle('priv', document.hidden && !!session); if (document.hidden) Store.flush(); });
 window.addEventListener('pagehide', () => Store.flush());
 
 /* Déconnexion automatique après 15 minutes d'inactivité */
@@ -1724,7 +1772,7 @@ const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { 
   DB = (d && Array.isArray(d.agents)) ? migrate(d) : seed();
   if ((Store.kind === 'native' || Store.kind === 'desktop') && DB.meta.lastAuto !== today()) { try { await Store.writeRaw(AUXFILE, JSON.stringify(DB)); DB.meta.lastAuto = today(); } catch (e) {} save(); }
   Store.set(DB); Sync.start();
-  try { const s = localStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
+  try { localStorage.removeItem('dfl_s'); const s = sessionStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
   route(); bump();
 })();
 })();
