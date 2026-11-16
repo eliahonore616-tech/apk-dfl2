@@ -317,7 +317,7 @@ const ETATS = ['Célibataire', 'Fiancé(e)', 'Marié(e)', 'Divorcé(e)', 'Veuf/V
 const PRISE = ['Suivi', 'Financé', 'Suivi et financé', 'Aucune'];
 const SITU = ['Actif', 'Détaché', 'Suspendu', 'Retraité', 'Décédé'];
 const DIRNAME = 'Direction de Suivi des Finances Locales';
-const ROLES = { admin: 'Adm1 — Directeur (DR)', cd: 'Adm2 — Chef de division (CD)', cb: 'Adm3 — Secrétaire et Chef de bureau (Sec et CB)' };
+const ROLES = { owner: 'Propriétaire', admin: 'Adm1 — Directeur (DR)', cd: 'Adm2 — Chef de division (CD)', cb: 'Adm3 — Secrétaire et Chef de bureau (Sec et CB)' };
 const GRADES = [
   { c: '120', l: 'Directeur-Chef de Service', a: 'DIR', p: 1 }, { c: '130', l: 'Chef de Division', a: 'CD', p: 4 }, { c: '140', l: 'Chef de Bureau', a: 'CB', p: 10 },
   { c: '210', l: 'Attaché d’Administration de 1ère Classe', a: 'ATA1', p: 14 }, { c: '220', l: 'Attaché d’Administration de 2ème Classe', a: 'ATA2', p: 890 },
@@ -551,8 +551,8 @@ const migrate = d => {
     d.meta.cadreInit = true;
   }
   d.agents.forEach(a => { if (a.grade) a.grade = canonGrade(a.grade); });
-  d.users.forEach(u => { if (u.role === 'directeur') u.role = 'admin'; else if (u.role === 'saisie') u.role = 'cb'; });
-  [['cd', 'Adm2'], ['cb', 'Adm3']].forEach(([r, n]) => { if (!d.users.some(u => u.role === r) && !d.users.some(u => u.username.toLowerCase() === n.toLowerCase())) d.users.push({ id: uid(), username: n, pass: hash(n.toLowerCase()), role: r, mustChange: true }); });
+  d.users.forEach(u => { if (u.role === 'directeur') u.role = 'admin'; else if (u.role === 'saisie') u.role = 'cb'; if (u.mustChange) { u.pass = ''; u.mustChange = false; } });
+  [['cd', 'Adm2'], ['cb', 'Adm3']].forEach(([r, n]) => { if (!d.users.some(u => u.role === r) && !d.users.some(u => u.username.toLowerCase() === n.toLowerCase())) d.users.push({ id: uid(), username: n, pass: '', role: r }); });
   const main = d.directions[0];
   if (main) main.divisions = d.org.divisions.map(x => x.name);
   d.version = 3; return d;
@@ -678,6 +678,8 @@ const Sync = {
     const m = new Map();
     DB.agents.forEach(a => m.set('a:' + a.id, JSON.stringify(a)));
     ['users', 'directions', 'org', 'cadre'].forEach(k => m.set('c:' + k, JSON.stringify(DB[k])));
+    if (DB.owner) m.set('c:owner', JSON.stringify(DB.owner));
+    if (DB.ctl) m.set('c:ctl', JSON.stringify(DB.ctl));
     return m;
   },
   set(status, msg) {
@@ -741,7 +743,7 @@ const Sync = {
           const id = x.id.slice(2);
           if (x.deleted) { if (idx.has(id)) { dels.add(id); changed = true; } applied.push(x.id); }
           else if (x.data) { if (idx.has(id)) DB.agents[idx.get(id)] = x.data; else { idx.set(id, DB.agents.length); DB.agents.push(x.data); } applied.push(x.id); changed = true; }
-        } else if (x.id.startsWith('c:') && x.data) {
+        } else if (x.id.startsWith('c:') && x.data && !(x.id === 'c:owner' && typeof x.data !== 'string')) {
           const k = x.id.slice(2); DB[k] = x.data; if (k === 'cadre') DB.meta.cadreInit = true; applied.push(x.id); changed = true;
         }
       }
@@ -752,7 +754,7 @@ const Sync = {
     const now = this.items();
     applied.forEach(id => { if (now.has(id)) this.st.snap[id] = this.hs(now.get(id)); else delete this.st.snap[id]; });
     this.st.last = last; this.st.init = true; this.persist();
-    if (session && DB.users && !DB.users.some(u => u.id === session.id)) { A.logout(); toast('Votre compte a été modifié : reconnectez-vous', true); }
+    if (session && session.role !== 'owner' && DB.users && !DB.users.some(u => u.id === session.id)) { A.logout(); toast('Votre compte a été modifié : reconnectez-vous', true); }
     return changed;
   },
   async push() {
@@ -791,7 +793,13 @@ const PBK = 120000;
 const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 async function kdf(p, salt) { const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(p), 'PBKDF2', false, ['deriveBits']); return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations: PBK }, k, 256)); }
 async function makePass(p) { try { const salt = hex(crypto.getRandomValues(new Uint8Array(16))); return 'p2$' + salt + '$' + await kdf(p, salt); } catch (e) { return sha256(p); } }
+const OWNER_DEFAULT = 'p2$33fa837f9a94a815842a9c11eb228a8b$e3dd39499ee8de91d0f814e92553205f64a5fca1b63cb247ea77596951c41256';
+async function checkOwner(p) { const x = DB.owner || OWNER_DEFAULT; if (!x.startsWith('p2$')) return false; const [, salt, h] = x.split('$'); return (await kdf(p, salt)) === h; }
+const lockedMsg = () => { const lk = lockInfo(); if (lk.until && lk.until <= Date.now() && lk.n >= 10) { lockSet({ n: 0, until: 0 }); return ''; } return lk.until > Date.now() ? `Trop de tentatives. Réessayez dans ${Math.max(1, Math.ceil((lk.until - Date.now()) / 60000))} minute(s).` : ''; };
+const lockBad = () => { const n = lockInfo().n + 1; lockSet({ n, until: n >= 10 ? Date.now() + 120000 : 0 }); return n >= 10; };
+const gateOpen = () => { try { return sessionStorage.getItem('dfl_gate') === '1'; } catch (e) { return false; } };
 async function checkPass(u, p) {
+  if (!u.pass) return false;
   const x = u.pass || '';
   if (x.startsWith('p2$')) { const [, salt, h] = x.split('$'); return (await kdf(p, salt)) === h; }
   return x.length === 64 ? x === await sha256(p) : x === hash(p);
@@ -804,14 +812,14 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.4.1';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
   users: [
-    { id: uid(), username: 'Adm1', pass: hash('adm1'), role: 'admin', mustChange: true },
-    { id: uid(), username: 'Adm2', pass: hash('adm2'), role: 'cd', mustChange: true },
-    { id: uid(), username: 'Adm3', pass: hash('adm3'), role: 'cb', mustChange: true }
+    { id: uid(), username: 'Adm1', pass: '', role: 'admin' },
+    { id: uid(), username: 'Adm2', pass: '', role: 'cd' },
+    { id: uid(), username: 'Adm3', pass: '', role: 'cb' }
   ],
   directions: [{ name: DIRNAME, divisions: [] }],
   agents: [], cadre: [], org: defaultOrg(), meta: { lastBackup: 0 }
@@ -839,7 +847,7 @@ const IC = {
   harddrive: '<line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/>'
 };
 const ico = (n, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
-const MARK = '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1565D8"/><polygon points="0,21 21,0 32,0 0,32" fill="#F7D618"/><polygon points="0,25 25,0 29,0 0,29" fill="#CE1021"/><path d="M8 6l1.2 3.4 3.6.1-2.9 2.1 1.1 3.5L8 13l-3 2.1 1.1-3.5L3.2 9.5l3.6-.1z" fill="#F7D618"/></svg>';
+const MARK = `<img class="mk" src="data:image/png;base64,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" alt="" width="40" height="40" style="border-radius:10px;flex:none;display:block">`;
 const initials = a => (((a.nom || '?')[0] || '?') + ((a.postnom || '')[0] || '')).toUpperCase();
 const avatar = a => `<span class="av">${a.photo ? `<img src="${a.photo}" alt="">` : esc(initials(a))}</span>`;
 
@@ -857,18 +865,16 @@ const DOCS = ['mise-en-place', 'cadre', 'liste'];
 const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents' };
 
 function shell(inner, name) {
-  const isAdmin = session && session.role === 'admin';
   const side = NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
     ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${ROLES[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
   const bn = `<nav class="bnav" aria-label="Navigation">${NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 22)}<small>${n.s}</small></a>`).join('')}</nav>`;
   const banners = [];
-  if (session && session.mustChange) banners.push(`<div class="warn">${ico('alert', 20)}<span>Le mot de passe par défaut est encore actif. <a href="#/compte">Le changer maintenant</a></span></div>`);
-  if (isAdmin && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
+  if (isAdm() && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
-  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
-  <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
+  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
+  <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
   <main>${banners.join('')}${inner}</main>${bn}`;
 }
 
@@ -889,8 +895,8 @@ function pAccueil() {
 }
 
 function pSync() {
-  const c = Sync.cfg, ok = !c || (session && session.role === 'admin');
-  if (!ok) return `<section class="card narrow"><h2>Synchronisation</h2><p class="sub" id="syncinfo">${Sync.info()}</p><p class="note">Seul l’Adm1 (DR) peut modifier la configuration. <a href="#/login">Se connecter</a></p><div class="acts"><button class="btn primary" data-act="syncnow">Synchroniser maintenant</button></div></section>`;
+  const c = Sync.cfg, ok = isOwner();
+  if (!ok) return `<section class="card narrow"><h2>Synchronisation</h2><p class="sub" id="syncinfo">${Sync.info()}</p><p class="note">Seul le propriétaire peut modifier la configuration (Espace propriétaire).</p><div class="acts"><button class="btn primary" data-act="syncnow">Synchroniser maintenant</button></div></section>`;
   return `<section class="card narrow"><h2>Synchronisation entre appareils</h2>
     <p class="sub" id="syncinfo" style="margin-bottom:12px">${Sync.info()}</p>
     <p class="sub" style="margin-bottom:12px">Chaque agent enregistré est envoyé automatiquement sur le serveur de la Direction puis reçu par tous les autres appareils (ordinateurs et téléphones). Sans Internet, l’application continue de fonctionner et envoie les changements plus tard.</p>
@@ -905,19 +911,52 @@ function pSync() {
     ${c ? `<div class="acts" style="margin-top:12px"><button class="btn" data-act="syncnow">Synchroniser maintenant</button><button class="btn" data-act="synccode">Code pour un autre appareil</button><button class="btn danger" data-act="syncoff">Désactiver</button></div>` : ''}
     <p class="sub" style="margin-top:14px;font-size:12px">Le code de connexion contient le mot de passe du compte de synchronisation : ne le partagez qu’avec les appareils de la Direction.</p></section>`;
 }
-const canPlace = () => !!session && ['admin', 'cd'].includes(session.role);
+const canPlace = () => !!session && ['owner', 'admin', 'cd'].includes(session.role);
+const isOwner = () => !!session && session.role === 'owner';
+const isAdm = () => !!session && ['owner', 'admin'].includes(session.role);
+
+function pOwnerLogin() {
+  return `<section class="card narrow" style="margin-top:6vh"><div class="lockhead"><span class="lk">${ico('shield', 26)}</span></div>
+    <h2 style="text-align:center">Espace propriétaire</h2><p class="sub" style="text-align:center;margin-bottom:12px">Accès réservé au propriétaire de l’application.</p>
+    <form data-f="ownerlogin"><label>Mot de passe propriétaire<input name="o" type="password" autocomplete="current-password" required></label><button class="btn primary">Entrer</button></form>
+    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/login">Retour à la connexion</a></p></section>`;
+}
+function pProprio() {
+  if (!isOwner()) return pOwnerLogin();
+  const locked = !!(DB.ctl && DB.ctl.locked);
+  const st = u => [u.blocked ? '<span class="nwb" style="background:#dc2626">BLOQUÉ</span>' : '', !u.pass ? '<span class="nwb" style="background:#6b7280">SANS MOT DE PASSE</span>' : u.tmp ? '<span class="nwb" style="background:#d97706">MOT DE PASSE TEMPORAIRE</span>' : ''].join(' ');
+  const users = DB.users.map(u => `<li style="flex-wrap:wrap;gap:8px"><span><b>${esc(u.username)}</b> <em>${ROLES[u.role] || u.role}</em> ${st(u)}</span><span class="acts"><button class="btn sm" data-act="ublock" data-id="${u.id}">${u.blocked ? 'Débloquer' : 'Bloquer'}</button><button class="btn sm" data-act="resetpw" data-id="${u.id}">Mot de passe</button><button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button></span></li>`).join('');
+  const log = [...(DB.meta.audit || [])].reverse().slice(0, 200).map(e => `<tr style="cursor:default"><td class="l">${new Date(e.t).toLocaleString('fr-FR')}</td><td class="l">${esc(e.u)}</td><td class="l">${esc(e.a)}${e.d ? ' — ' + esc(e.d) : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="l muted">Aucune action enregistrée.</td></tr>';
+  return `<header class="ph"><div><h2>Espace propriétaire</h2><p class="sub">Contrôle total de l’application · version ${APP_VERSION}</p></div></header>
+  <section class="card sec2"><h3>Contrôle de l’application</h3>
+    <p class="sub" style="margin:6px 0 12px">${locked ? '<b style="color:#dc2626">L’application est VERROUILLÉE :</b> aucun administrateur ne peut se connecter, les sessions ouvertes sont fermées.' : 'Les administrateurs peuvent se connecter normalement.'} Ce réglage s’applique à tous les appareils synchronisés.</p>
+    <button class="btn ${locked ? 'primary' : 'danger'}" data-act="ctllock">${locked ? 'Déverrouiller l’application' : 'Verrouiller l’application (bloquer tous les administrateurs)'}</button></section>
+  <section class="card sec2"><h3>Utilisateurs</h3><p class="sub" style="margin:6px 0 10px">Seul le propriétaire crée, bloque, réinitialise ou supprime les comptes. Un mot de passe temporaire oblige l’utilisateur à choisir le sien à sa première connexion.</p>
+    <ul class="list" style="margin:12px 0 14px">${users}</ul>
+    <div class="acts" style="margin-bottom:14px"><button class="btn danger" data-act="resetall">Réinitialiser tous les mots de passe</button></div>
+    <form data-f="adduser" class="grid"><label>Nouvel identifiant<input name="u" autocapitalize="none" required></label>
+    <label>Rôle<select name="r">${['cb', 'cd', 'admin'].map(r => `<option value="${r}">${ROLES[r]}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn primary">Créer le compte</button></div></form></section>
+  <section class="card sec2"><h3>Synchronisation</h3><p class="sub" style="margin:6px 0 10px" id="syncinfo">${Sync.info()}</p><a class="btn" href="#/sync">Configurer la synchronisation</a></section>
+  <section class="card sec2"><h3>Mon mot de passe propriétaire</h3><p class="sub" style="margin:6px 0 10px">Le changer ici le change immédiatement sur tous les appareils synchronisés.</p>
+    <form data-f="ownerpw" class="grid"><label>Mot de passe actuel<input name="cur" type="password" autocomplete="off" required></label><label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" minlength="8" autocomplete="new-password" required></label><label>Confirmer<input name="n2" type="password" minlength="8" autocomplete="new-password" required></label><div style="align-self:end"><button class="btn primary">Modifier</button></div></form></section>
+  <section class="card sec2"><h3>Journal d’activité</h3><p class="sub" style="margin:6px 0 10px">Connexions, échecs (identifiants inconnus compris), ajouts, modifications et suppressions sur cet appareil.</p><details><summary class="btn sm" style="display:inline-block">Afficher le journal</summary><div class="tw" style="max-height:360px;margin-top:10px"><table class="tbl"><thead><tr><th class="l">Date</th><th class="l">Utilisateur</th><th class="l">Action</th></tr></thead><tbody>${log}</tbody></table></div></details></section>
+  <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Sauvegarde, restauration et effacement des données. Pensez à sauvegarder sur la page <a href="#/base-de-donnees">Base de données</a> avant.</p><div class="acts"><a class="btn" href="#/base-de-donnees">Sauvegarde et restauration</a><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></div></section>`;
+}
+const tempPw = () => { const L = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz', D = '23456789', r = n => crypto.getRandomValues(new Uint32Array(1))[0] % n; const a = []; for (let i = 0; i < 6; i++) a.push(L[r(L.length)]); for (let i = 0; i < 3; i++) a.push(D[r(D.length)]); for (let i = a.length - 1; i > 0; i--) { const j = r(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a.join(''); };
+const showTemps = list => openModal(`<h3 style="margin-bottom:8px">Mots de passe temporaires</h3><p class="sub" style="margin-bottom:10px">Notez-les maintenant : ils ne seront plus affichés. Chaque utilisateur devra choisir son mot de passe à la première connexion.</p><table class="tbl"><thead><tr><th class="l">Identifiant</th><th class="l">Mot de passe temporaire</th></tr></thead><tbody>${list.map(([n, p]) => `<tr style="cursor:default"><td class="l"><b>${esc(n)}</b></td><td class="l"><code style="font-size:16px">${esc(p)}</code></td></tr>`).join('')}</tbody></table><div class="acts" style="margin-top:12px"><button class="btn" data-act="copytemps" data-t="${esc(list.map(([n, p]) => n + ' : ' + p).join('\\n'))}">Copier</button><button class="btn primary" data-act="close">Fermer</button></div>`);
 function pLogin() {
-  const first = DB.users.some(u => u.mustChange);
+  const first = DB.users.filter(u => !u.pass);
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
     <h2 style="text-align:center">Accès Administrateur</h2><p class="sub" style="text-align:center">Accès réservé au personnel autorisé.</p>
     <form data-f="login"><label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
     <button class="btn primary">Se connecter</button></form>
-    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/sync">${Sync.cfg ? 'Synchronisation' : 'Nouvel appareil ? Configurer la synchronisation'}</a></p>
-    ${first ? `<p class="sub" style="margin-top:14px">Premier accès : le mot de passe initial est l’identifiant écrit en minuscules (${DB.users.filter(u => u.mustChange).map(u => '<b>' + esc(u.username) + '</b>').join(', ')}). Vous devrez le changer ensuite.</p>` : ''}
+    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/proprietaire">Espace propriétaire</a></p>
+    ${first.length ? `<p class="sub" style="margin-top:14px">Compte(s) sans mot de passe (${first.map(u => '<b>' + esc(u.username) + '</b>').join(', ')}) : le propriétaire doit d’abord les activer dans l’Espace propriétaire.</p>` : ''}
     <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
+  if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p></section>';
   return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
     <form data-f="pw"><label>Mot de passe actuel<input name="old" type="password" autocomplete="current-password" required></label>
     <label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" autocomplete="new-password" minlength="8" required></label>
@@ -966,7 +1005,7 @@ function pBaseDeDonnees() {
     <div class="acts">
       <button class="btn primary" data-act="cloudbackup">${ico('cloud', 18)}Envoyer / Enregistrer sur le Cloud (.json)</button>
       <button class="btn" data-act="copyjson">${ico('file', 18)}Copier la base (Presse-papiers)</button>
-      ${session.role === 'admin' ? `<label class="btn">${ico('upload', 18)}<input type="file" id="impJson" accept=".json,application/json" hidden>Restaurer depuis le Cloud / un fichier</label>` : ''}
+      ${isOwner() ? `<label class="btn">${ico('upload', 18)}<input type="file" id="impJson" accept=".json,application/json" hidden>Restaurer depuis le Cloud / un fichier</label>` : ''}
     </div>
   </section>
 
@@ -1025,7 +1064,7 @@ function openFiche(id) {
       <a href="#/liste" data-act="close">${ico('list', 20)}<span><b>Liste déclarative</b>N° ${rank} sur ${DB.agents.filter(x => x.direction === a.direction).length}</span></a></div>
     <div class="acts"><a class="btn primary" href="#/nouveau/${a.id}" data-act="close">Modifier</a>
       ${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}
-      ${session.role === 'admin' ? `<button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>` : ''}
+      <button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>
       <button class="btn" data-act="close">Fermer</button></div></div>`);
 }
 
@@ -1178,7 +1217,7 @@ function renderMise() {
   }));
 }
 function renderCadre() {
-  const admin = session && (session.role === 'admin' || session.role === 'cd'), dir = DB.directions[0].name;
+  const admin = canPlace(), dir = DB.directions[0].name;
   const rows = cadreRows(dir), P = rows.reduce((s, r) => s + r.prevu, 0), E = rows.reduce((s, r) => s + r.enplace, 0);
   const ecart = (p, e) => { const x = p - e; return p === 0 && e > 0 ? '<span class="badge">Hors cadre</span>' : x > 0 ? `<span class="badge warn">${x} vacant${x > 1 ? 's' : ''}</span>` : x === 0 ? '<span class="badge ok">Complet</span>' : `<span class="badge bad">+${-x} en surnombre</span>`; };
   const key = `data-dir="${esc(dir)}" data-div=""`;
@@ -1232,7 +1271,7 @@ function renderListe() {
 const renderDoc = kind => { ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])(); docBar(kind); };
 function docBar(kind) {
   const e = $('#docbar'); if (!e || !session) return;
-  const adm = session.role === 'admin', ed = adm || session.role === 'cd';
+  const adm = canPlace(), ed = canPlace();
   let h = '';
   if ((kind === 'liste' || kind === 'cadre') && ed) {
     h += `<button class="btn sm${ui.edit ? ' primary' : ''}" data-act="tedit">${ui.edit ? 'Terminer la modification' : (kind === 'liste' ? 'Modifier le tableau' : 'Modifier les en-têtes')}</button>`;
@@ -1456,41 +1495,40 @@ function setupTables() {
 
 /* ---------- Administration ---------- */
 function pAdmin() {
-  const dr = session.role === 'admin';
+  const dr = isAdm();
   const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
   const head = `<header class="ph"><div><h2>Administration</h2><p class="sub">${ROLES[session.role] || session.role} · version ${APP_VERSION}</p></div></header>`;
   const tiles = `<div class="tiles">
     ${it('importer', 'Importer un fichier', 'upload', 'Excel, Word ou PDF : agents et cadre organique')}
     ${it('base-de-donnees', 'Base de données', 'db', 'Sauvegarde, copie Cloud et archive')}
     ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
-    ${it('sync', 'Synchronisation', 'db', 'Envoi automatique des agents vers tous les appareils')}</div>`;
-  if (!dr) return head + tiles + '<p class="note">La gestion des utilisateurs, de la structure et des suppressions est réservée à l’Adm1 (DR).</p>';
-  const users = DB.users.map(u => `<li><span><b>${esc(u.username)}</b><em>${ROLES[u.role] || u.role}</em></span><span class="acts"><button class="btn sm" data-act="resetpw" data-id="${u.id}">Nouveau mot de passe</button>${u.id !== session.id ? `<button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button>` : ''}</span></li>`).join('');
+    ${it('sync', 'Synchronisation', 'db', 'État de la synchronisation entre appareils')}
+    ${isOwner() ? it('proprietaire', 'Espace propriétaire', 'shield', 'Utilisateurs, blocage, mots de passe, journal') : ''}</div>`;
+  if (!dr) return head + tiles + '<p class="note">La gestion de la structure est réservée à l’Adm1 (DR).</p>';
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
     <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
   return head + tiles + `
   <section class="card sec2"><h3>Liste déclarative</h3><form class="inline" data-f="year" style="margin-top:10px;max-width:340px"><input name="y" type="number" min="2000" max="2100" value="${DB.meta.annee}" required aria-label="Année"><button class="btn">Enregistrer l’année</button></form></section>
   <section class="card sec2"><h3>Directions et divisions</h3><p class="sub" style="margin-bottom:12px">Touchez le nom d’une division pour la renommer. Une division qui contient des agents ne peut pas être supprimée.</p>${dirs}
-    <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>
-  <section class="card sec2"><h3>Utilisateurs</h3><ul class="list" style="margin:12px 0 14px">${users}</ul>
-    <form data-f="adduser" class="grid"><label>Identifiant<input name="u" autocapitalize="none" required></label><label>Mot de passe (8 caractères minimum, lettres et chiffres)<input name="p" type="password" minlength="8" required></label>
-    <label>Rôle<select name="r">${['cb', 'cd', 'admin'].map(r => `<option value="${r}">${ROLES[r]}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn primary">Ajouter l’utilisateur</button></div></form></section>
-  <section class="card sec2"><h3>Journal d’activité</h3><p class="sub" style="margin:6px 0 10px">Connexions, échecs de connexion, ajouts, modifications et suppressions sur cet appareil (400 dernières actions).</p><details><summary class="btn sm" style="display:inline-block">Afficher le journal</summary><div class="tw" style="max-height:340px;margin-top:10px"><table class="tbl"><thead><tr><th class="l">Date</th><th class="l">Utilisateur</th><th class="l">Action</th></tr></thead><tbody>${[...(DB.meta.audit || [])].reverse().slice(0, 150).map(e => `<tr style="cursor:default"><td class="l">${new Date(e.t).toLocaleString('fr-FR')}</td><td class="l">${esc(e.u)}</td><td class="l">${esc(e.a)}${e.d ? ' — ' + esc(e.d) : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="l muted">Aucune action enregistrée.</td></tr>'}</tbody></table></div></details></section>
-  <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Efface tous les agents de cet appareil. Pensez à sauvegarder sur la page <a href="#/base-de-donnees">Base de données</a> avant.</p><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></section>`;
+    <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>`;
 }
 
 /* ================= Routage ================= */
 function route() {
   const h = location.hash.replace(/^#\//, '') || 'accueil', [name, arg] = h.split('/');
+  if (session && session.role !== 'owner') {
+    const cu = DB.users.find(x => x.id === session.id);
+    if (!cu || cu.blocked || (DB.ctl && DB.ctl.locked)) { const why = !cu ? 'Votre compte n’existe plus.' : cu.blocked ? 'Votre compte a été bloqué par le propriétaire.' : 'L’application est verrouillée par le propriétaire.'; session = null; try { sessionStorage.removeItem('dfl_s'); } catch (e) {} toast(why, true); }
+  }
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (session && session.mustChange && name !== 'compte') { location.hash = '#/compte'; return; }
   if (name === 'importer' && session && !canPlace() && arg !== 'agents' && arg) { location.hash = '#/importer/agents'; return; }
   if (name === 'login' && session) { location.hash = '#/accueil'; return; }
   closeModal();
-  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, 'base-de-donnees': pBaseDeDonnees };
+  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
-  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin' }[name] || name) : 'accueil');
+  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin', proprietaire: 'admin', sync: 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
   if (DOCS.includes(name)) {
     fillTDiv(); if (ui.nextSort && $('#tSort')) { $('#tSort').value = ui.nextSort; ui.nextSort = ''; } ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
@@ -1558,8 +1596,16 @@ const A = {
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
   delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); audit('Fiche supprimée', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
-  resetpw: async t => { if (!session || session.role !== 'admin') return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; const p = await ask(`Nouveau mot de passe pour ${u.username} (8 caractères minimum, lettres et chiffres) :`, '', 'password'); if (p == null) return; if (!strongPw(p, u.username)) return toast(PWMSG, true); u.pass = await makePass(p); u.mustChange = false; audit('Mot de passe réinitialisé', u.username); toast('Mot de passe modifié'); },
-  deluser: t => { if (!session || session.role !== 'admin') return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (u.role === 'admin' && DB.users.filter(x => x.role === 'admin').length < 2) return toast('Il faut garder au moins un administrateur', true); if (confirm(`Supprimer l’utilisateur ${u.username} ?`)) { DB.users = DB.users.filter(x => x.id !== u.id); audit('Utilisateur supprimé', u.username); route(); } },
+  resetpw: async t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return;
+    const p = await ask(`Nouveau mot de passe pour ${u.username} (8 caractères minimum, lettres et chiffres). Laissez vide pour générer un mot de passe temporaire :`, '', 'password'); if (p == null) return;
+    const pw = p === '' ? tempPw() : p; if (!strongPw(pw, u.username)) return toast(PWMSG, true);
+    u.pass = await makePass(pw); u.tmp = true; u.mustChange = false; audit('Mot de passe réinitialisé', u.username); route(); showTemps([[u.username, pw]]); },
+  resetall: async () => { if (!isOwner()) return; if (!confirm('Réinitialiser le mot de passe de TOUS les comptes ? Chaque utilisateur recevra un mot de passe temporaire et devra en choisir un nouveau.')) return;
+    const out = []; for (const u of DB.users) { const pw = tempPw(); u.pass = await makePass(pw); u.tmp = true; u.mustChange = false; out.push([u.username, pw]); } audit('Tous les mots de passe réinitialisés'); route(); showTemps(out); },
+  copytemps: t => { const x = t.dataset.t; if (navigator.clipboard) navigator.clipboard.writeText(x).then(() => toast('Copié'), () => toast('Copie impossible', true)); },
+  ublock: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; u.blocked = !u.blocked; audit(u.blocked ? 'Compte bloqué' : 'Compte débloqué', u.username); toast(u.blocked ? 'Compte bloqué' : 'Compte débloqué'); route(); },
+  ctllock: () => { if (!isOwner()) return; const on = !(DB.ctl && DB.ctl.locked); if (on && !confirm('Verrouiller l’application ? Aucun administrateur ne pourra se connecter jusqu’au déverrouillage.')) return; DB.ctl = { locked: on }; audit(on ? 'Application verrouillée' : 'Application déverrouillée'); route(); },
+  deluser: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (!confirm(`Supprimer le compte « ${u.username} » ?`)) return; DB.users = DB.users.filter(x => x.id !== u.id); audit('Utilisateur supprimé', u.username); route(); },
   rendir: async t => {
     const d = DB.directions[+t.dataset.i], n = ((await ask('Nouveau nom de la direction :', d.name)) || '').trim(); if (!n || n === d.name) return;
     if (DB.directions.some(x => x.name === n)) return toast('Ce nom existe déjà', true);
@@ -1603,7 +1649,7 @@ const A = {
   exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee }[k] + '_DFL_' + today(), r.header, r.rows); },
   template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Situation'], []),
   openfolder: () => window.dflDesktop && window.dflDesktop.open(),
-  wipe: async () => { if (!session || session.role !== 'admin') return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; audit('Tous les agents supprimés'); toast('Tous les agents ont été supprimés'); route(); } },
+  wipe: async () => { if (!isOwner()) return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; audit('Tous les agents supprimés'); toast('Tous les agents ont été supprimés'); route(); } },
   enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
   cadrerm: t => { DB.cadre = DB.cadre.filter(c => c.id !== t.dataset.id); save(); renderCadre(); },
   impapply: () => {
@@ -1631,6 +1677,21 @@ const A = {
 
 /* ================= Formulaires ================= */
 const F = {
+  async ownerlogin(f) {
+    const msg = lockedMsg(); if (msg) return toast(msg, true);
+    if (!(await checkOwner(f.o.value))) { const lock = lockBad(); audit('Échec accès propriétaire'); return toast(lock ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Mot de passe propriétaire incorrect', true); }
+    lockSet({ n: 0, until: 0 });
+    session = { id: 'owner', username: 'Propriétaire', role: 'owner', mustChange: false };
+    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    audit('Connexion propriétaire'); location.hash = '#/proprietaire'; route();
+  },
+  async ownerpw(f) {
+    if (!isOwner()) return;
+    if (!(await checkOwner(f.cur.value))) return toast('Mot de passe propriétaire actuel incorrect', true);
+    if (f.n1.value !== f.n2.value) return toast('Les deux nouveaux mots de passe sont différents', true);
+    if (!strongPw(f.n1.value, '')) return toast(PWMSG, true);
+    DB.owner = await makePass(f.n1.value); audit('Mot de passe propriétaire modifié'); f.reset(); toast('Mot de passe propriétaire modifié');
+  },
   async syncsave(f) {
     let c = f.code.value.trim() ? Sync.parseCode(f.code.value) : { u: f.u.value.trim().replace(/\/+$/, ''), k: f.k.value.trim(), e: f.e.value.trim(), p: f.p.value };
     if (!c || !c.u || !c.k || !c.e || !c.p) return toast('Code ou informations incomplets', true);
@@ -1649,23 +1710,24 @@ const F = {
       const n = lk.n + 1; lockSet({ n, until: n >= 10 ? Date.now() + 2 * 60000 : 0 });
       audit('Échec de connexion', u.slice(0, 30)); return toast(n >= 10 ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Identifiant ou mot de passe incorrect', true);
     }
+    if (user.blocked || (DB.ctl && DB.ctl.locked)) { audit('Connexion refusée', user.username + (user.blocked ? ' (compte bloqué)' : ' (application verrouillée)')); return toast(user.blocked ? 'Ce compte est bloqué par le propriétaire.' : 'L’application est verrouillée par le propriétaire.', true); }
     lockSet({ n: 0, until: 0 });
-    if (!(user.pass || '').startsWith('p2$')) { user.pass = await makePass(f.p.value); }
-    session = { id: user.id, username: user.username, role: user.role, mustChange: !!user.mustChange };
+    if (user.pass && !user.pass.startsWith('p2$')) { user.pass = await makePass(f.p.value); }
+    session = { id: user.id, username: user.username, role: user.role, mustChange: !!user.tmp };
     try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
     audit('Connexion'); 
-    const n = user.mustChange ? 'compte' : (nextRoute || 'accueil'); nextRoute = ''; location.hash = '#/' + n; route();
+    const n = user.tmp ? 'compte' : (nextRoute || 'accueil'); nextRoute = ''; location.hash = '#/' + n; route();
   },
   async pw(f) {
     const user = DB.users.find(x => x.id === session.id);
     if (!(await checkPass(user, f.old.value))) return toast('Le mot de passe actuel est incorrect', true);
     if (f.n1.value !== f.n2.value) return toast('Les deux nouveaux mots de passe sont différents', true);
     if (!strongPw(f.n1.value, user.username)) return toast(PWMSG, true);
-    user.pass = await makePass(f.n1.value); user.mustChange = false; session.mustChange = false;
+    user.pass = await makePass(f.n1.value); user.mustChange = false; user.tmp = false; session.mustChange = false;
     try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
     audit('Mot de passe modifié'); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
   },
-  async adduser(f) { if (!session || session.role !== 'admin') return; const u = f.u.value.trim(); if (!strongPw(f.p.value, u)) return toast(PWMSG, true); if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: await makePass(f.p.value), role: f.r.value, mustChange: false }); audit('Utilisateur ajouté', u); toast('Utilisateur ajouté'); route(); },
+  async adduser(f) { if (!isOwner()) return; const u = f.u.value.trim(); if (!u) return; if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); const pw = tempPw(); DB.users.push({ id: uid(), username: u, pass: await makePass(pw), role: f.r.value, tmp: true }); audit('Utilisateur ajouté', u); route(); showTemps([[u, pw]]); },
   adddir(f) { const v = f.v.value.trim(); if (DB.directions.some(d => d.name === v)) return toast('Cette direction existe déjà', true); DB.directions.push({ name: v, divisions: [] }); save(); route(); },
   adddiv(f) { const d = DB.directions[+f.dataset.i], v = f.v.value.trim(); if (d.divisions.includes(v)) return toast('Cette division existe déjà', true); d.divisions.push(v); save(); route(); },
   year(f) { DB.meta.annee = parseInt(f.y.value, 10) || DB.meta.annee; save(); toast('Année enregistrée'); },
@@ -1743,10 +1805,9 @@ document.addEventListener('change', async e => {
       const d = JSON.parse(await file.text());
       if (!d || !Array.isArray(d.agents) || !Array.isArray(d.users) || !Array.isArray(d.directions)) throw 0;
       if (!confirm(`Remplacer toutes les données actuelles par cette sauvegarde (${d.agents.length} agents) ?`)) return;
-      if (!session || session.role !== 'admin') return toast('Restauration réservée à l’Adm1', true);
-      DB = migrate(d); audit('Sauvegarde restaurée', d.agents.length + ' agents');
-      const me = DB.users.find(u => u.id === session.id) || DB.users.find(u => u.username === session.username);
-      if (me) session = { id: me.id, username: me.username, role: me.role, mustChange: !!me.mustChange }; else { session = null; location.hash = '#/login'; }
+      if (!isOwner()) return toast('Restauration réservée au propriétaire', true);
+      const ow = DB.owner; DB = migrate(d); if (!DB.owner) DB.owner = ow; audit('Sauvegarde restaurée', d.agents.length + ' agents');
+      if (session.role !== 'owner') { const me = DB.users.find(u => u.id === session.id) || DB.users.find(u => u.username === session.username); if (me) session = { id: me.id, username: me.username, role: me.role, mustChange: !!me.mustChange }; else { session = null; location.hash = '#/login'; } }
       toast('Sauvegarde restaurée'); route();
     } catch (err) { toast('Ce fichier n’est pas une sauvegarde valide', true); }
     t.value = '';
@@ -1762,7 +1823,7 @@ window.addEventListener('pagehide', () => Store.flush());
 
 /* Déconnexion automatique après 15 minutes d'inactivité */
 let idle; const IDLE = 15 * 60 * 1000;
-const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { if (session) { A.logout(); toast('Session fermée après 15 minutes d’inactivité'); } }, IDLE); };
+const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { if (session) { A.logout(); try { sessionStorage.removeItem('dfl_s'); } catch (e) {} route(); toast('Session fermée après 15 minutes d’inactivité'); } }, IDLE); };
 ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, bump, { passive: true }));
 
 /* ================= Démarrage ================= */
@@ -1772,7 +1833,7 @@ const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { 
   DB = (d && Array.isArray(d.agents)) ? migrate(d) : seed();
   if ((Store.kind === 'native' || Store.kind === 'desktop') && DB.meta.lastAuto !== today()) { try { await Store.writeRaw(AUXFILE, JSON.stringify(DB)); DB.meta.lastAuto = today(); } catch (e) {} save(); }
   Store.set(DB); Sync.start();
-  try { localStorage.removeItem('dfl_s'); const s = sessionStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
+  try { localStorage.removeItem('dfl_s'); const s = sessionStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (x.role === 'owner' || DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
   route(); bump();
 })();
 })();
