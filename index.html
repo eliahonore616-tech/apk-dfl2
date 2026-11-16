@@ -812,7 +812,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.4.2';
+const APP_VERSION = '3.5.1';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -924,14 +924,14 @@ function pOwnerLogin() {
 function pProprio() {
   if (!isOwner()) return pOwnerLogin();
   const locked = !!(DB.ctl && DB.ctl.locked);
-  const st = u => [u.blocked ? '<span class="nwb" style="background:#dc2626">BLOQUÉ</span>' : '', !u.pass ? '<span class="nwb" style="background:#6b7280">SANS MOT DE PASSE</span>' : u.tmp ? '<span class="nwb" style="background:#d97706">MOT DE PASSE TEMPORAIRE</span>' : ''].join(' ');
-  const users = DB.users.map(u => `<li style="flex-wrap:wrap;gap:8px"><span><b>${esc(u.username)}</b> <em>${ROLES[u.role] || u.role}</em> ${st(u)}</span><span class="acts"><button class="btn sm" data-act="ublock" data-id="${u.id}">${u.blocked ? 'Débloquer' : 'Bloquer'}</button><button class="btn sm" data-act="resetpw" data-id="${u.id}">Mot de passe</button><button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button></span></li>`).join('');
+  const st = u => [u.blocked ? '<span class="nwb" style="background:#dc2626">BLOQUÉ</span>' : '', !u.pass ? '<span class="nwb" style="background:#6b7280">MOT DE PASSE À CRÉER</span>' : ''].join(' ');
+  const users = DB.users.map(u => `<li style="flex-wrap:wrap;gap:8px"><span><b>${esc(u.username)}</b> <em>${ROLES[u.role] || u.role}</em> ${st(u)}</span><span class="acts"><button class="btn sm" data-act="ublock" data-id="${u.id}">${u.blocked ? 'Débloquer' : 'Bloquer'}</button><button class="btn sm" data-act="resetpw" data-id="${u.id}">Réinitialiser le mot de passe</button><button class="btn sm danger" data-act="deluser" data-id="${u.id}">Supprimer</button></span></li>`).join('');
   const log = [...(DB.meta.audit || [])].reverse().slice(0, 200).map(e => `<tr style="cursor:default"><td class="l">${new Date(e.t).toLocaleString('fr-FR')}</td><td class="l">${esc(e.u)}</td><td class="l">${esc(e.a)}${e.d ? ' — ' + esc(e.d) : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="l muted">Aucune action enregistrée.</td></tr>';
   return `<header class="ph"><div><h2>Espace propriétaire</h2><p class="sub">Contrôle total de l’application · version ${APP_VERSION}</p></div></header>
   <section class="card sec2"><h3>Contrôle de l’application</h3>
     <p class="sub" style="margin:6px 0 12px">${locked ? '<b style="color:#dc2626">L’application est VERROUILLÉE :</b> aucun administrateur ne peut se connecter, les sessions ouvertes sont fermées.' : 'Les administrateurs peuvent se connecter normalement.'} Ce réglage s’applique à tous les appareils synchronisés.</p>
     <button class="btn ${locked ? 'primary' : 'danger'}" data-act="ctllock">${locked ? 'Déverrouiller l’application' : 'Verrouiller l’application (bloquer tous les administrateurs)'}</button></section>
-  <section class="card sec2"><h3>Utilisateurs</h3><p class="sub" style="margin:6px 0 10px">Seul le propriétaire crée, bloque, réinitialise ou supprime les comptes. Un mot de passe temporaire oblige l’utilisateur à choisir le sien à sa première connexion.</p>
+  <section class="card sec2"><h3>Utilisateurs</h3><p class="sub" style="margin:6px 0 10px">Chaque administrateur gère son propre mot de passe. En cas de perte, réinitialisez-le ici : le compte redemandera la création d’un nouveau mot de passe à la prochaine connexion. Seul le propriétaire crée, bloque ou supprime les comptes.</p>
     <ul class="list" style="margin:12px 0 14px">${users}</ul>
     <div class="acts" style="margin-bottom:14px"><button class="btn danger" data-act="resetall">Réinitialiser tous les mots de passe</button></div>
     <form data-f="adduser" class="grid"><label>Nouvel identifiant<input name="u" autocapitalize="none" required></label>
@@ -943,17 +943,29 @@ function pProprio() {
   <div class="acts" style="margin:6px 0 18px"><button class="btn" data-act="logout">Se déconnecter</button></div>
   <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Sauvegarde, restauration et effacement des données. Pensez à sauvegarder sur la page <a href="#/base-de-donnees">Base de données</a> avant.</p><div class="acts"><a class="btn" href="#/base-de-donnees">Sauvegarde et restauration</a><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></div></section>`;
 }
-const tempPw = () => { const L = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz', D = '23456789', r = n => crypto.getRandomValues(new Uint32Array(1))[0] % n; const a = []; for (let i = 0; i < 6; i++) a.push(L[r(L.length)]); for (let i = 0; i < 3; i++) a.push(D[r(D.length)]); for (let i = a.length - 1; i > 0; i--) { const j = r(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a.join(''); };
-const showTemps = list => openModal(`<h3 style="margin-bottom:8px">Mots de passe temporaires</h3><p class="sub" style="margin-bottom:10px">Notez-les maintenant : ils ne seront plus affichés. Chaque utilisateur devra choisir son mot de passe à la première connexion.</p><table class="tbl"><thead><tr><th class="l">Identifiant</th><th class="l">Mot de passe temporaire</th></tr></thead><tbody>${list.map(([n, p]) => `<tr style="cursor:default"><td class="l"><b>${esc(n)}</b></td><td class="l"><code style="font-size:16px">${esc(p)}</code></td></tr>`).join('')}</tbody></table><div class="acts" style="margin-top:12px"><button class="btn" data-act="copytemps" data-t="${esc(list.map(([n, p]) => n + ' : ' + p).join('\\n'))}">Copier</button><button class="btn primary" data-act="close">Fermer</button></div>`);
+function pActivate() {
+  return `<section class="card narrow"><h2>Créer mon mot de passe</h2><p class="sub" style="margin-bottom:12px">Première connexion, ou mot de passe réinitialisé par le propriétaire : choisissez votre mot de passe personnel. Lui seul vous donnera accès à votre compte.</p>
+    <form data-f="activate"><label>Identifiant<input name="u" autocapitalize="none" autocomplete="username" required></label>
+    <label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirmer le mot de passe<input name="n2" type="password" minlength="8" autocomplete="new-password" required></label>
+    <button class="btn primary">Créer mon mot de passe et me connecter</button></form>
+    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/login">Retour à la connexion</a></p></section>`;
+}
+function pGate() {
+  return `<section class="card narrow" style="margin-top:7vh"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
+    <h2 style="text-align:center">Mot de passe propriétaire</h2>
+    <p class="sub" style="text-align:center;margin-bottom:12px">Saisissez le mot de passe propriétaire pour ouvrir l’application.</p>
+    <form data-f="gate"><label>Mot de passe propriétaire<input name="o" type="password" autocomplete="off" required></label><button class="btn primary">Ouvrir l’application</button></form>
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p></section>`;
+}
 function pLogin() {
-  const first = DB.users.filter(u => !u.pass);
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
     <h2 style="text-align:center">Accès Administrateur</h2><p class="sub" style="text-align:center">Accès réservé au personnel autorisé.</p>
     <form data-f="login"><label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
     <button class="btn primary">Se connecter</button></form>
     <p class="sub" style="text-align:center;margin-top:12px"><a href="#/proprietaire">Espace propriétaire</a></p>
-    ${first.length ? `<p class="sub" style="margin-top:14px">Compte(s) sans mot de passe (${first.map(u => '<b>' + esc(u.username) + '</b>').join(', ')}) : le propriétaire doit d’abord les activer dans l’Espace propriétaire.</p>` : ''}
+    <p class="sub" style="margin-top:14px;text-align:center"><a href="#/activer">Première connexion ou mot de passe oublié ? Créer mon mot de passe</a></p>
     <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
@@ -1032,13 +1044,19 @@ const allDivisions = dir => DB.directions.filter(d => !dir || d.name === dir).fl
 const agentRow = a => `<button class="arow" data-act="fiche" data-id="${a.id}">${avatar(a)}<span class="an"><b>${esc(fullName(a))}</b><small>${esc(a.grade || 'Grade non renseigné')}${a.fonction ? ' — ' + esc(a.fonction) : ''}</small></span><span class="am">${esc(a.matricule || '')}${a.bureau ? `<br><span class="badge">${esc(a.bureau)}</span>` : a.division ? `<br><span class="badge">${esc(a.division)}</span>` : ''}</span></button>`;
 
 /* ---------- Fenêtres ---------- */
+let mDepth = 0, popIgnore = 0;
 function openModal(html) {
-  closeModal();
+  const had = $$('.mb').length; $$('.mb').forEach(m => m.remove());
   const m = document.createElement('div'); m.className = 'mb'; m.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
   m.addEventListener('click', e => { if (e.target === m) closeModal(); });
   document.body.appendChild(m);
+  if (!had) { try { history.pushState({ m: 1 }, ''); mDepth = 1; } catch (e) {} }
 }
-function closeModal() { $$('.mb').forEach(m => m.remove()); document.body.classList.remove('printing'); }
+function closeModal(fromPop, quiet) {
+  const had = $$('.mb').length; $$('.mb').forEach(m => m.remove()); document.body.classList.remove('printing');
+  if (!had || !mDepth) return;
+  mDepth = 0; if (!fromPop && !quiet) { popIgnore++; try { history.back(); } catch (e) { popIgnore--; } }
+}
 function ask(msg, def = '', type = 'text') {
   return new Promise(res => {
     const m = document.createElement('div'); m.className = 'mb'; m.style.zIndex = 90;
@@ -1518,16 +1536,17 @@ function pAdmin() {
 /* ================= Routage ================= */
 function route() {
   const h = location.hash.replace(/^#\//, '') || 'accueil', [name, arg] = h.split('/');
+  if (!gateOpen()) { $('#app').innerHTML = pGate(); window.scrollTo(0, 0); return; }
   if (session && session.role !== 'owner') {
     const cu = DB.users.find(x => x.id === session.id);
     if (!cu || cu.blocked || (DB.ctl && DB.ctl.locked)) { const why = !cu ? 'Votre compte n’existe plus.' : cu.blocked ? 'Votre compte a été bloqué par le propriétaire.' : 'L’application est verrouillée par le propriétaire.'; session = null; try { sessionStorage.removeItem('dfl_s'); } catch (e) {} toast(why, true); }
   }
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
-  if (session && session.mustChange && name !== 'compte') { location.hash = '#/compte'; return; }
+  if (session && session.mustChange && name !== 'compte') { location.replace('#/compte'); return; }
   if (name === 'importer' && session && !canPlace() && arg !== 'agents' && arg) { location.hash = '#/importer/agents'; return; }
-  if (name === 'login' && session) { location.hash = '#/accueil'; return; }
-  closeModal();
-  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, 'base-de-donnees': pBaseDeDonnees };
+  if (name === 'login' && session) { location.replace('#/accueil'); return; }
+  closeModal(false, true);
+  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, activer: pActivate, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
   $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin', proprietaire: 'admin', sync: 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
@@ -1597,13 +1616,11 @@ const A = {
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
   delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); audit('Fiche supprimée', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
-  resetpw: async t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return;
-    const p = await ask(`Nouveau mot de passe pour ${u.username} (8 caractères minimum, lettres et chiffres). Laissez vide pour générer un mot de passe temporaire :`, '', 'password'); if (p == null) return;
-    const pw = p === '' ? tempPw() : p; if (!strongPw(pw, u.username)) return toast(PWMSG, true);
-    u.pass = await makePass(pw); u.tmp = true; u.mustChange = false; audit('Mot de passe réinitialisé', u.username); route(); showTemps([[u.username, pw]]); },
-  resetall: async () => { if (!isOwner()) return; if (!confirm('Réinitialiser le mot de passe de TOUS les comptes ? Chaque utilisateur recevra un mot de passe temporaire et devra en choisir un nouveau.')) return;
-    const out = []; for (const u of DB.users) { const pw = tempPw(); u.pass = await makePass(pw); u.tmp = true; u.mustChange = false; out.push([u.username, pw]); } audit('Tous les mots de passe réinitialisés'); route(); showTemps(out); },
-  copytemps: t => { const x = t.dataset.t; if (navigator.clipboard) navigator.clipboard.writeText(x).then(() => toast('Copié'), () => toast('Copie impossible', true)); },
+  resetpw: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return;
+    if (!confirm(`Réinitialiser le mot de passe de « ${u.username} » ? Il devra créer un nouveau mot de passe à sa prochaine connexion.`)) return;
+    u.pass = ''; u.tmp = false; u.mustChange = false; audit('Mot de passe réinitialisé', u.username); toast('Mot de passe réinitialisé : ' + u.username + ' crée un nouveau mot de passe à sa prochaine connexion'); route(); },
+  resetall: () => { if (!isOwner()) return; if (!confirm('Réinitialiser le mot de passe de TOUS les administrateurs ? Chacun créera un nouveau mot de passe à sa prochaine connexion.')) return;
+    DB.users.forEach(u => { u.pass = ''; u.tmp = false; u.mustChange = false; }); audit('Tous les mots de passe réinitialisés'); toast('Tous les mots de passe sont réinitialisés'); route(); },
   ublock: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; u.blocked = !u.blocked; audit(u.blocked ? 'Compte bloqué' : 'Compte débloqué', u.username); toast(u.blocked ? 'Compte bloqué' : 'Compte débloqué'); route(); },
   ctllock: () => { if (!isOwner()) return; const on = !(DB.ctl && DB.ctl.locked); if (on && !confirm('Verrouiller l’application ? Aucun administrateur ne pourra se connecter jusqu’au déverrouillage.')) return; DB.ctl = { locked: on }; audit(on ? 'Application verrouillée' : 'Application déverrouillée'); route(); },
   deluser: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return; if (!confirm(`Supprimer le compte « ${u.username} » ?`)) return; DB.users = DB.users.filter(x => x.id !== u.id); audit('Utilisateur supprimé', u.username); route(); },
@@ -1678,6 +1695,25 @@ const A = {
 
 /* ================= Formulaires ================= */
 const F = {
+  async gate(f) {
+    const msg = lockedMsg(); if (msg) return toast(msg, true);
+    if (!(await checkOwner(f.o.value))) { const lock = lockBad(); audit('Échec mot de passe propriétaire (ouverture)'); return toast(lock ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Mot de passe propriétaire incorrect', true); }
+    lockSet({ n: 0, until: 0 }); try { sessionStorage.setItem('dfl_gate', '1'); } catch (e) {}
+    audit('Application ouverte'); route();
+  },
+  async activate(f) {
+    const msg = lockedMsg(); if (msg) return toast(msg, true);
+    const u = DB.users.find(x => x.username.toLowerCase() === f.u.value.trim().toLowerCase());
+    if (!u) { audit('Création de mot de passe : identifiant inconnu', f.u.value.trim().slice(0, 30)); return toast('Identifiant inconnu', true); }
+    if (u.pass) return toast('Ce compte a déjà un mot de passe. Si vous l’avez perdu, demandez au propriétaire de le réinitialiser.', true);
+    if (u.blocked || (DB.ctl && DB.ctl.locked)) return toast('Ce compte est bloqué par le propriétaire.', true);
+    if (f.n1.value !== f.n2.value) return toast('Les deux mots de passe sont différents', true);
+    if (!strongPw(f.n1.value, u.username)) return toast(PWMSG, true);
+    u.pass = await makePass(f.n1.value); u.tmp = false; audit('Mot de passe créé', u.username);
+    session = { id: u.id, username: u.username, role: u.role, mustChange: false };
+    try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
+    toast('Mot de passe créé'); location.hash = '#/accueil'; route();
+  },
   async ownerlogin(f) {
     const msg = lockedMsg(); if (msg) return toast(msg, true);
     if (!(await checkOwner(f.o.value))) { const lock = lockBad(); audit('Échec accès propriétaire'); return toast(lock ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Mot de passe propriétaire incorrect', true); }
@@ -1706,6 +1742,7 @@ const F = {
     const lk = lockInfo(); if (lk.until && lk.until <= Date.now() && lk.n >= 10) { lk.n = 0; lk.until = 0; lockSet(lk); }
     if (lk.until > Date.now()) return toast(`Trop de tentatives. Réessayez dans ${Math.ceil((lk.until - Date.now()) / 60000)} minute(s).`, true);
     const u = f.u.value.trim().toLowerCase(), user = DB.users.find(x => x.username.toLowerCase() === u);
+    if (user && !user.pass) return toast('Ce compte n’a pas encore de mot de passe : utilisez « Créer mon mot de passe ».', true);
     const ok = user ? await checkPass(user, f.p.value) : (await kdf('x', 'y').catch(() => 0), false);
     if (!ok) {
       const n = lk.n + 1; lockSet({ n, until: n >= 10 ? Date.now() + 2 * 60000 : 0 });
@@ -1728,7 +1765,7 @@ const F = {
     try { sessionStorage.setItem('dfl_s', JSON.stringify(session)); } catch (e) {}
     audit('Mot de passe modifié'); toast('Mot de passe modifié'); location.hash = '#/accueil'; route();
   },
-  async adduser(f) { if (!isOwner()) return; const u = f.u.value.trim(); if (!u) return; if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); const pw = tempPw(); DB.users.push({ id: uid(), username: u, pass: await makePass(pw), role: f.r.value, tmp: true }); audit('Utilisateur ajouté', u); route(); showTemps([[u, pw]]); },
+  async adduser(f) { if (!isOwner()) return; const u = f.u.value.trim(); if (!u) return; if (DB.users.some(x => x.username.toLowerCase() === u.toLowerCase())) return toast('Cet identifiant existe déjà', true); DB.users.push({ id: uid(), username: u, pass: '', role: f.r.value }); audit('Utilisateur ajouté', u); toast('Compte créé : l’utilisateur choisit son mot de passe à la première connexion'); route(); },
   adddir(f) { const v = f.v.value.trim(); if (DB.directions.some(d => d.name === v)) return toast('Cette direction existe déjà', true); DB.directions.push({ name: v, divisions: [] }); save(); route(); },
   adddiv(f) { const d = DB.directions[+f.dataset.i], v = f.v.value.trim(); if (d.divisions.includes(v)) return toast('Cette division existe déjà', true); d.divisions.push(v); save(); route(); },
   year(f) { DB.meta.annee = parseInt(f.y.value, 10) || DB.meta.annee; save(); toast('Année enregistrée'); },
@@ -1819,12 +1856,23 @@ window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/liste/.te
 window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/liste/.test(location.hash)) renderListe(); } });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
 window.addEventListener('hashchange', route);
+/* Bouton « Retour » du téléphone : ferme la fenêtre ouverte, sinon revient à la page précédente ; sur la première page, demande de le presser deux fois pour quitter */
+const ANDROID = /Android/i.test(navigator.userAgent);
+window.addEventListener('popstate', e => {
+  if (popIgnore > 0) { popIgnore--; return; }
+  if (mDepth > 0 || document.querySelector('.mb')) { closeModal(true); return; }
+  if (ANDROID && e.state && e.state.root) {
+    toast('Appuyez encore sur Retour pour quitter');
+    setTimeout(() => { try { if (history.state && history.state.root) history.pushState({ app: 1 }, ''); } catch (x) {} }, 2500);
+  }
+});
+if (ANDROID) { try { history.replaceState({ root: 1 }, ''); history.pushState({ app: 1 }, ''); } catch (e) {} }
 document.addEventListener('visibilitychange', () => { document.body.classList.toggle('priv', document.hidden && !!session); if (document.hidden) Store.flush(); });
 window.addEventListener('pagehide', () => Store.flush());
 
 /* Déconnexion automatique après 15 minutes d'inactivité */
 let idle; const IDLE = 15 * 60 * 1000;
-const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { if (session) { A.logout(); try { sessionStorage.removeItem('dfl_s'); } catch (e) {} route(); toast('Session fermée après 15 minutes d’inactivité'); } }, IDLE); };
+const bump = () => { clearTimeout(idle); if (session) idle = setTimeout(() => { if (session) { A.logout(); try { sessionStorage.removeItem('dfl_s'); sessionStorage.removeItem('dfl_gate'); } catch (e) {} route(); toast('Session fermée après 15 minutes d’inactivité'); } }, IDLE); };
 ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, bump, { passive: true }));
 
 /* ================= Démarrage ================= */
