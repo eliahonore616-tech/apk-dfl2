@@ -812,7 +812,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.4.1';
+const APP_VERSION = '3.4.2';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -873,7 +873,7 @@ function shell(inner, name) {
   const banners = [];
   if (isAdm() && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
-  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
+  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a><button class="ib" data-act="logout" aria-label="Se déconnecter" title="Se déconnecter" style="color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:10px;min-width:38px;min-height:38px;display:grid;place-items:center;background:transparent">${ico('logout', 20)}</button>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
   <main>${banners.join('')}${inner}</main>${bn}`;
 }
@@ -940,6 +940,7 @@ function pProprio() {
   <section class="card sec2"><h3>Mon mot de passe propriétaire</h3><p class="sub" style="margin:6px 0 10px">Le changer ici le change immédiatement sur tous les appareils synchronisés.</p>
     <form data-f="ownerpw" class="grid"><label>Mot de passe actuel<input name="cur" type="password" autocomplete="off" required></label><label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" minlength="8" autocomplete="new-password" required></label><label>Confirmer<input name="n2" type="password" minlength="8" autocomplete="new-password" required></label><div style="align-self:end"><button class="btn primary">Modifier</button></div></form></section>
   <section class="card sec2"><h3>Journal d’activité</h3><p class="sub" style="margin:6px 0 10px">Connexions, échecs (identifiants inconnus compris), ajouts, modifications et suppressions sur cet appareil.</p><details><summary class="btn sm" style="display:inline-block">Afficher le journal</summary><div class="tw" style="max-height:360px;margin-top:10px"><table class="tbl"><thead><tr><th class="l">Date</th><th class="l">Utilisateur</th><th class="l">Action</th></tr></thead><tbody>${log}</tbody></table></div></details></section>
+  <div class="acts" style="margin:6px 0 18px"><button class="btn" data-act="logout">Se déconnecter</button></div>
   <section class="card sec2"><h3>Zone sensible</h3><p class="sub" style="margin:8px 0 12px">Sauvegarde, restauration et effacement des données. Pensez à sauvegarder sur la page <a href="#/base-de-donnees">Base de données</a> avant.</p><div class="acts"><a class="btn" href="#/base-de-donnees">Sauvegarde et restauration</a><button class="btn danger" data-act="wipe">Supprimer tous les agents</button></div></section>`;
 }
 const tempPw = () => { const L = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz', D = '23456789', r = n => crypto.getRandomValues(new Uint32Array(1))[0] % n; const a = []; for (let i = 0; i < 6; i++) a.push(L[r(L.length)]); for (let i = 0; i < 3; i++) a.push(D[r(D.length)]); for (let i = a.length - 1; i > 0; i--) { const j = r(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a.join(''); };
@@ -956,12 +957,12 @@ function pLogin() {
     <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
-  if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p></section>';
+  if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>';
   return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
     <form data-f="pw"><label>Mot de passe actuel<input name="old" type="password" autocomplete="current-password" required></label>
     <label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" autocomplete="new-password" minlength="8" required></label>
     <label>Confirmer le nouveau mot de passe<input name="n2" type="password" autocomplete="new-password" minlength="8" required></label>
-    <button class="btn primary">Enregistrer le mot de passe</button></form></section>`;
+    <button class="btn primary">Enregistrer le mot de passe</button></form><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>`;
 }
 
 /* ---------- 7e Page : Base de données (Stockage interne, Cloud & Lieu sûr) ---------- */
@@ -1504,7 +1505,7 @@ function pAdmin() {
     ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
     ${it('sync', 'Synchronisation', 'db', 'État de la synchronisation entre appareils')}
     ${isOwner() ? it('proprietaire', 'Espace propriétaire', 'shield', 'Utilisateurs, blocage, mots de passe, journal') : ''}</div>`;
-  if (!dr) return head + tiles + '<p class="note">La gestion de la structure est réservée à l’Adm1 (DR).</p>';
+  if (!dr) return head + tiles + '<p class="note">La gestion de la structure est réservée à l’Adm1 (DR).</p><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div>';
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
     <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
