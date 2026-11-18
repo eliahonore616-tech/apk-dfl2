@@ -370,7 +370,7 @@ const normEtat = s => {
 const FIELDS = [['noms', 'Noms complets (nom + postnom + prénom)'], ['nom', 'Nom'], ['postnom', 'Postnom'], ['prenom', 'Prénom'], ['sexe', 'Sexe'],
   ['naissance', 'Date de naissance'], ['etat_civil', 'État civil'], ['diplome', 'Diplôme'], ['matricule', 'Matricule'], ['acte', 'N° acte d’engagement'],
   ['engagement', 'Date d’engagement'], ['grade', 'Grade'], ['fonction', 'Fonction'], ['direction', 'Direction'], ['division', 'Division'], ['bureau', 'Bureau'],
-  ['salaire', 'Salaire (oui/non)'], ['salaire_montant', 'Montant du salaire'], ['prime', 'Prime (oui/non)'], ['prime_montant', 'Montant de la prime'], ['recense', 'Recensé (oui/non)'], ['prise_en_charge', 'Prise en charge'], ['situation', 'Situation'], ['observation', 'Observation']];
+  ['salaire', 'Salaire (oui/non)'], ['salaire_montant', 'Montant du salaire'], ['prime', 'Prime (oui/non)'], ['prime_montant', 'Montant de la prime'], ['recense', 'Recensé (oui/non)'], ['controle', 'Contrôle (oui/non)'], ['prise_en_charge', 'Prise en charge'], ['situation', 'Situation'], ['observation', 'Observation']];
 const CFIELDS = [['direction', 'Direction'], ['division', 'Division'], ['grade', 'Grade / poste'], ['prevu', 'Effectif prévu'], ['note', 'Remarque']];
 const AKEYS = FIELDS.map(f => f[0]), CKEYS = CFIELDS.map(f => f[0]);
 const ALIAS = {
@@ -386,6 +386,7 @@ const ALIAS = {
   grade: ['grade', 'gradeactuel', 'structure'], fonction: ['fonction', 'poste', 'emploi', 'fonctionexercee'],
   direction: ['direction'], division: ['division', 'divisiondaffectation'], bureau: ['bureau', 'bureaux', 'cellule', 'section'],
   salaire: ['salaire', 'paie'], salaire_montant: ['montant', 'montantsalaire'], prime: ['prime'], prime_montant: ['montant2', 'montantprime'], recense: ['recenser', 'recense', 'recensement'], observation: ['observation', 'observations', 'remarque', 'remarques'], prise_en_charge: ['priseencharge'],
+  controle: ['controle', 'controles', 'controleouinon', 'controleoui', 'controleounon', 'controlesounon'],
   situation: ['situation', 'statut', 'situationadministrative'],
   prevu: ['effectif', 'effectifprevu', 'effectifsprevus', 'prevu', 'prevus', 'postesprevus', 'effectifcadre', 'effectifs', 'nombredepostes', 'nbpostes', 'cadre'],
   note: ['remarque', 'remarques', 'observation', 'observations', 'note']
@@ -426,7 +427,7 @@ function rowToAgent(r, map, opt, sheet) {
     etat_civil: normEtat(g('etat_civil')), diplome: g('diplome'), matricule: g('matricule'), acte: g('acte'),
     engagement: dateFrom(map.engagement != null ? r[map.engagement] : ''), grade: (() => { let gr = canonGrade(g('grade')); if (!GRADES.some(x => x.l === gr)) { const f = canonGrade(g('fonction')); if (GRADES.some(x => x.l === f)) gr = f; } return gr; })(), fonction: g('fonction'),
     direction: g('direction') || opt.dir || '', division: g('division') || (opt.sheetAsDiv ? sheet : ''), bureau: g('bureau'),
-    salaire: yn(g('salaire')), salaire_montant: g('salaire_montant'), prime: yn(g('prime')), prime_montant: g('prime_montant'), recense: yn(g('recense')), prise_en_charge: g('prise_en_charge'), situation: g('situation'), observation: g('observation')
+    salaire: yn(g('salaire')), salaire_montant: g('salaire_montant'), prime: yn(g('prime')), prime_montant: g('prime_montant'), recense: yn(g('recense')), controle: yn(g('controle')), prise_en_charge: g('prise_en_charge'), situation: g('situation'), observation: g('observation')
   };
 }
 function rowToPost(r, map, opt, sheet) {
@@ -469,6 +470,7 @@ function sortAgents(list, mode) {
   const nm = a => (a.nom + ' ' + a.postnom + ' ' + a.prenom);
   const c = {
     hier: (a, b) => di(a) - di(b) || vi(a) - vi(b) || gradeRank(a.grade) - gradeRank(b.grade) || nm(a).localeCompare(nm(b), 'fr'),
+    ga: (a, b) => gradeRank(a.grade) - gradeRank(b.grade) || nm(a).localeCompare(nm(b), 'fr'),
     alpha: (a, b) => nm(a).localeCompare(nm(b), 'fr'),
     recent: (a, b) => (b.created || 0) - (a.created || 0),
     mat: (a, b) => String(a.matricule || '~').localeCompare(String(b.matricule || '~'), 'fr', { numeric: true })
@@ -812,7 +814,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.6.0';
+const APP_VERSION = '3.7.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -860,12 +862,16 @@ const NAV = [
   { r: 'cadre', l: 'Cadre organique', s: 'Cadre', i: 'org' },
   { r: 'admin', l: 'Administration', s: 'Admin', i: 'shield' }
 ];
-const PROTECTED = ['nouveau', 'mise-en-place', 'cadre', 'liste', 'importer', 'admin', 'base-de-donnees', 'compte'];
-const DOCS = ['mise-en-place', 'cadre', 'liste'];
-const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents' };
+const PROTECTED = ['nouveau', 'mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu', 'importer', 'admin', 'base-de-donnees', 'compte'];
+const DOCS = ['mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu'];
+const SDOCS = ['alpha', 'matricules', 'nu'];
+const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents', alpha: 'Liste des cadres et agents (ordre alphabétique et grade)', matricules: 'Agents et cadres ayant un numéro matricule', nu: 'Agents N.U contrôlés et non contrôlés' };
+const SEGLBL = { 'mise-en-place': 'Mise en place', cadre: 'Cadre organique', liste: 'Liste déclarative', alpha: 'Ordre alphabétique', matricules: 'Matriculés', nu: 'N.U contrôlés' };
+const SEGICO = { 'mise-en-place': 'layers', cadre: 'org', liste: 'list', alpha: 'list', matricules: 'key', nu: 'check' };
 
 function shell(inner, name) {
-  const side = NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
+  const sideItems = session ? [...NAV.slice(0, 5), ...SDOCS.map(r => ({ r, l: SEGLBL[r], i: SEGICO[r] })), NAV[5]] : NAV;
+  const side = sideItems.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
     ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${ROLES[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
@@ -885,13 +891,18 @@ function lastAgents() {
   if (!L.length) return '';
   return `<section class="card sec2" style="margin-top:16px"><h3>Derniers agents enregistrés</h3><div class="alist" style="margin-top:10px">${L.map(a => `<button class="arow" data-act="fiche" data-id="${a.id}" style="width:100%;min-width:0">${avatar(a)}<span class="an" style="min-width:0"><b>${esc(fullName(a))}</b><small>${esc(gradeCode(a.grade) || 'Grade non renseigné')}${a.created ? ' · ajouté le ' + new Date(a.created).toLocaleDateString('fr-FR') : ''}${isNew(a) && DB.agents.filter(isNew).length <= 30 ? ' <span class="nwb">NOUVEAU</span>' : ''}</small></span></button>`).join('')}</div><div class="acts" style="margin-top:12px"><a class="btn" href="#/liste" data-act="gonew">Voir toute la liste (les plus récents d’abord)</a></div></section>`;
 }
+function homeLists() {
+  const n = { alpha: DB.agents.length, matricules: DB.agents.filter(a => isMat(a.matricule)).length, nu: DB.agents.filter(a => !isMat(a.matricule)).length };
+  const d = { alpha: 'Tous les agents, par grade puis par ordre alphabétique', matricules: 'Agents ayant un numéro matricule', nu: 'Agents sans matricule, contrôlés ou non' };
+  return `<div class="tiles sec2" style="margin-top:16px">${SDOCS.map(r => `<a class="tile" href="#/${r}"><span class="ic">${ico(SEGICO[r])}</span><div><b>${DOCTITLE[r]}</b><span>${n[r]} agent${n[r] > 1 ? 's' : ''} · ${d[r]}</span></div></a>`).join('')}</div>`;
+}
 function pAccueil() {
   return `<section class="hero"><span class="band"></span>
     <span class="pill">République Démocratique du Congo</span>
     <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
     <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
     <p class="msg">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p>`;
+    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? homeLists() : ''}${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p>`;
 }
 
 function pSync() {
@@ -1153,17 +1164,18 @@ function resizeImg(file, max = 240) {
 
 /* ---------- Les 3 documents : Mise en place, Cadre organique, Liste déclarative ---------- */
 const selDirs = () => ui.dir ? DB.directions.filter(d => d.name === ui.dir) : DB.directions;
-const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico({ 'mise-en-place': 'layers', cadre: 'org', liste: 'list' }[r], 17)}${DOCTITLE[r].replace(' des agents', '').replace(' du personnel', '')}</a>`).join('')}</div>`;
+const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico(SEGICO[r], 17)}${SEGLBL[r]}</a>`).join('')}</div>`;
 const LETTER = n => ['RÉPUBLIQUE DÉMOCRATIQUE DU CONGO', 'MINISTÈRE DE L’INTÉRIEUR, SÉCURITÉ, DÉCENTRALISATION ET AFFAIRES COUTUMIÈRES', 'DIRECTION DE SUIVI DES FINANCES LOCALES'].map(t => `<tr><th class="t sm" colspan="${n}"><div class="stk">${t}</div></th></tr>`).join('');
 const printHead = kind => '';
 function pDoc(kind) {
-  const desc = { 'mise-en-place': 'Secrétariat, 4 divisions et 8 bureaux. Les agents sont répartis automatiquement selon leur affectation.', cadre: 'Effectif prévu par grade et par unité, comparé aux agents en place.', liste: `Liste déclarative des agents de la Direction – année ${DB.meta.annee}.` }[kind];
+  const desc = { 'mise-en-place': 'Secrétariat, 4 divisions et 8 bureaux. Les agents sont répartis automatiquement selon leur affectation.', cadre: 'Effectif prévu par grade et par unité, comparé aux agents en place.', liste: `Liste déclarative des agents de la Direction – année ${DB.meta.annee}.`, alpha: 'Tous les cadres et agents, classés par grade puis par ordre alphabétique.', matricules: 'Cadres et agents ayant un numéro matricule.', nu: 'Agents sans matricule (N.U) : contrôlés ou non contrôlés.' }[kind];
   const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
   const extra = kind === 'liste' ? `<select id="tDiv" aria-label="Division"></select><select id="tSit" aria-label="Situation"><option value="">Toutes les situations</option>${SITU.map(s => `<option>${s}</option>`).join('')}</select><select id="tSort" aria-label="Tri"><option value="hier">Tri : hiérarchie</option><option value="alpha">Tri : alphabétique</option><option value="recent">Tri : derniers enregistrés</option><option value="mat">Tri : matricule</option></select>` : '';
+  const sx = SDOCS.includes(kind) ? `<select id="tSort" aria-label="Tri"><option value="ga">Tri : grade puis alphabétique</option><option value="alpha">Tri : alphabétique</option><option value="recent">Tri : derniers enregistrés</option></select>${kind === 'nu' ? '<select id="tCtl" aria-label="Contrôle"><option value="">Tous (contrôlés ou non)</option><option value="Oui">Contrôlés (OUI)</option><option value="Non">Non contrôlés (NON)</option><option value="-">Non renseigné</option></select>' : ''}` : '';
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
   return `${printHead(kind)}<header class="ph"><div><h2>${DOCTITLE[kind]}</h2><p class="sub">${desc}</p></div>
-    <div class="acts noprint">${kind === 'liste' || canPlace() ? `<a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents' }[kind]}">${ico('upload', 18)}Importer</a>` : ''}<button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
-    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}</div><div id="docbar" class="acts noprint" style="margin:10px 0"></div><div id="doc"></div>`;
+    <div class="acts noprint">${kind === 'liste' || SDOCS.includes(kind) || canPlace() ? `<a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents', alpha: 'alpha', matricules: 'matricules', nu: 'nu' }[kind]}">${ico('upload', 18)}Importer</a>` : ''}<button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
+    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}${sx}</div><div id="docbar" class="acts noprint" style="margin:10px 0"></div><div id="doc"></div>`;
 }
 function docRows(kind) {
   if (kind === 'mise-en-place') {
@@ -1181,6 +1193,7 @@ function docRows(kind) {
     unitRows().filter(u => u.type !== 'div').forEach(u => rows.push([u.name, u.prevu, u.enplace, u.prevu - u.enplace]));
     return { header: ['Structure', 'Effectif prévu', 'En place', 'Écart'], rows };
   }
+  if (SDOCS.includes(kind)) { const cols = sCols(kind), L = simpleAgents(kind); return { header: cols.map(c => c.label), rows: L.map((a, i) => sVals(cols, a, i, kind)) }; }
   const L = listeAgents();
   const cols = listeCols();
   return { header: cols.map(c => c.label), rows: L.map((a, i) => colVals(cols, a, i)) };
@@ -1287,11 +1300,57 @@ function renderListe() {
     <tfoot><tr><td class="s1"></td><td class="s2 l">Effectif : ${L.length}</td><td colspan="${Math.max(1, n - 2)}" class="l">Hommes : ${m} · Femmes : ${f}</td></tr></tfoot></table></div>
     ${L.length > ui.max ? `<div class="acts noprint" style="justify-content:center;margin:14px 0"><span class="muted" style="align-self:center">${Math.min(ui.max, L.length)} sur ${L.length} agents affichés</span><button class="btn" data-act="more">Afficher 100 de plus</button><button class="btn" data-act="moreall">Tout afficher</button></div>` : ''}`;
 }
-const renderDoc = kind => { ({ 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])(); docBar(kind); };
+const gradeAbbr = g => { const f = GRADES.find(x => x.l === canonGrade(g)); return f ? (f.a || f.l) : String(g || ''); };
+const SBASE = ['N°', 'NOMS, POSTNOMS ET PRÉNOMS', 'MATR', 'GRADE', 'CONTRÔLE OUI/NON'];
+const STITLE = { alpha: 'LISTE DES AGENTS ET CADRES DE LA DIRECTION SUIVANT L’ORDRE ALPHABÉTIQUE ET GRADE', matricules: 'LISTE DES AGENTS ET CADRES AYANT DES N° MATRICULES DE LA DSFL SUIVANT L’ORDRE ALPHABÉTIQUE', nu: 'LISTE DES AGENTS N.U CONTRÔLÉS ET NON CONTRÔLÉS' };
+const dcfgW = kind => { const o = DB.org; if (!o.dcfg) o.dcfg = {}; const c = o.dcfg[kind] = o.dcfg[kind] || {}; c.heads = c.heads || {}; c.hidden = c.hidden || []; c.extra = c.extra || []; return c; };
+function sCols(kind) {
+  const c = (DB.org && DB.org.dcfg && DB.org.dcfg[kind]) || {}, hd = c.heads || {}, hid = c.hidden || [], cols = [];
+  const n = kind === 'nu' ? 5 : 4;
+  for (let k = 0; k < n; k++) if (!hid.includes(k)) cols.push({ k, label: hd[k] || SBASE[k] });
+  (c.extra || []).forEach(x => cols.push({ k: x.id, label: x.label, extra: true }));
+  return cols;
+}
+const sVals = (cols, a, i, kind) => cols.map(o => o.extra ? ((a.x || {})[o.k] || '') : [i + 1, fullName(a), isMat(a.matricule) ? a.matricule : 'N.U', gradeAbbr(a.grade), (a.controle || '').toUpperCase()][o.k]);
+function simpleAgents(kind) {
+  const q = norm($('#tq') ? $('#tq').value : ''), sort = $('#tSort') ? $('#tSort').value : 'ga', ct = $('#tCtl') ? $('#tCtl').value : '';
+  return sortAgents(DB.agents.filter(a => (!ui.dir || a.direction === ui.dir) &&
+    (kind === 'alpha' || (kind === 'matricules' ? isMat(a.matricule) : !isMat(a.matricule))) &&
+    (kind !== 'nu' || !ct || (ct === '-' ? !a.controle : a.controle === ct)) &&
+    (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.grade, a.fonction].join(' ')).includes(q))), sort);
+}
+function renderSimple(kind) {
+  const L = simpleAgents(kind), ed = !!ui.edit && canPlace(), cols = sCols(kind), n = cols.length;
+  const label = { alpha: 'Aucun agent à afficher.', matricules: 'Aucun agent matriculé à afficher.', nu: 'Aucun agent N.U à afficher.' }[kind];
+  if (!L.length) { $('#doc').innerHTML = `<div class="empty">${label}<br><br><a class="btn primary" href="#/importer/${kind}">Importer un fichier</a> <a class="btn" href="#/nouveau">Ajouter un agent</a></div>`; return; }
+  const ctr = new Set([0, 2, 3, 4]);
+  const cl = (o, p) => p === 0 ? 's1 c' : p === 1 ? 's2 l' : ctr.has(o.k) ? 'c' : 'l';
+  const th = (o, p) => `<th class="${p === 0 ? 's1' : p === 1 ? 's2' : ''}">${ed ? `<input ${o.extra ? 'data-dx' : 'data-dh'}="${kind}|${o.k}" value="${esc(o.label)}" style="min-width:90px" aria-label="En-tête">${p > 1 ? `<button class="btn sm danger" data-act="dcoldel" data-kind="${kind}" data-k="${o.k}" aria-label="Supprimer la colonne" title="Supprimer la colonne">×</button>` : ''}` : esc(o.label)}</th>`;
+  const NW = DB.agents.filter(isNew).length <= 30;
+  const td = (o, p, a, v) => {
+    if (ed && o.extra) return `<td class="l"><input data-cx="${o.k}" data-id="${a.id}" value="${esc(v)}" aria-label="${esc(o.label)}"></td>`;
+    if (ed && o.k === 2) return `<td class="c"><input data-cf="matricule" data-id="${a.id}" value="${esc(isMat(a.matricule) ? a.matricule : '')}" placeholder="N.U" aria-label="Matricule"></td>`;
+    if (ed && o.k === 3) return `<td class="c"><input data-cf="grade" data-id="${a.id}" value="${esc(gradeAbbr(a.grade))}" aria-label="Grade"></td>`;
+    if (ed && o.k === 4) return `<td class="c"><select data-cf="controle" data-id="${a.id}" aria-label="Contrôle"><option value=""></option><option value="Oui" ${a.controle === 'Oui' ? 'selected' : ''}>OUI</option><option value="Non" ${a.controle === 'Non' ? 'selected' : ''}>NON</option></select></td>`;
+    return `<td class="${cl(o, p)}">${esc(v)}${p === 1 && NW && isNew(a) ? '<span class="nwb">NOUVEAU</span>' : ''}</td>`;
+  };
+  const oui = L.filter(a => a.controle === 'Oui').length, non = L.filter(a => a.controle === 'Non').length;
+  const foot = kind === 'nu' ? `Effectif : ${L.length} · Contrôlés : ${oui} · Non contrôlés : ${non}${L.length - oui - non ? ' · Non renseignés : ' + (L.length - oui - non) : ''}` : kind === 'alpha' ? `Effectif : ${L.length} · Avec matricule : ${L.filter(a => isMat(a.matricule)).length} · N.U : ${L.filter(a => !isMat(a.matricule)).length}` : `Effectif : ${L.length}`;
+  $('#doc').innerHTML = `<div class="xlwrap"><table class="tbl xl${ed ? ' editing' : ''}"><thead>${LETTER(n)}<tr><th class="t last" colspan="${n}"><div class="stk">${STITLE[kind]}</div></th></tr>
+    <tr>${cols.map(th).join('')}</tr></thead><tbody>
+    ${L.slice(0, ui.max).map((a, i) => { const v = sVals(cols, a, i, kind); return `<tr ${NW && isNew(a) ? 'class="nw" ' : ''}${ed ? '' : `data-act="fiche" data-id="${a.id}"`}>${cols.map((o, p) => td(o, p, a, v[p])).join('')}</tr>`; }).join('')}</tbody>
+    <tfoot><tr><td class="s1"></td><td class="s2 l" colspan="${Math.max(1, n - 1)}">${foot}</td></tr></tfoot></table></div>
+    ${L.length > ui.max ? `<div class="acts noprint" style="justify-content:center;margin:14px 0"><span class="muted" style="align-self:center">${Math.min(ui.max, L.length)} sur ${L.length} agents affichés</span><button class="btn" data-act="more">Afficher 100 de plus</button><button class="btn" data-act="moreall">Tout afficher</button></div>` : ''}`;
+}
+const renderDoc = kind => { (SDOCS.includes(kind) ? () => renderSimple(kind) : { 'mise-en-place': renderMise, cadre: renderCadre, liste: renderListe }[kind])(); docBar(kind); };
 function docBar(kind) {
   const e = $('#docbar'); if (!e || !session) return;
   const adm = canPlace(), ed = canPlace();
   let h = '';
+  if (SDOCS.includes(kind) && ed) {
+    h += `<button class="btn sm${ui.edit ? ' primary' : ''}" data-act="tedit">${ui.edit ? 'Terminer la modification' : 'Modifier le tableau'}</button>`;
+    if (ui.edit) h += `<button class="btn sm" data-act="dcoladd" data-kind="${kind}">+ Ajouter une colonne</button><button class="btn sm" data-act="dcolreset" data-kind="${kind}">Rétablir les colonnes d’origine</button>`;
+  }
   if ((kind === 'liste' || kind === 'cadre') && ed) {
     h += `<button class="btn sm${ui.edit ? ' primary' : ''}" data-act="tedit">${ui.edit ? 'Terminer la modification' : (kind === 'liste' ? 'Modifier le tableau' : 'Modifier les en-têtes')}</button>`;
     if (ui.edit && kind === 'liste') h += '<button class="btn sm" data-act="lcoladd">+ Ajouter une colonne</button><button class="btn sm" data-act="lcolreset">Rétablir les colonnes d’origine</button>';
@@ -1305,12 +1364,12 @@ function fillTDiv() { const s = $('#tDiv'); if (!s) return; const cur = s.value;
 
 /* ---------- Importer un fichier ---------- */
 function pImport(arg) {
-  const md = arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents';
+  const md = arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : SDOCS.includes(arg) ? arg : 'agents';
   return `<header class="ph"><div><h2>Importer un fichier</h2><p class="sub">Excel (.xlsx), Word (.docx) ou CSV. Choisissez ce que contient le fichier, vérifiez l’aperçu, puis importez.</p></div></header>
   <section class="card"><h3 style="margin-bottom:12px">1. Choisir le fichier</h3>
     <label class="drop" for="impFile">${ico('upload')}<b>Toucher pour choisir un fichier</b><span>.xlsx, .xls, .csv, .docx, .pdf</span></label>
     <input id="impFile" type="file" accept=".xlsx,.xls,.xlsm,.csv,.txt,.docx,.pdf" hidden>
-    <div class="grid sec2"><div><label>Le fichier contient</label><div class="radios"><label class="rd"><input type="radio" name="impMode" value="agents" ${md === 'agents' ? 'checked' : ''}>Liste déclarative (agents)</label><label class="rd"><input type="radio" name="impMode" value="mise" ${md === 'mise' ? 'checked' : ''}>Mise en place (tableau Word par bureau)</label><label class="rd"><input type="radio" name="impMode" value="cadre" ${md === 'cadre' ? 'checked' : ''}>Cadre organique (postes prévus)</label></div></div>
+    <div class="grid sec2"><div><label>Le fichier contient</label><div class="radios"><label class="rd"><input type="radio" name="impMode" value="agents" ${md === 'agents' ? 'checked' : ''}>Liste déclarative (agents)</label><label class="rd"><input type="radio" name="impMode" value="alpha" ${md === 'alpha' ? 'checked' : ''}>Liste des cadres et agents (ordre alphabétique et grade)</label><label class="rd"><input type="radio" name="impMode" value="matricules" ${md === 'matricules' ? 'checked' : ''}>Agents et cadres matriculés</label><label class="rd"><input type="radio" name="impMode" value="nu" ${md === 'nu' ? 'checked' : ''}>Agents N.U contrôlés / non contrôlés</label><label class="rd"><input type="radio" name="impMode" value="mise" ${md === 'mise' ? 'checked' : ''}>Mise en place (tableau Word par bureau)</label><label class="rd"><input type="radio" name="impMode" value="cadre" ${md === 'cadre' ? 'checked' : ''}>Cadre organique (postes prévus)</label></div></div>
       <label>Direction par défaut<select id="impDir">${DB.directions.map(d => `<option>${esc(d.name)}</option>`).join('')}</select></label></div>
     <label class="rd sec2" style="display:flex"><input type="checkbox" id="impSheet">Utiliser le nom de la feuille / du tableau comme division (si le fichier n’a pas de colonne « Division »)</label>
     <p class="sub sec2">Pas de fichier prêt ? <button class="linkbtn" data-act="template">Télécharger un modèle Excel</button></p></section>
@@ -1543,7 +1602,7 @@ function route() {
   }
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (session && session.mustChange && name !== 'compte') { location.replace('#/compte'); return; }
-  if (name === 'importer' && session && !canPlace() && arg !== 'agents' && arg) { location.hash = '#/importer/agents'; return; }
+  if (name === 'importer' && session && !canPlace() && !['agents', 'alpha', 'matricules', 'nu'].includes(arg) && arg) { location.hash = '#/importer/agents'; return; }
   if (name === 'login' && session) { location.replace('#/accueil'); return; }
   closeModal(false, true);
   const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, activer: pActivate, 'base-de-donnees': pBaseDeDonnees };
@@ -1552,7 +1611,7 @@ function route() {
   window.scrollTo(0, 0);
   if (DOCS.includes(name)) {
     fillTDiv(); if (ui.nextSort && $('#tSort')) { $('#tSort').value = ui.nextSort; ui.nextSort = ''; } ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
-    ['tq', 'tDiv', 'tSit', 'tSort'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', () => { ui.max = 100; if (i === 'tq') { clearTimeout(tm); tm = setTimeout(rd, 250); } else rd(); }); });
+    ['tq', 'tDiv', 'tSit', 'tSort', 'tCtl'].forEach(i => { const e = $('#' + i); if (e) e.addEventListener(i === 'tq' ? 'input' : 'change', () => { ui.max = 100; if (i === 'tq') { clearTimeout(tm); tm = setTimeout(rd, 250); } else rd(); }); });
     if ($('#tDir')) $('#tDir').addEventListener('change', e => { ui.dir = e.target.value; fillTDiv(); rd(); });
     rd();
   }
@@ -1563,7 +1622,7 @@ function route() {
     $('#fmGrade').addEventListener('change', e => { const g = GRADES.find(x => x.l === e.target.value); if (g && g.a && !$('#fmFonc').value.trim()) $('#fmFonc').value = g.a; });
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
-  if (name === 'importer') imp = { tables: [], mode: arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
+  if (name === 'importer') imp = { tables: [], src: SDOCS.includes(arg) ? arg : '', mode: arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
   if (name === 'base-de-donnees') Store.where().then(w => { const e = $('#whereDb'); if (e) e.textContent = w; });
   if (afterRoute) { const f = afterRoute; afterRoute = null; f(); }
 }
@@ -1576,25 +1635,38 @@ function onDocEdit(e) {
   else if (d.lx !== undefined) { const x = lcfgW().extra.find(z => z.id === d.lx); if (x) { x.label = v || x.label; save(); } }
   else if (d.hd !== undefined) { DB.org.heads = DB.org.heads || {}; DB.org.heads[d.hd] = v; save(); }
   else if (d.cx !== undefined) { const a = ag(); if (a) { a.x = a.x || {}; a.x[d.cx] = t.value; a.updated = Date.now(); save(); } }
-  else if (d.cf !== undefined) { const a = ag(); if (a) { a[d.cf] = v; a.updated = Date.now(); save(); } }
+  else if (d.dh !== undefined) { const [k, i] = d.dh.split('|'); dcfgW(k).heads[i] = v || ''; if (!v) delete dcfgW(k).heads[i]; save(); }
+  else if (d.dx !== undefined) { const [k, i] = d.dx.split('|'), x = dcfgW(k).extra.find(z => z.id === i); if (x) { x.label = v || x.label; save(); } }
+  else if (d.cf !== undefined) { const a = ag(); if (a) { a[d.cf] = d.cf === 'grade' ? canonGrade(v) : v; a.updated = Date.now(); save(); } }
 }
 
 /* ================= Actions ================= */
 const A = {
-  more: () => { ui.max += 100; const y = window.scrollY; renderListe(); window.scrollTo(0, y); },
-  moreall: () => { ui.max = 1e9; const y = window.scrollY; renderListe(); window.scrollTo(0, y); },
-  close: () => closeModal(),
+  more: () => { ui.max += 100; const y = window.scrollY; renderDoc(curKind()); window.scrollTo(0, y); },
+  moreall: () => { ui.max = 1e9; const y = window.scrollY; renderDoc(curKind()); window.scrollTo(0, y); },
+  close: t => closeModal(false, !!(t && t.closest && t.closest('a[href]'))),
   gonew: () => { ui.nextSort = 'recent'; },
   tedit: () => { ui.edit = !ui.edit; renderDoc(curKind()); },
   lcoladd: async () => { if (!canPlace()) return; const n = await ask('Nom de la nouvelle colonne :'); if (!n || !n.trim()) return; lcfgW().extra.push({ id: 'x' + uid(), label: n.trim() }); save(); renderListe(); toast('Colonne ajoutée'); },
   lcoldel: t => { if (!canPlace()) return; const k = t.dataset.k, c = lcfgW(), x = c.extra.find(z => z.id === k); if (!confirm(x ? `Supprimer la colonne « ${x.label} » et ses valeurs ?` : 'Masquer cette colonne ?')) return; if (x) { c.extra = c.extra.filter(z => z.id !== k); DB.agents.forEach(a => { if (a.x && k in a.x) { delete a.x[k]; a.updated = Date.now(); } }); } else c.hidden.push(+k); save(); renderListe(); },
+  dcoladd: async t => { if (!canPlace()) return; const n = await ask('Nom de la nouvelle colonne :'); if (!n || !n.trim()) return; dcfgW(t.dataset.kind).extra.push({ id: 'x' + uid(), label: n.trim() }); save(); renderDoc(t.dataset.kind); toast('Colonne ajoutée'); },
+  dcoldel: t => { if (!canPlace()) return; const kd = t.dataset.kind, k = t.dataset.k, c = dcfgW(kd), x = c.extra.find(z => z.id === k); if (!confirm(x ? `Supprimer la colonne « ${x.label} » et ses valeurs ?` : 'Masquer cette colonne ?')) return; if (x) { c.extra = c.extra.filter(z => z.id !== k); DB.agents.forEach(a => { if (a.x && k in a.x) { delete a.x[k]; a.updated = Date.now(); } }); } else c.hidden.push(+k); save(); renderDoc(kd); },
+  dcolreset: t => { if (!canPlace()) return; if (!confirm('Rétablir les en-têtes et les colonnes d’origine ? Les colonnes ajoutées sont conservées.')) return; const c = dcfgW(t.dataset.kind); c.heads = {}; c.hidden = []; save(); renderDoc(t.dataset.kind); },
   lcolreset: () => { if (!canPlace()) return; if (!confirm('Rétablir les en-têtes et les colonnes d’origine ? Les colonnes ajoutées sont conservées.')) return; const c = lcfgW(); c.heads = {}; c.hidden = []; save(); renderListe(); },
   hdreset: () => { DB.org.heads = {}; save(); renderCadre(); docBar('cadre'); },
   addbur: async t => { if (!canPlace()) return; const div = DB.org.divisions[+t.dataset.i]; const n = await ask(`Nom du nouveau bureau de « ${div.name} » :`); if (!n || !n.trim()) return; const nm = n.trim(); if (div.bureaux.some(b => norm(b.name) === norm(nm))) return toast('Ce bureau existe déjà dans cette division', true); div.bureaux.push({ id: div.id + 'b' + uid(), name: nm, cb: '', prevu: 0 }); save(); toast('Bureau ajouté'); renderMise(); docBar('mise-en-place'); },
   delbur: t => { if (!canPlace()) return; const div = DB.org.divisions[+t.dataset.i], b = div.bureaux[+t.dataset.j]; const k = DB.agents.filter(a => a.division === div.name && a.bureau === b.name).length; if (!confirm(`Supprimer le bureau « ${b.name} » ?${k ? ` Ses ${k} agent(s) resteront dans la division, sans bureau.` : ''}`)) return; DB.agents.forEach(a => { if (a.division === div.name && a.bureau === b.name) { a.bureau = ''; a.updated = Date.now(); } }); div.bureaux.splice(+t.dataset.j, 1); save(); toast('Bureau supprimé'); renderMise(); docBar('mise-en-place'); },
   delimp: async t => {
     if (!canPlace()) return; const k = t.dataset.k;
-    if (k === 'liste') {
+    if (k === 'matricules') {
+      const L = DB.agents.filter(a => isMat(a.matricule)); if (!L.length) return toast('Aucun matricule à effacer');
+      if (!confirm(`Effacer les matricules de la liste importée ? Les ${L.length} agents restent enregistrés mais deviennent « N.U ».`)) return;
+      L.forEach(a => { a.matricule = ''; a.updated = Date.now(); }); audit('Liste des matriculés supprimée'); toast('Matricules effacés'); route();
+    } else if (k === 'nu') {
+      const L = DB.agents.filter(a => a.controle); if (!L.length) return toast('Aucun contrôle à effacer');
+      if (!confirm(`Effacer les mentions OUI/NON de contrôle de ${L.length} agent(s) ? Les agents restent enregistrés.`)) return;
+      L.forEach(a => { a.controle = ''; a.updated = Date.now(); }); audit('Contrôles N.U supprimés'); toast('Contrôles effacés'); route();
+    } else if (k === 'liste' || k === 'alpha') {
       if (!DB.agents.length) return toast('La liste est déjà vide');
       if ((await ask(`Supprimer la liste importée : les ${DB.agents.length} agents seront effacés (sur tous les appareils synchronisés). Pensez à sauvegarder avant (page Base de données). Tapez SUPPRIMER pour confirmer :`)) !== 'SUPPRIMER') return;
       DB.agents = []; audit('Liste déclarative supprimée'); toast('Liste déclarative supprimée'); route();
@@ -1665,7 +1737,7 @@ const A = {
   backup: async () => { DB.meta.lastBackup = Date.now(); save(); await saveFile(`archive_lieu_sur_DFL_${today()}.json`, JSON.stringify(DB), 'application/json'); toast('Archive téléchargée : placez-la en lieu sûr'); route(); },
   exportall: () => exportTable('agents_DFL_' + today(), ['Nom', 'Postnom', 'Prénom', 'Date de naissance', 'Sexe', 'État civil', 'Diplôme', 'Matricule', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Prise en charge', 'Situation'],
     DB.agents.map(a => [a.nom, a.postnom, a.prenom, fmtDate(a.naissance), SEX[a.sexe] || '', a.etat_civil, a.diplome, a.matricule, a.acte, fmtDate(a.engagement), a.grade, a.fonction, a.direction, a.division, a.bureau, a.salaire, a.prime, a.prise_en_charge, a.situation])),
-  exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee }[k] + '_DFL_' + today(), r.header, r.rows); },
+  exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee, alpha: 'liste_alphabetique_grade', matricules: 'agents_matricules', nu: 'agents_NU_controles' }[k] + '_DFL_' + today(), r.header, r.rows); },
   template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Situation'], []),
   openfolder: () => window.dflDesktop && window.dflDesktop.open(),
   wipe: async () => { if (!isOwner()) return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; audit('Tous les agents supprimés'); toast('Tous les agents ont été supprimés'); route(); } },
@@ -1679,10 +1751,13 @@ const A = {
       res.items.forEach(c => {
         if (!canPlace()) { delete c.division; delete c.bureau; }
         const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
-        const ex = DB.agents.find(a => agentKey(a) === agentKey(c));
+        const nk = z => norm(z.nom + z.postnom + z.prenom);
+        let ex = DB.agents.find(a => agentKey(a) === agentKey(c));
+        if (!ex) { const hom = DB.agents.filter(a => nk(a) === nk(c) && isMat(a.matricule) !== isMat(c.matricule)); if (hom.length === 1) ex = hom[0]; }
+        if (ex && !isMat(c.matricule) && isMat(ex.matricule)) delete c.matricule;
         if (ex) { for (const k in c) if (c[k]) ex[k] = c[k]; ex.updated = Date.now(); up++; } else { DB.agents.push({ id: uid(), photo: '', created: Date.now(), updated: Date.now(), ...c, situation: c.situation || 'Actif' }); nw++; }
       });
-      audit('Import', `${nw} ajouté(s), ${up} mis à jour`); toast(`Import terminé : ${nw} ajouté(s), ${up} mis à jour`); afterRoute = null; location.hash = '#/liste'; route();
+      audit('Import', `${nw} ajouté(s), ${up} mis à jour`); toast(`Import terminé : ${nw} ajouté(s), ${up} mis à jour`); afterRoute = null; location.hash = '#/' + (imp.src || 'liste'); route();
     } else {
       res.items.forEach(c => {
         const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
@@ -1820,7 +1895,7 @@ document.addEventListener('change', async e => {
     if (t.dataset.j === '') dv.prevu = v; else dv.bureaux[+t.dataset.j].prevu = v;
     save(); renderCadre(); return;
   }
-  if (t.name === 'impMode' && imp) { imp.mode = t.value; afterParse(); return; }
+  if (t.name === 'impMode' && imp) { imp.src = SDOCS.includes(t.value) ? t.value : ''; imp.mode = imp.src ? 'agents' : t.value; afterParse(); return; }
   if (t.id === 'impDir' && imp) { imp.dir = t.value; afterParse(); return; }
   if (t.id === 'impSheet' && imp) { imp.sheetAsDiv = t.checked; afterParse(); return; }
   if (t.dataset && t.dataset.imp && imp && imp.mode !== 'mise') {
@@ -1832,7 +1907,7 @@ document.addEventListener('change', async e => {
   if (t.id === 'impFile' && imp) {
     $('#impPreview').innerHTML = '<div class="card"><p>Lecture du fichier…</p></div>';
     try {
-      imp.tables = (await parseFile(file)).filter(x => x.aoa.length); imp.mode = ($('input[name=impMode]:checked') || {}).value || 'agents'; imp.dir = $('#impDir').value; imp.sheetAsDiv = $('#impSheet').checked;
+      imp.tables = (await parseFile(file)).filter(x => x.aoa.length); { const v = ($('input[name=impMode]:checked') || {}).value || 'agents'; imp.src = SDOCS.includes(v) ? v : ''; imp.mode = imp.src ? 'agents' : v; } imp.dir = $('#impDir').value; imp.sheetAsDiv = $('#impSheet').checked;
       if (!imp.tables.length) throw new Error('Le fichier est vide.'); afterParse();
     } catch (err) {
       imp.tables = []; $('#impPreview').innerHTML = `<div class="warn">${ico('alert', 20)}<span>${esc(err.message === 'lib' ? 'Ce format n’est pas lisible dans cette version. Utilisez un fichier Excel (.xlsx), Word (.docx) ou CSV.' : err.message)}</span></div>`;
@@ -1853,8 +1928,8 @@ document.addEventListener('change', async e => {
   }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/liste/.test(location.hash)) { ui._prev = ui.max; ui.max = 1e9; renderListe(); } });
-window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/liste/.test(location.hash)) renderListe(); } });
+window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/(liste|alpha|matricules|nu)/.test(location.hash)) { ui._prev = ui.max; ui.max = 1e9; renderDoc(curKind()); } });
+window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/(liste|alpha|matricules|nu)/.test(location.hash)) renderDoc(curKind()); } });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
 window.addEventListener('hashchange', route);
 /* Bouton « Retour » du téléphone : ferme la fenêtre ouverte, sinon revient à la page précédente ; sur la première page, demande de le presser deux fois pour quitter */
