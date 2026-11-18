@@ -891,13 +891,18 @@ function lastAgents() {
   if (!L.length) return '';
   return `<section class="card sec2" style="margin-top:16px"><h3>Derniers agents enregistrés</h3><div class="alist" style="margin-top:10px">${L.map(a => `<button class="arow" data-act="fiche" data-id="${a.id}" style="width:100%;min-width:0">${avatar(a)}<span class="an" style="min-width:0"><b>${esc(fullName(a))}</b><small>${esc(gradeCode(a.grade) || 'Grade non renseigné')}${a.created ? ' · ajouté le ' + new Date(a.created).toLocaleDateString('fr-FR') : ''}${isNew(a) && DB.agents.filter(isNew).length <= 30 ? ' <span class="nwb">NOUVEAU</span>' : ''}</small></span></button>`).join('')}</div><div class="acts" style="margin-top:12px"><a class="btn" href="#/liste" data-act="gonew">Voir toute la liste (les plus récents d’abord)</a></div></section>`;
 }
+function homeLists() {
+  const n = { alpha: DB.agents.length, matricules: DB.agents.filter(a => isMat(a.matricule)).length, nu: DB.agents.filter(a => !isMat(a.matricule)).length };
+  const d = { alpha: 'Tous les agents, par grade puis par ordre alphabétique', matricules: 'Agents ayant un numéro matricule', nu: 'Agents sans matricule, contrôlés ou non' };
+  return `<div class="tiles sec2" style="margin-top:16px">${SDOCS.map(r => `<a class="tile" href="#/${r}"><span class="ic">${ico(SEGICO[r])}</span><div><b>${DOCTITLE[r]}</b><span>${n[r]} agent${n[r] > 1 ? 's' : ''} · ${d[r]}</span></div></a>`).join('')}</div>`;
+}
 function pAccueil() {
   return `<section class="hero"><span class="band"></span>
     <span class="pill">République Démocratique du Congo</span>
     <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
     <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
     <p class="msg">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p>`;
+    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? homeLists() : ''}${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p>`;
 }
 
 function pSync() {
