@@ -121,6 +121,7 @@ label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;
 .printhead{display:none;text-align:center;margin-bottom:14px}
 
 /* ---------- Design & Pied de page ---------- */
+.vcenter{min-height:calc(100vh - 140px);min-height:calc(100dvh - 140px);display:flex;align-items:center;justify-content:center;padding:8px 14px}
 .lockhead{display:flex;justify-content:center;margin-bottom:12px}
 .lockhead .lk{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--soft);color:var(--deep)}
 .narrow .btn{width:100%;border-radius:999px}
@@ -464,18 +465,24 @@ function divOrder(d) {
   DB.cadre.filter(c => c.direction === d.name).forEach(c => add(c.division));
   return set;
 }
+const COL = new Intl.Collator('fr', { numeric: false });
+const COLN = new Intl.Collator('fr', { numeric: true });
 function sortAgents(list, mode) {
-  const di = a => DB.directions.findIndex(d => d.name === a.direction);
-  const vi = a => { const d = DB.directions[di(a)]; if (!d) return 999; const i = divOrder(d).indexOf(a.division || ''); return i < 0 ? 998 : i; };
-  const nm = a => (a.nom + ' ' + a.postnom + ' ' + a.prenom);
+  mode = mode || 'hier';
+  if (mode === 'recent') return [...list].sort((a, b) => (b.created || 0) - (a.created || 0));
+  const gr = new Map(), K = list.map(a => { let g = gr.get(a.grade); if (g === undefined) { g = gradeRank(a.grade); gr.set(a.grade, g); } return { a, g, n: a.nom + ' ' + a.postnom + ' ' + a.prenom, m: String(a.matricule || '~') }; });
+  if (mode === 'hier') {
+    const dIdx = new Map(DB.directions.map((d, i) => [d.name, i])), dOrd = new Map();
+    DB.directions.forEach(d => { const o = divOrder(d), m = new Map(); o.forEach((x, i) => { if (!m.has(x)) m.set(x, i); }); dOrd.set(d.name, m); });
+    K.forEach(k => { const di = dIdx.has(k.a.direction) ? dIdx.get(k.a.direction) : -1; k.di = di; if (di < 0) k.v = 999; else { const v = dOrd.get(k.a.direction).get(k.a.division || ''); k.v = v === undefined ? 998 : v; } });
+  }
   const c = {
-    hier: (a, b) => di(a) - di(b) || vi(a) - vi(b) || gradeRank(a.grade) - gradeRank(b.grade) || nm(a).localeCompare(nm(b), 'fr'),
-    ga: (a, b) => gradeRank(a.grade) - gradeRank(b.grade) || nm(a).localeCompare(nm(b), 'fr'),
-    alpha: (a, b) => nm(a).localeCompare(nm(b), 'fr'),
-    recent: (a, b) => (b.created || 0) - (a.created || 0),
-    mat: (a, b) => String(a.matricule || '~').localeCompare(String(b.matricule || '~'), 'fr', { numeric: true })
-  }[mode || 'hier'];
-  return [...list].sort(c);
+    hier: (x, y) => x.di - y.di || x.v - y.v || x.g - y.g || COL.compare(x.n, y.n),
+    ga: (x, y) => x.g - y.g || COL.compare(x.n, y.n),
+    alpha: (x, y) => COL.compare(x.n, y.n),
+    mat: (x, y) => COLN.compare(x.m, y.m)
+  }[mode];
+  return K.sort(c).map(k => k.a);
 }
 function cadreRows(dirName) {
   const rows = new Map();
@@ -927,10 +934,10 @@ const isOwner = () => !!session && session.role === 'owner';
 const isAdm = () => !!session && ['owner', 'admin'].includes(session.role);
 
 function pOwnerLogin() {
-  return `<section class="card narrow" style="margin-top:6vh"><div class="lockhead"><span class="lk">${ico('shield', 26)}</span></div>
+  return `<div class="vcenter"><section class="card narrow" style="margin:0;width:100%"><div class="lockhead"><span class="lk">${ico('shield', 26)}</span></div>
     <h2 style="text-align:center">Espace propriétaire</h2><p class="sub" style="text-align:center;margin-bottom:12px">Accès réservé au propriétaire de l’application.</p>
     <form data-f="ownerlogin"><label>Mot de passe propriétaire<input name="o" type="password" autocomplete="current-password" required></label><button class="btn primary">Entrer</button></form>
-    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/login">Retour à la connexion</a></p></section>`;
+    <p class="sub" style="text-align:center;margin-top:12px"><a href="#/login">Retour à la connexion</a></p></section></div>`;
 }
 function pProprio() {
   if (!isOwner()) return pOwnerLogin();
@@ -963,11 +970,11 @@ function pActivate() {
     <p class="sub" style="text-align:center;margin-top:12px"><a href="#/login">Retour à la connexion</a></p></section>`;
 }
 function pGate() {
-  return `<section class="card narrow" style="margin-top:7vh"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
+  return `<div class="vcenter"><section class="card narrow" style="margin:0;width:100%"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
     <h2 style="text-align:center">Mot de passe propriétaire</h2>
     <p class="sub" style="text-align:center;margin-bottom:12px">Saisissez le mot de passe propriétaire pour ouvrir l’application.</p>
     <form data-f="gate"><label>Mot de passe propriétaire<input name="o" type="password" autocomplete="off" required></label><button class="btn primary">Ouvrir l’application</button></form>
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p></section>`;
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p></section></div>`;
 }
 function pLogin() {
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
@@ -1221,7 +1228,8 @@ function renderMise() {
   });
   /* Listes d'agents, en bas */
   html += `<h3 class="sec2" style="margin:22px 0 10px">Liste des agents par division et par bureau</h3>`;
-  const rowsOf = (list, n0 = 0) => list.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="c">${i + 1}</td><td class="l"><b>${esc(fullName(a))}</b></td><td class="l">${esc(gradeCode(a.grade))}</td><td class="c">${esc(a.fonction)}</td><td class="l">${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td></tr>`).join('');
+  let left = ui.max, total = 0;
+  const rowsOf = (list, n0 = 0) => { total += list.length; const part = list.slice(0, Math.max(0, left)); left -= part.length; return part.map((a, i) => `<tr data-act="fiche" data-id="${a.id}"><td class="c">${i + 1}</td><td class="l"><b>${esc(fullName(a))}</b></td><td class="l">${esc(gradeCode(a.grade))}</td><td class="c">${esc(a.fonction)}</td><td class="l">${esc(a.matricule)}</td><td class="c">${a.sexe || ''}</td></tr>`).join(''); };
   const head = '<tr><th style="width:46px">N°</th><th class="l">NOMS, POST-NOMS, PRÉNOMS</th><th>GRADE</th><th>FONCTION</th><th class="l">MATRICULE</th><th>SEXE</th></tr>';
   const block = (label, list) => {
     const L = sortAgents(list, 'hier');
@@ -1237,6 +1245,7 @@ function renderMise() {
   });
   const known = new Set(org.divisions.map(x => x.name)), un = DB.agents.filter(a => !known.has(a.division) && hit(a));
   if (un.length) html += `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead><tr><th class="t lft last" colspan="6">AGENTS SANS AFFECTATION — ${un.length}</th></tr>${head}</thead><tbody class="ag">${block('Division non renseignée (à compléter par « Modifier » sur la fiche)', un)}</tbody></table></div>`;
+  if (total > ui.max) html += `<div class="acts noprint" style="justify-content:center;margin:14px 0"><span class="muted" style="align-self:center">${ui.max} sur ${total} agents affichés</span><button class="btn" data-act="more">Afficher 100 de plus</button><button class="btn" data-act="moreall">Tout afficher</button></div>`;
   $('#doc').innerHTML = html;
   if (admin) $$('#doc [data-org]').forEach(el => el.addEventListener('change', () => {
     const k = el.dataset.org, i = +el.dataset.i, j = +el.dataset.j, val = el.value.trim();
@@ -1748,14 +1757,18 @@ const A = {
     const res = buildImport(); let nw = 0, up = 0;
     const dirOf = n => { let d = DB.directions.find(x => norm(x.name) === norm(n || imp.dir)); if (!d) { d = { name: n || imp.dir, divisions: [] }; DB.directions.push(d); } return d; };
     if (imp.mode === 'agents') {
+      const nk = z => norm(z.nom + z.postnom + z.prenom), byKey = new Map(), byName = new Map();
+      const idx = a => { const k = agentKey(a); if (!byKey.has(k)) byKey.set(k, a); const n = nk(a); (byName.get(n) || byName.set(n, []).get(n)).push(a); };
+      DB.agents.forEach(idx); const now = Date.now(), dcache = new Map();
       res.items.forEach(c => {
         if (!canPlace()) { delete c.division; delete c.bureau; }
-        const d = dirOf(c.direction); c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
-        const nk = z => norm(z.nom + z.postnom + z.prenom);
-        let ex = DB.agents.find(a => agentKey(a) === agentKey(c));
-        if (!ex) { const hom = DB.agents.filter(a => nk(a) === nk(c) && isMat(a.matricule) !== isMat(c.matricule)); if (hom.length === 1) ex = hom[0]; }
+        const dk = c.direction || '';
+        let d = dcache.get(dk); if (!d) { d = dirOf(c.direction); dcache.set(dk, d); }
+        c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
+        let ex = byKey.get(agentKey(c));
+        if (!ex) { const hom = (byName.get(nk(c)) || []).filter(a => isMat(a.matricule) !== isMat(c.matricule)); if (hom.length === 1) ex = hom[0]; }
         if (ex && !isMat(c.matricule) && isMat(ex.matricule)) delete c.matricule;
-        if (ex) { for (const k in c) if (c[k]) ex[k] = c[k]; ex.updated = Date.now(); up++; } else { DB.agents.push({ id: uid(), photo: '', created: Date.now(), updated: Date.now(), ...c, situation: c.situation || 'Actif' }); nw++; }
+        if (ex) { for (const k in c) if (c[k]) ex[k] = c[k]; ex.updated = now; up++; } else { const na = { id: uid(), photo: '', created: now, updated: now, ...c, situation: c.situation || 'Actif' }; DB.agents.push(na); idx(na); nw++; }
       });
       audit('Import', `${nw} ajouté(s), ${up} mis à jour`); toast(`Import terminé : ${nw} ajouté(s), ${up} mis à jour`); afterRoute = null; location.hash = '#/' + (imp.src || 'liste'); route();
     } else {
@@ -1928,8 +1941,8 @@ document.addEventListener('change', async e => {
   }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/(liste|alpha|matricules|nu)/.test(location.hash)) { ui._prev = ui.max; ui.max = 1e9; renderDoc(curKind()); } });
-window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/(liste|alpha|matricules|nu)/.test(location.hash)) renderDoc(curKind()); } });
+window.addEventListener('beforeprint', () => { if (ui.max < 1e9 && /#\/(liste|alpha|matricules|nu|mise-en-place)/.test(location.hash)) { ui._prev = ui.max; ui.max = 1e9; renderDoc(curKind()); } });
+window.addEventListener('afterprint', () => { if (ui._prev) { ui.max = ui._prev; ui._prev = 0; if (/#\/(liste|alpha|matricules|nu|mise-en-place)/.test(location.hash)) renderDoc(curKind()); } });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
 window.addEventListener('hashchange', route);
 /* Bouton « Retour » du téléphone : ferme la fenêtre ouverte, sinon revient à la page précédente ; sur la première page, demande de le presser deux fois pour quitter */
