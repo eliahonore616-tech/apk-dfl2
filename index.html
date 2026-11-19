@@ -122,6 +122,16 @@ label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;
 
 /* ---------- Design & Pied de page ---------- */
 .vcenter{min-height:calc(100vh - 140px);min-height:calc(100dvh - 140px);display:flex;align-items:center;justify-content:center;padding:8px 14px}
+.lockov{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+.lbx{position:fixed;inset:0;z-index:9000;background:rgba(5,12,30,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
+.lbx img{max-width:100%;max-height:78vh;border-radius:10px;background:#fff}
+.histo{list-style:none;margin:6px 0 10px;padding:0}.histo li{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line,#d5e0f2)}
+.histoform{margin:10px 0 14px}.fh{margin:18px 0 4px;font-size:14px;color:var(--deep)}
+.bars .br{display:grid;grid-template-columns:minmax(96px,36%) 1fr auto;gap:10px;align-items:center;font-size:13px;margin:7px 0}
+.bars .bt{height:10px;border-radius:6px;background:var(--alice,#eef4ff);overflow:hidden}.bars .bt i{display:block;height:100%;border-radius:6px;background:var(--steel)}
+.bars .br b small{font-weight:500;opacity:.65}
+.snap{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line,#d5e0f2)}
+details{margin:8px 0}details>summary{cursor:pointer;padding:6px 0}.rdate{font-size:12px;color:var(--muted,#5a6b86);margin:-2px 0 6px 56px}
 .lockhead{display:flex;justify-content:center;margin-bottom:12px}
 .lockhead .lk{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--soft);color:var(--deep)}
 .narrow .btn{width:100%;border-radius:999px}
@@ -316,7 +326,9 @@ const sha256 = async s => {
 const SEX = { M: 'Masculin', F: 'Féminin' };
 const ETATS = ['Célibataire', 'Fiancé(e)', 'Marié(e)', 'Divorcé(e)', 'Veuf/Veuve'];
 const PRISE = ['Suivi', 'Financé', 'Suivi et financé', 'Aucune'];
-const SITU = ['Actif', 'Détaché', 'Suspendu', 'Retraité', 'Décédé'];
+const SITU = ['Actif', 'En congé', 'En mission', 'Détaché', 'Suspendu', 'Retraité', 'Décédé'];
+const HTYPES = ['Promotion', 'Mutation', 'Nomination', 'Congé', 'Mission', 'Formation', 'Sanction', 'Autre'];
+const DCATS = ['Arrêté de nomination', 'Acte de naissance', 'Diplôme', 'Pièce d’identité', 'Autre'];
 const DIRNAME = 'Direction de Suivi des Finances Locales';
 const ROLES = { owner: 'Propriétaire', admin: 'Adm1 — Directeur (DR)', cd: 'Adm2 — Chef de division (CD)', cb: 'Adm3 — Secrétaire et Chef de bureau (Sec et CB)' };
 const GRADES = [
@@ -671,7 +683,7 @@ const Store = {
     return Promise.resolve(this.kind === 'idb' ? 'Stockage interne local de l’appareil (IndexedDB sécurisé)' : 'Mémoire temporaire');
   }
 };
-const save = () => { Store.set(DB); Sync.schedule(); };
+const save = () => { Store.set(DB); Sync.schedule(); try { Snap.soon(); } catch (e) {} };
 
 /* ================= Synchronisation entre appareils (Supabase, gratuit) ================= */
 const Sync = {
@@ -821,7 +833,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.7.0';
+const APP_VERSION = '3.8.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -869,7 +881,7 @@ const NAV = [
   { r: 'cadre', l: 'Cadre organique', s: 'Cadre', i: 'org' },
   { r: 'admin', l: 'Administration', s: 'Admin', i: 'shield' }
 ];
-const PROTECTED = ['nouveau', 'mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu', 'importer', 'admin', 'base-de-donnees', 'compte'];
+const PROTECTED = ['stats', 'nouveau', 'mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu', 'importer', 'admin', 'base-de-donnees', 'compte'];
 const DOCS = ['mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu'];
 const SDOCS = ['alpha', 'matricules', 'nu'];
 const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents', alpha: 'Liste des cadres et agents (ordre alphabétique et grade)', matricules: 'Agents et cadres ayant un numéro matricule', nu: 'Agents N.U contrôlés et non contrôlés' };
@@ -877,15 +889,16 @@ const SEGLBL = { 'mise-en-place': 'Mise en place', cadre: 'Cadre organique', lis
 const SEGICO = { 'mise-en-place': 'layers', cadre: 'org', liste: 'list', alpha: 'list', matricules: 'key', nu: 'check' };
 
 function shell(inner, name) {
-  const sideItems = session ? [...NAV.slice(0, 5), ...SDOCS.map(r => ({ r, l: SEGLBL[r], i: SEGICO[r] })), NAV[5]] : NAV;
+  const sideItems = session ? [...NAV.slice(0, 5), ...SDOCS.map(r => ({ r, l: SEGLBL[r], i: SEGICO[r] })), { r: 'stats', l: 'Statistiques', i: 'chart' }, NAV[5]] : NAV;
   const side = sideItems.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
     ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${ROLES[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
   const bn = `<nav class="bnav" aria-label="Navigation">${NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 22)}<small>${n.s}</small></a>`).join('')}</nav>`;
   const banners = [];
-  if (isAdm() && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 30 * 864e5))
-    banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde depuis plus de 30 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
+  if (isAdm() && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 14 * 864e5))
+    banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde téléchargée depuis plus de 14 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
+  if (isAdm() && name !== 'stats') { const R = retraites(), k = R.passe.length + R.an.length; if (k) banners.push(`<div class="warn">${ico('alert', 20)}<span><b>${k}</b> agent(s) ont atteint ou atteindront l’âge de la retraite cette année. <a href="#/stats">Voir la liste</a></span></div>`); }
   return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a><button class="ib" data-act="logout" aria-label="Se déconnecter" title="Se déconnecter" style="color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:10px;min-width:38px;min-height:38px;display:grid;place-items:center;background:transparent">${ico('logout', 20)}</button>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
   <main>${banners.join('')}${inner}</main>${bn}`;
@@ -987,12 +1000,12 @@ function pLogin() {
     <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
 }
 function pCompte() {
-  if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>';
+  if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>' + lockCard();
   return `<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Connecté en tant que <b>${esc(session.username)}</b></p>
     <form data-f="pw"><label>Mot de passe actuel<input name="old" type="password" autocomplete="current-password" required></label>
     <label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" autocomplete="new-password" minlength="8" required></label>
     <label>Confirmer le nouveau mot de passe<input name="n2" type="password" autocomplete="new-password" minlength="8" required></label>
-    <button class="btn primary">Enregistrer le mot de passe</button></form><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>`;
+    <button class="btn primary">Enregistrer le mot de passe</button></form><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>${lockCard()}`;
 }
 
 /* ---------- 7e Page : Base de données (Stockage interne, Cloud & Lieu sûr) ---------- */
@@ -1054,6 +1067,19 @@ function pBaseDeDonnees() {
       <button class="btn primary" data-act="backup">${ico('download', 18)}Télécharger l’archive en lieu sûr (.json)</button>
       <button class="btn" data-act="exportall">${ico('file', 18)}Exporter le registre complet (Excel)</button>
     </div>
+  </section>
+
+  <section class="card sec2">
+    <div class="db-box"><span class="ic">${ico('db', 22)}</span><div><h3>4. Copies automatiques de l’appareil</h3>
+      <p class="sub" style="margin-top:4px">Une copie est faite chaque jour (7 jours conservés) et avant chaque import, suppression ou restauration. Utile en cas d’erreur ; elle ne remplace pas l’archive en lieu sûr (elle reste sur cet appareil).</p></div></div>
+    <div id="snapList"></div>
+  </section>
+
+  <section class="card sec2">
+    <div class="db-box"><span class="ic">${ico('file', 22)}</span><div><h3>5. Pièces jointes des agents</h3>
+      <p class="sub" style="margin-top:4px">Les documents joints aux fiches restent sur cet appareil. Exportez-les ici pour les conserver ou les copier sur un autre appareil.</p></div></div>
+    <div class="acts"><button class="btn primary" data-act="docsbackup">${ico('download', 18)}Exporter les pièces jointes (.json)</button>
+      <label class="btn">${ico('upload', 18)}<input type="file" id="impDocs" accept=".json,application/json" hidden>Importer des pièces jointes</label></div>
   </section>`;
 }
 
@@ -1091,10 +1117,11 @@ function openFiche(id) {
   const rank = sortAgents(DB.agents.filter(x => x.direction === a.direction), 'hier').findIndex(x => x.id === a.id) + 1;
   openModal(`<div class="printhead"><b>République Démocratique du Congo</b><br>Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières<br>Direction de Suivi des Finances Locales<h3 style="margin-top:8px">Fiche d’agent</h3></div>
     <div class="fiche-top">${avatar(a)}<div><h3>${esc(fullName(a))}</h3><span class="muted" style="font-size:13px">${esc(a.fonction || a.grade || '')}</span>
-      <div class="badges">${a.situation ? `<span class="badge ok">${esc(a.situation)}</span>` : ''}${a.division ? `<span class="badge">${esc(a.division)}</span>` : ''}${incomplete(a) ? '<span class="badge warn">Dossier incomplet</span>' : ''}</div></div></div>
-    <dl class="f">${f('Matricule', a.matricule)}${f('N° acte d’engagement', a.acte)}${f('Date d’engagement', fmtDate(a.engagement))}${f('Situation', a.situation)}
+      <div class="badges">${a.situation ? `<span class="badge ${a.situation === 'Actif' ? 'ok' : 'warn'}">${esc(a.situation)}</span>` : ''}${a.division ? `<span class="badge">${esc(a.division)}</span>` : ''}${incomplete(a) ? '<span class="badge warn">Dossier incomplet</span>' : ''}</div></div></div>
+    <dl class="f">${f('Matricule', a.matricule)}${f('N° acte d’engagement', a.acte)}${f('Date d’engagement', fmtDate(a.engagement))}${f('Situation', a.situation ? a.situation + (a.sit_debut ? ' depuis le ' + fmtDate(a.sit_debut) : '') + (a.sit_fin ? ' — jusqu’au ' + fmtDate(a.sit_fin) : '') : '')}
       ${f('Date de naissance', fmtDate(a.naissance) + (ag != null ? ` (${ag} ans)` : ''))}${f('Sexe', SEX[a.sexe])}${f('État civil', a.etat_civil)}${f('Diplôme', a.diplome)}
       ${f('Grade', canonGrade(a.grade) + (gradeCode(a.grade) !== canonGrade(a.grade) ? ' (' + gradeCode(a.grade) + ')' : ''))}${f('Fonction', a.fonction)}${f('Direction', a.direction)}${f('Division', a.division)}${f('Bureau', a.bureau)}${f('Salaire', a.salaire)}${f('Montant du salaire', a.salaire_montant)}${f('Prime', a.prime)}${f('Montant de la prime', a.prime_montant)}${f('Recensé', a.recense)}${f('Observation', a.observation)}${f('Prise en charge', a.prise_en_charge)}${f('Fiche créée le', a.created ? new Date(a.created).toLocaleDateString('fr-FR') : '')}${a.updated && a.updated !== a.created ? f('Dernière modification', new Date(a.updated).toLocaleDateString('fr-FR')) : ''}</dl>
+    ${ficheHisto(a)}${ficheDocs(a)}
     <div class="noprint"><div class="placed">
       <a href="#/mise-en-place" data-act="close">${ico('layers', 20)}<span><b>Mise en place</b>${esc(a.division || 'Sans division')}</span></a>
       <a href="#/cadre" data-act="close">${ico('org', 20)}<span><b>Cadre organique</b>${esc(a.grade || 'Grade non renseigné')}</span></a>
@@ -1103,6 +1130,141 @@ function openFiche(id) {
       ${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}
       <button class="btn danger" data-act="delagent" data-id="${a.id}">Supprimer</button>
       <button class="btn" data-act="close">Fermer</button></div></div>`);
+}
+
+/* ================= Copies automatiques (7 jours) ================= */
+const Snap = {
+  db: null, t: 0,
+  open() { return new Promise(res => { if (this.db) return res(this.db); try { const r = indexedDB.open('dfl_snaps', 1); r.onupgradeneeded = () => r.result.createObjectStore('s', { keyPath: 'id' }); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => res(null); } catch (e) { res(null); } }); },
+  async all() { const d = await this.open(); if (!d) return []; return new Promise(res => { try { const q = d.transaction('s').objectStore('s').getAll(); q.onsuccess = () => res((q.result || []).sort((a, b) => b.ts - a.ts)); q.onerror = () => res([]); } catch (e) { res([]); } }); },
+  async get(id) { const d = await this.open(); if (!d) return null; return new Promise(res => { try { const q = d.transaction('s').objectStore('s').get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } }); },
+  async put(label, auto) {
+    if (!DB) return; const ts = Date.now(), data = JSON.stringify(DB), count = DB.agents.length; const d = await this.open(); if (!d) return;
+    const rec = { id: ts + '-' + Math.random().toString(36).slice(2, 6), ts, label, auto: !!auto, count, data };
+    await new Promise(res => { try { const tx = d.transaction('s', 'readwrite'); tx.objectStore('s').put(rec); tx.oncomplete = res; tx.onerror = res; tx.onabort = res; } catch (e) { res(); } });
+    const L = await this.all(), keep = new Set([...L.filter(x => x.auto).slice(0, 7), ...L.filter(x => !x.auto).slice(0, 5)].map(x => x.id)), rm = L.filter(x => !keep.has(x.id));
+    if (rm.length) await new Promise(res => { try { const tx = d.transaction('s', 'readwrite'), os = tx.objectStore('s'); rm.forEach(x => os.delete(x.id)); tx.oncomplete = res; tx.onerror = res; tx.onabort = res; } catch (e) { res(); } });
+  },
+  async daily() { let last = ''; try { last = localStorage.getItem('dfl_snap_day') || ''; } catch (e) {} if (last === today() || !DB || !DB.agents.length) return; try { localStorage.setItem('dfl_snap_day', today()); } catch (e) {} await this.put('Copie automatique du jour', true); },
+  soon() { if (this.t) return; this.t = setTimeout(() => { this.t = 0; this.daily(); }, 8000); }
+};
+async function restoreDB(d, why) {
+  await Snap.put('Avant restauration', false);
+  const ow = DB.owner; DB = migrate(d); if (!DB.owner) DB.owner = ow; audit('Sauvegarde restaurée', why);
+  if (session && session.role !== 'owner') { const me = DB.users.find(u => u.id === session.id) || DB.users.find(u => u.username === session.username); if (me) session = { id: me.id, username: me.username, role: me.role, mustChange: !!me.mustChange }; else { session = null; location.hash = '#/login'; } }
+  toast('Sauvegarde restaurée'); route();
+}
+async function fillSnaps() {
+  const box = $('#snapList'); if (!box) return; const L = await Snap.all();
+  box.innerHTML = L.length ? L.map(x => `<div class="snap"><div><b>${esc(new Date(x.ts).toLocaleString('fr-FR'))}</b><br><span class="muted" style="font-size:12.5px">${esc(x.label)} · ${x.count} agent${x.count > 1 ? 's' : ''}</span></div><div class="acts" style="margin:0">${isOwner() ? `<button class="btn sm" data-act="snaprestore" data-id="${x.id}">Restaurer</button>` : ''}<button class="btn sm" data-act="snapdl" data-id="${x.id}">Télécharger</button></div></div>`).join('') : '<p class="muted">Aucune copie pour l’instant : la première est créée automatiquement après l’ouverture de l’application.</p>';
+}
+
+/* ================= Verrouillage après inactivité ================= */
+const AutoLock = {
+  min: 15, last: Date.now(), on: false,
+  init() {
+    try { const v = localStorage.getItem('dfl_lockmin'); if (v !== null) this.min = +v || 0; } catch (e) {}
+    ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(ev => addEventListener(ev, () => { if (!this.on) this.last = Date.now(); }, { passive: true, capture: true }));
+    setInterval(() => this.tick(), 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) this.tick(); });
+  },
+  tick() { if (!session || !this.min || this.on) return; if (Date.now() - this.last > this.min * 60000) this.show(); },
+  show() {
+    this.on = true; const d = document.createElement('div'); d.id = 'lockov'; d.className = 'lockov';
+    d.innerHTML = `<section class="card narrow" style="width:100%"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div><h2 style="text-align:center">Session verrouillée</h2>
+      <p class="sub" style="text-align:center;margin-bottom:12px">Pour votre sécurité, l’application s’est verrouillée après ${this.min} minutes d’inactivité. Connecté : <b>${esc(session.username)}</b></p>
+      <form data-f="unlock"><label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label><button class="btn primary">Déverrouiller</button></form>
+      <p class="sub" style="text-align:center;margin-top:12px"><a href="#" data-act="lockout">Se déconnecter</a></p></section>`;
+    document.body.appendChild(d); const i = d.querySelector('input'); if (i) i.focus();
+  },
+  off() { const d = $('#lockov'); if (d) d.remove(); this.on = false; this.last = Date.now(); }
+};
+const lockCard = () => `<section class="card narrow sec2"><h3>Verrouillage automatique</h3><p class="sub" style="margin:6px 0 10px">Sur cet appareil, l’application se verrouille après un temps d’inactivité et demande votre mot de passe.</p>
+  <label>Verrouiller après<select id="lockSel">${[[0, 'Jamais'], [5, '5 minutes'], [10, '10 minutes'], [15, '15 minutes'], [30, '30 minutes'], [60, '1 heure']].map(([v, l]) => `<option value="${v}" ${v === AutoLock.min ? 'selected' : ''}>${l}</option>`).join('')}</select></label></section>`;
+
+/* ================= Pièces jointes (stockées sur l'appareil) ================= */
+const Docs = {
+  db: null,
+  open() { return new Promise(res => { if (this.db) return res(this.db); try { const r = indexedDB.open('dfl_docs', 1); r.onupgradeneeded = () => r.result.createObjectStore('f', { keyPath: 'id' }); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => res(null); } catch (e) { res(null); } }); },
+  async put(rec) { const d = await this.open(); if (!d) throw new Error('stockage'); return new Promise((res, rej) => { const tx = d.transaction('f', 'readwrite'); tx.objectStore('f').put(rec); tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); }); },
+  async get(id) { const d = await this.open(); if (!d) return null; return new Promise(res => { try { const q = d.transaction('f').objectStore('f').get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } }); },
+  async del(ids) { const d = await this.open(); if (!d) return; return new Promise(res => { try { const tx = d.transaction('f', 'readwrite'), os = tx.objectStore('f'); ids.forEach(i => os.delete(i)); tx.oncomplete = res; tx.onerror = res; tx.onabort = res; } catch (e) { res(); } }); },
+  async all() { const d = await this.open(); if (!d) return []; return new Promise(res => { try { const q = d.transaction('f').objectStore('f').getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); } catch (e) { res([]); } }); }
+};
+const blobB64 = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => res(''); r.readAsDataURL(b); });
+const b64Blob = (b64, type) => { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type }); };
+async function shrinkImage(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise(res => c.toBlob(b => res(b || file), 'image/jpeg', 0.72));
+  } finally { URL.revokeObjectURL(url); }
+}
+const fsize = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' Mo' : Math.max(1, Math.round(n / 1024)) + ' Ko';
+function ficheHisto(a) {
+  const H = (a.histo || []).slice().sort((x, y) => (y.date || '').localeCompare(x.date || '') || (y.ts || 0) - (x.ts || 0));
+  const rows = H.map(h => `<li><div><b>${esc(h.type)}</b> · <span class="muted">${esc(fmtDate(h.date))}</span>${h.ref ? ` · <span class="muted">Réf. ${esc(h.ref)}</span>` : ''}<br><span style="font-size:13.5px">${esc(h.detail)}</span></div>${canPlace() ? `<button class="btn sm danger noprint" data-act="histodel" data-id="${a.id}" data-h="${h.id}" aria-label="Supprimer cet événement">×</button>` : ''}</li>`).join('');
+  return `<h4 class="fh">Historique de carrière</h4>${rows ? `<ul class="histo">${rows}</ul>` : '<p class="muted" style="font-size:13px">Aucun événement enregistré.</p>'}
+    <form data-f="histo" data-id="${a.id}" class="noprint histoform"><div class="grid"><label>Date<input type="date" name="date" value="${today()}" required></label><label>Type<select name="type">${HTYPES.map(t => `<option>${t}</option>`).join('')}</select></label></div>
+    <label>Détail<input name="detail" placeholder="Ex. Promu au grade d’Attaché de 1ère classe" required></label><label>Référence de l’acte (facultatif)<input name="ref" placeholder="N° de l’arrêté ou de la décision"></label>
+    <button class="btn sm primary">Ajouter à l’historique</button></form>`;
+}
+function ficheDocs(a) {
+  const L = a.docs || [];
+  return `<div class="noprint"><h4 class="fh">Pièces jointes</h4>${L.length ? `<ul class="histo">${L.map(d => `<li><div><b>${esc(d.name)}</b><br><span class="muted" style="font-size:12.5px">${esc(d.cat)} · ${fsize(d.size)} · ${esc(fmtDate(d.date))}</span></div><div class="acts" style="margin:0"><button class="btn sm" data-act="docview" data-id="${a.id}" data-d="${d.id}">${d.type.startsWith('image') ? 'Voir' : 'Ouvrir'}</button>${canPlace() ? `<button class="btn sm danger" data-act="docdel" data-id="${a.id}" data-d="${d.id}" aria-label="Supprimer">×</button>` : ''}</div></li>`).join('')}</ul>` : '<p class="muted" style="font-size:13px">Aucun document joint.</p>'}
+    <div class="acts"><select id="docCat" aria-label="Type de document">${DCATS.map(c => `<option>${c}</option>`).join('')}</select><label class="btn sm primary">+ Joindre un document<input type="file" id="docAdd" data-id="${a.id}" accept="image/*,application/pdf" hidden></label></div>
+    <p class="muted" style="font-size:12px;margin-top:6px">Photos (réduites automatiquement) ou PDF jusqu’à 4 Mo. Conservés sur cet appareil ; non envoyés par la synchronisation (voir « Base de données » pour les sauvegarder).</p></div>`;
+}
+
+/* ================= Statistiques, retraites, contrôle qualité ================= */
+const retAge = () => +(DB.meta && DB.meta.retraite) || 65;
+const retDate = a => { if (!isoOK(a.naissance)) return null; const d = new Date(a.naissance); d.setFullYear(d.getFullYear() + retAge()); return d; };
+const SIT_OUT = ['Retraité', 'Décédé'];
+function retraites() {
+  const now = new Date(), y = now.getFullYear(), out = { passe: [], an: [], suiv: [] };
+  DB.agents.forEach(a => { if (SIT_OUT.includes(a.situation)) return; const d = retDate(a); if (!d) return; const x = { a, d };
+    if (d < now) out.passe.push(x); else if (d.getFullYear() === y) out.an.push(x); else if (d.getFullYear() === y + 1) out.suiv.push(x); });
+  ['passe', 'an', 'suiv'].forEach(k => out[k].sort((p, q) => p.d - q.d));
+  return out;
+}
+function quality() {
+  const grp = f => { const m = new Map(); DB.agents.forEach(a => { const k = f(a); if (k) (m.get(k) || m.set(k, []).get(k)).push(a); }); return [...m.values()].filter(v => v.length > 1).flat(); };
+  return [
+    { t: 'Matricules en double', d: 'Plusieurs agents portent le même numéro matricule.', L: grp(a => isMat(a.matricule) ? norm(a.matricule) : '') },
+    { t: 'Noms en double', d: 'Même nom, postnom et prénom : doublon possible (ou homonymes).', L: grp(a => norm(a.nom + a.postnom + a.prenom)) },
+    { t: 'Matricule mal formé', d: 'Le matricule contient des lettres ou des caractères inattendus.', L: DB.agents.filter(a => isMat(a.matricule) && /[^\d.\s]/.test(a.matricule)) },
+    { t: 'Date de naissance manquante ou invalide', d: 'Nécessaire pour l’âge et la retraite.', L: DB.agents.filter(a => !isoOK(a.naissance) || age(a.naissance) == null) },
+    { t: 'Sexe non renseigné', d: '', L: DB.agents.filter(a => !a.sexe) },
+    { t: 'Grade non renseigné', d: '', L: DB.agents.filter(a => !canonGrade(a.grade)) },
+    { t: 'Sans division', d: 'Agents non placés dans la mise en place.', L: DB.agents.filter(a => !a.division) }
+  ];
+}
+function pStats() {
+  const A = DB.agents, n = A.length, m = A.filter(a => a.sexe === 'M').length, f = A.filter(a => a.sexe === 'F').length;
+  const ages = A.map(a => age(a.naissance)).filter(x => x != null), moy = ages.length ? Math.round(ages.reduce((s, x) => s + x, 0) / ages.length) : '—';
+  const dir = DB.directions[0] ? DB.directions[0].name : '', cr = dir ? cadreRows(dir) : [], vac = cr.reduce((s, r) => s + Math.max(0, r.prevu - r.enplace), 0), sur = cr.reduce((s, r) => s + Math.max(0, r.enplace - r.prevu), 0), prevu = cr.reduce((s, r) => s + r.prevu, 0);
+  const bars = (items, tot) => { const mx = Math.max(1, ...items.map(i => i[1])); return `<div class="bars">${items.map(([l, v]) => `<div class="br"><span>${esc(l)}</span><div class="bt"><i style="width:${Math.max(2, v / mx * 100)}%"></i></div><b>${v}${tot ? ` <small>${Math.round(v / tot * 100)}%</small>` : ''}</b></div>`).join('')}</div>`; };
+  const count = (fn, order) => { const c = new Map(); A.forEach(a => { const k = fn(a); c.set(k, (c.get(k) || 0) + 1); }); const L = [...c.entries()]; if (order) L.sort((x, y) => order.indexOf(x[0]) - order.indexOf(y[0])); else L.sort((x, y) => y[1] - x[1]); return L; };
+  const tr = [['Moins de 30 ans', 0, 29], ['30 – 39 ans', 30, 39], ['40 – 49 ans', 40, 49], ['50 – 59 ans', 50, 59], ['60 ans et plus', 60, 200]].map(([l, lo, hi]) => [l, A.filter(a => { const g = age(a.naissance); return g != null && g >= lo && g <= hi; }).length]);
+  tr.push(['Âge inconnu', A.filter(a => age(a.naissance) == null).length]);
+  const gOrder = GRADES.map(g => g.l);
+  const R = retraites(), Q = quality();
+  const rlist = (L, empty) => L.length ? `<div class="arows">${L.slice(0, 60).map(x => `${agentRow(x.a)}<div class="rdate">Retraite : ${esc(fmtDate(x.d.toISOString().slice(0, 10)))} · ${age(x.a.naissance)} ans</div>`).join('')}${L.length > 60 ? `<p class="muted">… et ${L.length - 60} autres (affinez avec la liste déclarative).</p>` : ''}</div>` : `<p class="muted" style="font-size:13px">${empty}</p>`;
+  return `<header class="ph"><div><h2>Statistiques</h2><p class="sub">Vue d’ensemble des agents, retraites à venir et qualité des données.</p></div></header>
+  <div class="stats">${stat('users', '', n, 'agents enregistrés')}${stat('chart', 'g', m + ' H · ' + f + ' F', 'répartition par sexe')}${stat('shield', 'y', moy + (moy === '—' ? '' : ' ans'), 'âge moyen')}</div>
+  ${prevu ? `<div class="stats" style="margin-top:10px">${stat('org', '', prevu, 'postes prévus (cadre organique)')}${stat('alert', 'y', vac, 'postes vacants')}${stat('alert', 'g', sur, 'agents en surnombre')}</div>` : ''}
+  <section class="card sec2"><h3>Répartition par grade</h3>${bars(count(a => canonGrade(a.grade) || 'Non renseigné', [...gOrder, 'Non renseigné']), n)}</section>
+  <section class="card sec2"><h3>Répartition par division</h3>${bars(count(a => a.division || 'Sans division'), n)}</section>
+  <section class="card sec2"><h3>Tranches d’âge</h3>${bars(tr, n)}</section>
+  <section class="card sec2"><h3>Situation administrative</h3>${bars(count(a => a.situation || 'Non renseignée', [...SITU, 'Non renseignée']), n)}</section>
+  <section class="card sec2" id="retraites"><h3>Départs à la retraite</h3>
+    <p class="sub" style="margin:6px 0 10px">Âge légal de la retraite : ${canPlace() ? `<input id="retAge" type="number" min="55" max="75" value="${retAge()}" style="width:80px;display:inline-block;margin:0 6px">` : `<b>${retAge()}</b> `}ans. Les agents retraités ou décédés sont exclus.</p>
+    <details open><summary><b>${R.passe.length}</b> agent(s) ont atteint ou dépassé l’âge</summary>${rlist(R.passe, 'Aucun agent n’a atteint l’âge de la retraite.')}</details>
+    <details ${R.an.length ? 'open' : ''}><summary><b>${R.an.length}</b> agent(s) l’atteignent d’ici la fin de ${new Date().getFullYear()}</summary>${rlist(R.an, 'Aucun départ prévu cette année.')}</details>
+    <details><summary><b>${R.suiv.length}</b> agent(s) l’atteignent en ${new Date().getFullYear() + 1}</summary>${rlist(R.suiv, 'Aucun départ prévu l’an prochain.')}</details></section>
+  <section class="card sec2"><h3>Contrôle qualité des données</h3><p class="sub" style="margin:6px 0 10px">Anomalies à corriger pour fiabiliser les listes officielles.</p>
+    ${Q.map(q => `<details><summary>${q.L.length ? `<span class="badge warn">${q.L.length}</span>` : '<span class="badge ok">0</span>'} ${esc(q.t)}</summary>${q.d ? `<p class="muted" style="font-size:13px;margin:4px 0">${esc(q.d)}</p>` : ''}${q.L.length ? `<div class="arows">${q.L.slice(0, 40).map(agentRow).join('')}${q.L.length > 40 ? `<p class="muted">… et ${q.L.length - 40} autres.</p>` : ''}</div>` : '<p class="muted" style="font-size:13px">Rien à signaler.</p>'}</details>`).join('')}</section>`;
 }
 
 /* ---------- Formulaire ---------- */
@@ -1145,7 +1307,8 @@ function pForm(id) {
     <fieldset class="fsec">${sec(2, 'Engagement')}<div class="grid">
       <label>Matricule<input name="matricule" value="${esc(v.matricule)}"></label><label>N° de l’acte d’engagement<input name="acte" value="${esc(v.acte)}"></label>
       <label>Date d’engagement<input type="date" name="engagement" value="${esc(v.engagement)}"></label><label>Grade<select name="grade" id="fmGrade">${gradeOptions(v.grade)}</select></label>
-      <label>Fonction<input name="fonction" id="fmFonc" list="dl-fonc" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label></div></fieldset>
+      <label>Fonction<input name="fonction" id="fmFonc" list="dl-fonc" value="${esc(v.fonction)}"></label><label>Situation<select name="situation">${opt(SITU, v.situation)}</select></label>
+      <label>Situation depuis le<input type="date" name="sit_debut" value="${esc(v.sit_debut)}"></label><label>Fin prévue (congé, mission…)<input type="date" name="sit_fin" value="${esc(v.sit_fin)}"></label></div></fieldset>
     <fieldset class="fsec">${sec(3, 'Affectation')}<div class="grid">
       <label>Direction *<select name="direction" id="fmDir" required>${DB.directions.map(d => `<option ${d.name === v.direction ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
       ${canPlace() ? `<label>Division *<select name="division" id="fmDiv" required>${divOptions(v.direction, v.division)}</select></label>
@@ -1587,6 +1750,7 @@ function pAdmin() {
   const head = `<header class="ph"><div><h2>Administration</h2><p class="sub">${ROLES[session.role] || session.role} · version ${APP_VERSION}</p></div></header>`;
   const tiles = `<div class="tiles">
     ${it('importer', 'Importer un fichier', 'upload', 'Excel, Word ou PDF : agents et cadre organique')}
+    ${it('stats', 'Statistiques', 'chart', 'Effectifs, retraites à venir, contrôle qualité')}
     ${it('base-de-donnees', 'Base de données', 'db', 'Sauvegarde, copie Cloud et archive')}
     ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
     ${it('sync', 'Synchronisation', 'db', 'État de la synchronisation entre appareils')}
@@ -1614,9 +1778,9 @@ function route() {
   if (name === 'importer' && session && !canPlace() && !['agents', 'alpha', 'matricules', 'nu'].includes(arg) && arg) { location.hash = '#/importer/agents'; return; }
   if (name === 'login' && session) { location.replace('#/accueil'); return; }
   closeModal(false, true);
-  const pages = { accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, activer: pActivate, 'base-de-donnees': pBaseDeDonnees };
+  const pages = { stats: pStats, accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, activer: pActivate, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
-  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ importer: 'admin', 'base-de-donnees': 'admin', proprietaire: 'admin', sync: 'admin' }[name] || name) : 'accueil');
+  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ stats: 'stats', importer: 'admin', 'base-de-donnees': 'admin', proprietaire: 'admin', sync: 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
   if (DOCS.includes(name)) {
     fillTDiv(); if (ui.nextSort && $('#tSort')) { $('#tSort').value = ui.nextSort; ui.nextSort = ''; } ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
@@ -1632,6 +1796,7 @@ function route() {
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
   if (name === 'importer') imp = { tables: [], src: SDOCS.includes(arg) ? arg : '', mode: arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
+  if (name === 'base-de-donnees') fillSnaps();
   if (name === 'base-de-donnees') Store.where().then(w => { const e = $('#whereDb'); if (e) e.textContent = w; });
   if (afterRoute) { const f = afterRoute; afterRoute = null; f(); }
 }
@@ -1678,7 +1843,7 @@ const A = {
     } else if (k === 'liste' || k === 'alpha') {
       if (!DB.agents.length) return toast('La liste est déjà vide');
       if ((await ask(`Supprimer la liste importée : les ${DB.agents.length} agents seront effacés (sur tous les appareils synchronisés). Pensez à sauvegarder avant (page Base de données). Tapez SUPPRIMER pour confirmer :`)) !== 'SUPPRIMER') return;
-      DB.agents = []; audit('Liste déclarative supprimée'); toast('Liste déclarative supprimée'); route();
+      Snap.put('Avant suppression de la liste'); DB.agents = []; audit('Liste déclarative supprimée'); toast('Liste déclarative supprimée'); route();
     } else if (k === 'mise-en-place') {
       if (!confirm('Supprimer la mise en place importée ? La structure revient à celle d’origine et les agents n’ont plus de division ni de bureau (les agents ne sont pas supprimés).')) return;
       const keep = { lcfg: DB.org.lcfg, heads: DB.org.heads }; DB.org = Object.assign(defaultOrg(), keep);
@@ -1697,7 +1862,21 @@ const A = {
   fiche: t => openFiche(t.dataset.id),
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
-  delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { DB.agents = DB.agents.filter(x => x.id !== a.id); audit('Fiche supprimée', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
+  snaprestore: async t => { if (!isOwner()) return; const r = await Snap.get(t.dataset.id); if (!r) return toast('Copie introuvable', true); if (!confirm(`Remplacer les données actuelles par la copie du ${new Date(r.ts).toLocaleString('fr-FR')} (${r.count} agents) ? Une copie des données actuelles sera d’abord faite.`)) return; await restoreDB(JSON.parse(r.data), 'copie du ' + new Date(r.ts).toLocaleString('fr-FR')); },
+  snapdl: async t => { const r = await Snap.get(t.dataset.id); if (!r) return; await saveFile(`copie_DFL_${new Date(r.ts).toISOString().slice(0, 10)}.json`, r.data, 'application/json'); toast('Copie enregistrée'); },
+  histodel: t => { if (!canPlace()) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (!a || !confirm('Supprimer cet événement de l’historique ?')) return; a.histo = (a.histo || []).filter(h => h.id !== t.dataset.h); a.updated = Date.now(); save(); audit('Historique modifié', fullName(a)); openFiche(a.id); },
+  docview: async t => {
+    const a = DB.agents.find(x => x.id === t.dataset.id), m = a && (a.docs || []).find(d => d.id === t.dataset.d); if (!m) return;
+    const r = await Docs.get(m.id); if (!r) return toast('Ce document n’est pas présent sur cet appareil (importez les pièces jointes depuis la page Base de données).', true);
+    if (m.type.startsWith('image')) { const url = URL.createObjectURL(r.blob); const d = document.createElement('div'); d.className = 'lbx'; d.innerHTML = `<img alt="${esc(m.name)}" src="${url}"><div class="acts"><button class="btn primary" data-act="lbxdl" data-id="${a.id}" data-d="${m.id}">Télécharger</button><button class="btn" data-act="lbxclose">Fermer</button></div>`; document.body.appendChild(d); }
+    else { await saveFile(m.name, await blobB64(r.blob), m.type, true); toast('Document enregistré'); }
+  },
+  lbxdl: async t => { const a = DB.agents.find(x => x.id === t.dataset.id), m = a && (a.docs || []).find(d => d.id === t.dataset.d), r = m && await Docs.get(m.id); if (r) { await saveFile(m.name, await blobB64(r.blob), m.type, true); toast('Document enregistré'); } },
+  lbxclose: () => { $$('.lbx').forEach(x => { const i = x.querySelector('img'); if (i) URL.revokeObjectURL(i.src); x.remove(); }); },
+  docdel: async t => { if (!canPlace()) return; const a = DB.agents.find(x => x.id === t.dataset.id), m = a && (a.docs || []).find(d => d.id === t.dataset.d); if (!m || !confirm(`Supprimer « ${m.name} » ?`)) return; await Docs.del([m.id]); a.docs = a.docs.filter(d => d.id !== m.id); a.updated = Date.now(); save(); audit('Pièce jointe supprimée', fullName(a)); openFiche(a.id); },
+  docsbackup: async () => { const all = await Docs.all(); if (!all.length) return toast('Aucune pièce jointe à exporter'); toast('Préparation…'); const files = []; for (const r of all) files.push({ id: r.id, agent: r.agent, name: r.name, type: r.type, b64: await blobB64(r.blob) }); await saveFile(`pieces_jointes_DFL_${today()}.json`, JSON.stringify({ v: 1, files }), 'application/json'); toast(`${files.length} pièce(s) exportée(s)`); },
+  lockout: e => { AutoLock.off(); A.logout(); },
+  delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { Snap.put('Avant suppression d’une fiche'); Docs.del((a.docs || []).map(d => d.id)); DB.agents = DB.agents.filter(x => x.id !== a.id); audit('Fiche supprimée', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
   resetpw: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return;
     if (!confirm(`Réinitialiser le mot de passe de « ${u.username} » ? Il devra créer un nouveau mot de passe à sa prochaine connexion.`)) return;
     u.pass = ''; u.tmp = false; u.mustChange = false; audit('Mot de passe réinitialisé', u.username); toast('Mot de passe réinitialisé : ' + u.username + ' crée un nouveau mot de passe à sa prochaine connexion'); route(); },
@@ -1749,10 +1928,11 @@ const A = {
   exp: t => { const k = t.dataset.k, r = docRows(k); exportTable({ 'mise-en-place': 'mise_en_place', cadre: 'cadre_organique', liste: 'liste_declarative_' + DB.meta.annee, alpha: 'liste_alphabetique_grade', matricules: 'agents_matricules', nu: 'agents_NU_controles' }[k] + '_DFL_' + today(), r.header, r.rows); },
   template: () => exportTable('modele_agents_DFL', ['Matricule', 'Nom', 'Postnom', 'Prénom', 'Sexe', 'Date de naissance', 'État civil', 'Diplôme', 'N° acte d’engagement', 'Date d’engagement', 'Grade', 'Fonction', 'Direction', 'Division', 'Bureau', 'Salaire', 'Prime', 'Situation'], []),
   openfolder: () => window.dflDesktop && window.dflDesktop.open(),
-  wipe: async () => { if (!isOwner()) return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { DB.agents = []; audit('Tous les agents supprimés'); toast('Tous les agents ont été supprimés'); route(); } },
+  wipe: async () => { if (!isOwner()) return; if (!DB.agents.length) return toast('Aucun agent à supprimer'); if ((await ask(`Cette action est définitive. Tapez SUPPRIMER pour effacer les ${DB.agents.length} agents :`)) === 'SUPPRIMER') { Snap.put('Avant suppression de tous les agents'); DB.agents = []; audit('Tous les agents supprimés'); toast('Tous les agents ont été supprimés'); route(); } },
   enplace: t => { const L = sortAgents(DB.agents.filter(a => a.direction === t.dataset.dir && (a.division || '') === t.dataset.div && norm(a.grade || 'Grade non renseigné') === norm(t.dataset.grade)), 'hier'); openModal(`<h3 style="margin-bottom:12px">${esc(t.dataset.grade)}</h3><p class="sub" style="margin-bottom:12px">${esc(t.dataset.div || 'Sans division')} — ${L.length} agent${L.length > 1 ? 's' : ''}</p><div class="alist">${L.map(agentRow).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-act="close">Fermer</button></div>`); },
   cadrerm: t => { DB.cadre = DB.cadre.filter(c => c.id !== t.dataset.id); save(); renderCadre(); },
   impapply: () => {
+    Snap.put('Avant import');
     if (imp.mode === 'mise') return applyMise();
     const res = buildImport(); let nw = 0, up = 0;
     const dirOf = n => { let d = DB.directions.find(x => norm(x.name) === norm(n || imp.dir)); if (!d) { d = { name: n || imp.dir, divisions: [] }; DB.directions.push(d); } return d; };
@@ -1784,6 +1964,19 @@ const A = {
 
 /* ================= Formulaires ================= */
 const F = {
+  histo(f) {
+    const a = DB.agents.find(x => x.id === f.dataset.id); if (!a) return;
+    const g = n => f.elements[n].value.trim(); if (!g('detail') || !g('date')) return;
+    a.histo = a.histo || []; a.histo.push({ id: uid(), date: g('date'), type: g('type'), detail: g('detail'), ref: g('ref'), by: session ? session.username : '', ts: Date.now() });
+    a.updated = Date.now(); save(); audit('Historique de carrière', fullName(a) + ' : ' + g('type')); toast('Événement ajouté'); openFiche(a.id);
+  },
+  async unlock(f) {
+    const msg = lockedMsg(); if (msg) return toast(msg, true);
+    const p = f.p.value; let ok = false;
+    if (session && session.role === 'owner') ok = await checkOwner(p); else { const u = session && DB.users.find(x => x.id === session.id); ok = !!u && await checkPass(u, p); }
+    if (!ok) { const lock = lockBad(); return toast(lock ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Mot de passe incorrect', true); }
+    lockSet({ n: 0, until: 0 }); AutoLock.off();
+  },
   async gate(f) {
     const msg = lockedMsg(); if (msg) return toast(msg, true);
     if (!(await checkOwner(f.o.value))) { const lock = lockBad(); audit('Échec mot de passe propriétaire (ouverture)'); return toast(lock ? 'Trop de tentatives : accès bloqué 2 minutes' : 'Mot de passe propriétaire incorrect', true); }
@@ -1865,13 +2058,19 @@ const F = {
   },
   agent(f) {
     const g = n => (f.elements[n] ? f.elements[n].value : '').trim(), id = f.dataset.id, o = {};
-    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'bureau', 'prise_en_charge', 'situation', 'salaire_montant', 'prime_montant', 'observation'].forEach(k => o[k] = g(k));
+    ['nom', 'postnom', 'prenom', 'naissance', 'etat_civil', 'diplome', 'matricule', 'acte', 'engagement', 'grade', 'fonction', 'direction', 'division', 'bureau', 'prise_en_charge', 'situation', 'sit_debut', 'sit_fin', 'salaire_montant', 'prime_montant', 'observation'].forEach(k => o[k] = g(k));
     ['sexe', 'salaire', 'prime', 'recense'].forEach(k => o[k] = (f.querySelector(`input[name=${k}]:checked`) || {}).value || ''); o.photo = formPhoto;
     if (!canPlace()) { if (id) { delete o.division; delete o.bureau; } else { o.division = ''; o.bureau = ''; } }
     const dup = isMat(o.matricule) && DB.agents.find(a => a.matricule && a.id !== id && a.matricule.toLowerCase() === o.matricule.toLowerCase());
     if (dup) return toast(`Ce matricule existe déjà : ${fullName(dup)}`, true);
     let a;
-    if (id) { a = DB.agents.find(x => x.id === id); Object.assign(a, o, { updated: Date.now() }); } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o }; DB.agents.push(a); }
+    if (id) {
+      a = DB.agents.find(x => x.id === id);
+      const ev = [], ch = (k, type, lab) => { if (!(k in o)) return; const x = k === 'grade' ? canonGrade(a[k]) : (a[k] || ''), y = k === 'grade' ? canonGrade(o[k]) : (o[k] || ''); if (x !== y) ev.push({ type, lab, x, y }); };
+      ch('grade', 'Promotion', 'Grade'); ch('fonction', 'Nomination', 'Fonction'); ch('direction', 'Mutation', 'Direction'); ch('division', 'Mutation', 'Division'); ch('bureau', 'Mutation', 'Bureau'); ch('situation', 'Situation', 'Situation');
+      if (ev.length) { a.histo = a.histo || []; ev.forEach(e => a.histo.push({ id: uid(), date: (e.type === 'Situation' && o.sit_debut) || today(), type: e.type, detail: `${e.lab} : ${e.x || '—'} → ${e.y || '—'}`, ref: '', auto: true, by: session ? session.username : '', ts: Date.now() })); }
+      Object.assign(a, o, { updated: Date.now() });
+    } else { a = { id: uid(), created: Date.now(), updated: Date.now(), ...o, histo: [{ id: uid(), date: o.engagement || today(), type: 'Autre', detail: 'Agent enregistré dans l’application', ref: o.acte || '', auto: true, by: session ? session.username : '', ts: Date.now() }] }; DB.agents.push(a); }
     const dv = o.division; if (dv && canPlace()) { const d = DB.directions.find(x => x.name === o.direction); if (d && !d.divisions.includes(dv)) d.divisions.push(dv); }
     if (canPlace() && o.division && o.bureau && DB.org) {
       const od = DB.org.divisions.find(x => x.name === o.division);
@@ -1927,15 +2126,35 @@ document.addEventListener('change', async e => {
     }
     t.value = '';
   }
+  if (t.id === 'lockSel') { AutoLock.min = +t.value; try { localStorage.setItem('dfl_lockmin', String(AutoLock.min)); } catch (e) {} toast(AutoLock.min ? `Verrouillage après ${AutoLock.min} min` : 'Verrouillage désactivé'); return; }
+  if (t.id === 'retAge') { if (!canPlace()) return; const v = Math.min(75, Math.max(55, parseInt(t.value, 10) || 65)); DB.meta.retraite = v; save(); audit('Âge de retraite', v + ' ans'); route(); return; }
+  if (t.id === 'docAdd') {
+    const file = t.files && t.files[0], a = DB.agents.find(x => x.id === t.dataset.id); if (!file || !a) return; const cat = ($('#docCat') || {}).value || 'Autre';
+    try {
+      let blob = file, type = file.type || 'application/octet-stream', name = file.name;
+      if (type.startsWith('image/')) { blob = await shrinkImage(file); type = 'image/jpeg'; name = name.replace(/\.[^.]+$/, '') + '.jpg'; }
+      else if (type !== 'application/pdf') { t.value = ''; return toast('Formats acceptés : photo ou PDF', true); }
+      if (blob.size > 4 * 1048576) { t.value = ''; return toast('Document trop volumineux (4 Mo maximum)', true); }
+      const id = uid(); await Docs.put({ id, agent: a.id, name, type, blob });
+      a.docs = a.docs || []; a.docs.push({ id, name, cat, type, size: blob.size, date: today() }); a.updated = Date.now(); save(); audit('Pièce jointe ajoutée', fullName(a) + ' : ' + cat); toast('Document joint'); openFiche(a.id);
+    } catch (err) { toast('Impossible d’enregistrer le document sur cet appareil', true); }
+    t.value = ''; return;
+  }
+  if (t.id === 'impDocs') {
+    try {
+      const d = JSON.parse(await t.files[0].text()); if (!d || !Array.isArray(d.files)) throw 0;
+      for (const r of d.files) await Docs.put({ id: r.id, agent: r.agent, name: r.name, type: r.type, blob: b64Blob(r.b64, r.type) });
+      toast(`${d.files.length} pièce(s) importée(s)`);
+    } catch (err) { toast('Ce fichier n’est pas une sauvegarde de pièces jointes', true); }
+    t.value = ''; return;
+  }
   if (t.id === 'impJson') {
     try {
       const d = JSON.parse(await file.text());
       if (!d || !Array.isArray(d.agents) || !Array.isArray(d.users) || !Array.isArray(d.directions)) throw 0;
       if (!confirm(`Remplacer toutes les données actuelles par cette sauvegarde (${d.agents.length} agents) ?`)) return;
       if (!isOwner()) return toast('Restauration réservée au propriétaire', true);
-      const ow = DB.owner; DB = migrate(d); if (!DB.owner) DB.owner = ow; audit('Sauvegarde restaurée', d.agents.length + ' agents');
-      if (session.role !== 'owner') { const me = DB.users.find(u => u.id === session.id) || DB.users.find(u => u.username === session.username); if (me) session = { id: me.id, username: me.username, role: me.role, mustChange: !!me.mustChange }; else { session = null; location.hash = '#/login'; } }
-      toast('Sauvegarde restaurée'); route();
+      await restoreDB(d, d.agents.length + ' agents');
     } catch (err) { toast('Ce fichier n’est pas une sauvegarde valide', true); }
     t.value = '';
   }
@@ -1972,7 +2191,7 @@ const bump = () => { return;  clearTimeout(idle); if (session) idle = setTimeout
   if ((Store.kind === 'native' || Store.kind === 'desktop') && DB.meta.lastAuto !== today()) { try { await Store.writeRaw(AUXFILE, JSON.stringify(DB)); DB.meta.lastAuto = today(); } catch (e) {} save(); }
   Store.set(DB); Sync.start();
   try { const s = localStorage.getItem('dfl_s'); if (s) { const x = JSON.parse(s); if (x.role === 'owner' || DB.users.some(u => u.id === x.id)) session = x; } } catch (e) {}
-  route(); bump();
+  route(); bump(); AutoLock.init(); setTimeout(() => Snap.daily(), 6000);
 })();
 })();
 </script>
