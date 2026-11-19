@@ -1,3 +1,8 @@
+/*
+ * Gestion des agents DSFL — Copyright © 2026 Elia Kilu Honore. Tous droits réservés.
+ * Logiciel propriétaire : copie, modification, diffusion et décompilation interdites
+ * sans autorisation écrite de l'auteur. Voir LICENSE.txt.
+ */
 /* Protège le code de l'application : brouille (obfusque) le script contenu dans index.html.
    Utilisation : node protect.js [chemin/index.html]
    Le fichier est remplacé UNIQUEMENT dans l'espace de construction GitHub : votre dépôt garde le code lisible.

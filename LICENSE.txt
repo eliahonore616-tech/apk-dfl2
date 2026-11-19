@@ -1,0 +1,47 @@
+LICENCE LOGICIELLE PROPRIÉTAIRE — TOUS DROITS RÉSERVÉS
+=======================================================
+
+Logiciel : « Gestion des agents DSFL » (application web, application Windows et application Android)
+Auteur et titulaire des droits : Elia Kilu Honore
+Copyright © 2026 Elia Kilu Honore. Tous droits réservés.
+
+1. PROPRIÉTÉ
+   Le logiciel, son code source (HTML, JavaScript, CSS, scripts de construction et de configuration),
+   ses icônes, sa conception, ses textes et sa documentation sont la propriété exclusive de l'auteur.
+   Aucun droit de propriété n'est cédé par la remise d'une copie du logiciel.
+
+2. UTILISATION AUTORISÉE
+   L'utilisation du logiciel n'est permise qu'aux personnes ou organisations autorisées par l'auteur,
+   par écrit, et uniquement dans les limites de cette autorisation.
+
+3. INTERDICTIONS
+   Sans autorisation écrite préalable de l'auteur, il est interdit de :
+   a) copier, reproduire, publier ou distribuer le logiciel ou une partie de son code source ;
+   b) modifier le logiciel, en créer des œuvres dérivées ou l'intégrer à un autre produit ;
+   c) vendre, louer, prêter, sous-licencier ou mettre le logiciel à la disposition de tiers ;
+   d) décompiler, désassembler, désobfusquer ou tenter d'extraire ou de reconstituer le code source ;
+   e) supprimer ou modifier les mentions de droits d'auteur, les en-têtes et la présente licence ;
+   f) contourner les protections, les droits d'accès ou les mécanismes de verrouillage du logiciel.
+
+4. DONNÉES
+   Les données saisies dans le logiciel (agents, listes, pièces jointes) restent la propriété de
+   l'organisation qui les a saisies. La présente licence ne porte que sur le logiciel.
+
+5. ABSENCE DE GARANTIE
+   Le logiciel est fourni « tel quel », sans garantie d'aucune sorte. L'auteur ne peut être tenu
+   responsable des pertes de données ou des dommages résultant de l'utilisation du logiciel.
+   Il est recommandé de faire des sauvegardes régulières.
+
+6. SANCTIONS
+   Toute utilisation non autorisée peut donner lieu à des poursuites civiles et pénales
+   conformément à la législation applicable en République démocratique du Congo.
+
+----------------------------------------------------------------------------------------------
+
+PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED (summary)
+
+"Gestion des agents DSFL" — Copyright (c) 2026 Elia Kilu Honore. All rights reserved.
+This software and its source code are proprietary. No permission is granted to use, copy, modify,
+merge, publish, distribute, sublicense, sell, decompile, deobfuscate or create derivative works,
+except with the prior written permission of the copyright holder. The software is provided "as is",
+without warranty of any kind. In case of discrepancy, the French text prevails.

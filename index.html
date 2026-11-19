@@ -128,6 +128,9 @@ label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;
 
 /* ---------- Design & Pied de page ---------- */
 .vcenter{min-height:calc(100vh - 140px);min-height:calc(100dvh - 140px);display:flex;align-items:center;justify-content:center;padding:8px 14px}
+.ro [data-act=gonew],.ro [data-act=delagent],.ro [data-act=tedit],.ro [data-act=histodel],.ro [data-act=docdel],.ro .histoform,.ro #docCat,.ro label:has(#docAdd),.ro a[href^="#/nouveau"],.ro a[href^="#/importer"]{display:none!important}
+.signoff{display:none}
+@media print{.signoff{display:block;margin-top:30px;text-align:right;font-size:13px;line-height:1.6;page-break-inside:avoid}.signoff .sg{height:64px}}
 .lockov{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 .lbx{position:fixed;inset:0;z-index:9000;background:rgba(5,12,30,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
 .lbx img{max-width:100%;max-height:78vh;border-radius:10px;background:#fff}
@@ -285,7 +288,8 @@ details.map .grid{margin-top:12px}
 
 @media print{
   @page{size:A4 landscape;margin:12mm}
-  .top,.bnav,.side,#toast,.noprint,.tools,.seg{display:none!important}
+  .top,.bnav,.side,#toast,.noprint,.tools,.seg,.warn{display:none!important}
+  .xlwrap{max-height:none!important;overflow:visible!important}
   main{margin:0;padding:0;max-width:none}
   body{background:#fff;color:#000}
   .printhead{display:block}
@@ -305,6 +309,7 @@ details.map .grid{margin-top:12px}
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
+/*! Gestion des agents DSFL — © 2026 Elia Kilu Honore. Tous droits réservés. Voir LICENSE.txt. Copie, modification et décompilation interdites sans autorisation écrite. */
 (() => {
 'use strict';
 
@@ -336,7 +341,7 @@ const SITU = ['Actif', 'En congé', 'En mission', 'Détaché', 'Suspendu', 'Retr
 const HTYPES = ['Promotion', 'Mutation', 'Nomination', 'Congé', 'Mission', 'Formation', 'Sanction', 'Autre'];
 const DCATS = ['Arrêté de nomination', 'Acte de naissance', 'Diplôme', 'Pièce d’identité', 'Autre'];
 const DIRNAME = 'Direction de Suivi des Finances Locales';
-const ROLES = { owner: 'Propriétaire', admin: 'Adm1 — Directeur (DR)', cd: 'Adm2 — Chef de division (CD)', cb: 'Adm3 — Secrétaire et Chef de bureau (Sec et CB)' };
+const ROLES = { owner: 'Propriétaire', admin: 'Adm1 — Directeur (DR)', cd: 'Adm2 — Chef de division (CD)', cb: 'Adm3 — Secrétaire et Chef de bureau (Sec et CB)', lecteur: 'Lecteur — consultation seule' };
 const GRADES = [
   { c: '120', l: 'Directeur-Chef de Service', a: 'DIR', p: 1 }, { c: '130', l: 'Chef de Division', a: 'CD', p: 4 }, { c: '140', l: 'Chef de Bureau', a: 'CB', p: 10 },
   { c: '210', l: 'Attaché d’Administration de 1ère Classe', a: 'ATA1', p: 14 }, { c: '220', l: 'Attaché d’Administration de 2ème Classe', a: 'ATA2', p: 890 },
@@ -693,6 +698,7 @@ const save = () => { Store.set(DB); Sync.schedule(); try { Snap.soon(); } catch 
 
 /* ================= Synchronisation entre appareils (Supabase, gratuit) ================= */
 const Sync = {
+  mine: {},
   cfg: null, st: { init: false, last: 0, snap: {} }, tok: null, exp: 0, rt: '', timer: null, busy: false, status: 'off', msg: '', again: false,
   load() {
     try { this.cfg = JSON.parse(localStorage.getItem('dfl_sync_cfg') || 'null'); } catch (e) {}
@@ -752,7 +758,7 @@ const Sync = {
   },
   async pull() {
     const first = !this.st.init, cur = this.items(), idx = new Map(DB.agents.map((a, i) => [a.id, i]));
-    let last = this.st.last, changed = false; const applied = [], dels = new Set();
+    let last = this.st.last, changed = false; const applied = [], dels = new Set(), conf = [];
     for (;;) {
       const r = await fetch(`${this.cfg.u}/rest/v1/dfl_items?rev=gt.${last}&order=rev.asc&limit=300&select=id,data,rev,deleted`, { headers: this.hd() });
       if (!r.ok) throw new Error('Lecture impossible (' + r.status + ') — table dfl_items créée ?');
@@ -765,6 +771,7 @@ const Sync = {
         if (x.id.startsWith('c:')) { if (first) dirty = false; }
         else if (first && loc !== undefined && !x.deleted) dirty = !(x.data && (x.data.updated || 0) > (idx.has(x.id.slice(2)) ? DB.agents[idx.get(x.id.slice(2))].updated || 0 : 0));
         else if (first && x.deleted) dirty = loc !== undefined;
+        if (dirty && !first && x.id.startsWith('a:') && !x.deleted && x.data && this.mine[x.id] !== x.data.updated && idx.has(x.id.slice(2)) && (x.data.updated || 0) !== (DB.agents[idx.get(x.id.slice(2))].updated || 0)) conf.push(x.data);
         if (dirty || delPending) continue;
         if (x.id.startsWith('a:')) {
           const id = x.id.slice(2);
@@ -776,6 +783,7 @@ const Sync = {
       }
       if (rows.length < 300) break;
     }
+    if (conf.length) { const L = DB.meta.conflicts = DB.meta.conflicts || []; conf.forEach(d => { const i = L.findIndex(c => c.id === d.id); const e = { id: d.id, name: fullName(d), ts: Date.now(), remote: d }; if (i >= 0) L[i] = e; else L.push(e); }); if (L.length > 30) L.splice(0, L.length - 30); setTimeout(() => { audit('Conflit de synchronisation', conf.length + ' fiche(s) modifiée(s) sur deux appareils : version de cet appareil conservée'); toast(conf.length + ' conflit(s) de synchronisation : voir Administration', true); }, 0); }
     if (dels.size) DB.agents = DB.agents.filter(a => !dels.has(a.id));
     if (changed) { DB = migrate(DB); Store.set(DB); }
     const now = this.items();
@@ -786,7 +794,7 @@ const Sync = {
   },
   async push() {
     const cur = this.items(), out = [], hh = {};
-    cur.forEach((t, id) => { const h = this.hs(t); if (this.st.snap[id] !== h) { out.push({ id, body: `{"id":${JSON.stringify(id)},"data":${t},"deleted":false}`, h }); } });
+    cur.forEach((t, id) => { const h = this.hs(t); if (this.st.snap[id] !== h) { const mm = /"updated":(\d+)/.exec(t); if (mm) this.mine[id] = +mm[1]; out.push({ id, body: `{"id":${JSON.stringify(id)},"data":${t},"deleted":false}`, h }); } });
     Object.keys(this.st.snap).forEach(id => { if (!cur.has(id)) out.push({ id, body: `{"id":${JSON.stringify(id)},"data":null,"deleted":true}`, del: true }); });
     for (let i = 0; i < out.length; i += 100) {
       const b = out.slice(i, i + 100);
@@ -839,7 +847,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.8.0';
+const APP_VERSION = '3.9.0';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -896,14 +904,15 @@ const SEGICO = { 'mise-en-place': 'layers', cadre: 'org', liste: 'list', alpha: 
 
 function shell(inner, name) {
   const sideItems = session ? [...NAV.slice(0, 5), ...SDOCS.map(r => ({ r, l: SEGLBL[r], i: SEGICO[r] })), { r: 'stats', l: 'Statistiques', i: 'chart' }, NAV[5]] : NAV;
-  const side = sideItems.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
+  const side = sideItems.filter(n => !isRO() || !['nouveau', 'admin'].includes(n.r)).map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
     ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${ROLES[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
     : '<div class="who"><a class="btn sm primary" href="#/login">Se connecter</a></div>';
-  const bn = `<nav class="bnav" aria-label="Navigation">${NAV.map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 22)}<small>${n.s}</small></a>`).join('')}</nav>`;
+  const bn = `<nav class="bnav" aria-label="Navigation">${NAV.filter(n => !isRO() || !['nouveau', 'admin'].includes(n.r)).map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 22)}<small>${n.s}</small></a>`).join('')}</nav>`;
   const banners = [];
   if (isAdm() && DB.agents.length && (!DB.meta.lastBackup || Date.now() - DB.meta.lastBackup > 14 * 864e5))
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde téléchargée depuis plus de 14 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
+  { const up = DB.ctl && DB.ctl.update; if (session && up && up.v && verGt(up.v, APP_VERSION)) banners.push(`<div class="warn">${ico('alert', 20)}<span>Nouvelle version <b>${esc(up.v)}</b> disponible${up.note ? ' : ' + esc(up.note) : ''}. ${up.u ? `<a href="${esc(up.u)}" target="_blank" rel="noopener">Télécharger</a>` : 'Contactez le propriétaire.'}</span></div>`); }
   if (isAdm() && name !== 'stats') { const R = retraites(), k = R.passe.length + R.an.length; if (k) banners.push(`<div class="warn">${ico('alert', 20)}<span><b>${k}</b> agent(s) ont atteint ou atteindront l’âge de la retraite cette année. <a href="#/stats">Voir la liste</a></span></div>`); }
   return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a><button class="ib" data-act="logout" aria-label="Se déconnecter" title="Se déconnecter" style="color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:10px;min-width:38px;min-height:38px;display:grid;place-items:center;background:transparent">${ico('logout', 20)}</button>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
@@ -928,7 +937,7 @@ function pAccueil() {
     <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
     <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
     <p class="msg">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? homeLists() : ''}${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p>`;
+    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? homeLists() : ''}${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}<br>© 2026 Elia Kilu Honore · <a href="#" data-act="licence">Licence</a></p>`;
 }
 
 function pSync() {
@@ -949,6 +958,10 @@ function pSync() {
     <p class="sub" style="margin-top:14px;font-size:12px">Le code de connexion contient le mot de passe du compte de synchronisation : ne le partagez qu’avec les appareils de la Direction.</p></section>`;
 }
 const canPlace = () => !!session && ['owner', 'admin', 'cd'].includes(session.role);
+const LICENSE_TEXT = "LICENCE LOGICIELLE PROPRIÉTAIRE — TOUS DROITS RÉSERVÉS\n=======================================================\n\nLogiciel : « Gestion des agents DSFL » (application web, application Windows et application Android)\nAuteur et titulaire des droits : Elia Kilu Honore\nCopyright © 2026 Elia Kilu Honore. Tous droits réservés.\n\n1. PROPRIÉTÉ\n   Le logiciel, son code source (HTML, JavaScript, CSS, scripts de construction et de configuration),\n   ses icônes, sa conception, ses textes et sa documentation sont la propriété exclusive de l'auteur.\n   Aucun droit de propriété n'est cédé par la remise d'une copie du logiciel.\n\n2. UTILISATION AUTORISÉE\n   L'utilisation du logiciel n'est permise qu'aux personnes ou organisations autorisées par l'auteur,\n   par écrit, et uniquement dans les limites de cette autorisation.\n\n3. INTERDICTIONS\n   Sans autorisation écrite préalable de l'auteur, il est interdit de :\n   a) copier, reproduire, publier ou distribuer le logiciel ou une partie de son code source ;\n   b) modifier le logiciel, en créer des œuvres dérivées ou l'intégrer à un autre produit ;\n   c) vendre, louer, prêter, sous-licencier ou mettre le logiciel à la disposition de tiers ;\n   d) décompiler, désassembler, désobfusquer ou tenter d'extraire ou de reconstituer le code source ;\n   e) supprimer ou modifier les mentions de droits d'auteur, les en-têtes et la présente licence ;\n   f) contourner les protections, les droits d'accès ou les mécanismes de verrouillage du logiciel.\n\n4. DONNÉES\n   Les données saisies dans le logiciel (agents, listes, pièces jointes) restent la propriété de\n   l'organisation qui les a saisies. La présente licence ne porte que sur le logiciel.\n\n5. ABSENCE DE GARANTIE\n   Le logiciel est fourni « tel quel », sans garantie d'aucune sorte. L'auteur ne peut être tenu\n   responsable des pertes de données ou des dommages résultant de l'utilisation du logiciel.\n   Il est recommandé de faire des sauvegardes régulières.\n\n6. SANCTIONS\n   Toute utilisation non autorisée peut donner lieu à des poursuites civiles et pénales\n   conformément à la législation applicable en République démocratique du Congo.";
+const isRO = () => !!session && session.role === 'lecteur';
+const RO_ACTS = new Set(['close', 'exp', 'fiche', 'lbxclose', 'lbxdl', 'docview', 'lockout', 'logout', 'more', 'moreall', 'print', 'pdf', 'pw', 'gate', 'login', 'ownerlogin', 'unlock', 'openfolder', 'licence']);
+const RO_FORMS = new Set(['gate', 'login', 'ownerlogin', 'pw', 'unlock']);
 const isOwner = () => !!session && session.role === 'owner';
 const isAdm = () => !!session && ['owner', 'admin'].includes(session.role);
 
@@ -972,7 +985,7 @@ function pProprio() {
     <ul class="list" style="margin:12px 0 14px">${users}</ul>
     <div class="acts" style="margin-bottom:14px"><button class="btn danger" data-act="resetall">Réinitialiser tous les mots de passe</button></div>
     <form data-f="adduser" class="grid"><label>Nouvel identifiant<input name="u" autocapitalize="none" required></label>
-    <label>Rôle<select name="r">${['cb', 'cd', 'admin'].map(r => `<option value="${r}">${ROLES[r]}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn primary">Créer le compte</button></div></form></section>
+    <label>Rôle<select name="r">${['cb', 'cd', 'admin', 'lecteur'].map(r => `<option value="${r}">${ROLES[r]}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn primary">Créer le compte</button></div></form></section>
   <section class="card sec2"><h3>Synchronisation</h3><p class="sub" style="margin:6px 0 10px" id="syncinfo">${Sync.info()}</p><a class="btn" href="#/sync">Configurer la synchronisation</a></section>
   <section class="card sec2"><h3>Mon mot de passe propriétaire</h3><p class="sub" style="margin:6px 0 10px">Le changer ici le change immédiatement sur tous les appareils synchronisés.</p>
     <form data-f="ownerpw" class="grid"><label>Mot de passe actuel<input name="cur" type="password" autocomplete="off" required></label><label>Nouveau mot de passe (8 caractères minimum, lettres et chiffres)<input name="n1" type="password" minlength="8" autocomplete="new-password" required></label><label>Confirmer<input name="n2" type="password" minlength="8" autocomplete="new-password" required></label><div style="align-self:end"><button class="btn primary">Modifier</button></div></form></section>
@@ -993,7 +1006,7 @@ function pGate() {
     <h2 style="text-align:center">Mot de passe propriétaire</h2>
     <p class="sub" style="text-align:center;margin-bottom:12px">Saisissez le mot de passe propriétaire pour ouvrir l’application.</p>
     <form data-f="gate"><label>Mot de passe propriétaire<input name="o" type="password" autocomplete="off" required></label><button class="btn primary">Ouvrir l’application</button></form>
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}</p></section></div>`;
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}<br>© 2026 Elia Kilu Honore · <a href="#" data-act="licence">Licence</a></p></section></div>`;
 }
 function pLogin() {
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
@@ -1003,7 +1016,7 @@ function pLogin() {
     <button class="btn primary">Se connecter</button></form>
     <p class="sub" style="text-align:center;margin-top:12px"><a href="#/proprietaire">Espace propriétaire</a></p>
     <p class="sub" style="margin-top:14px;text-align:center"><a href="#/activer">Première connexion ou mot de passe oublié ? Créer mon mot de passe</a></p>
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}</p></section>`;
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}<br>© 2026 Elia Kilu Honore · <a href="#" data-act="licence">Licence</a></p></section>`;
 }
 function pCompte() {
   if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>' + lockCard();
@@ -1343,6 +1356,7 @@ const selDirs = () => ui.dir ? DB.directions.filter(d => d.name === ui.dir) : DB
 const seg = active => `<div class="seg noprint">${DOCS.map(r => `<a href="#/${r}" ${r === active ? 'aria-current="page"' : ''}>${ico(SEGICO[r], 17)}${SEGLBL[r]}</a>`).join('')}</div>`;
 const LETTER = n => ['RÉPUBLIQUE DÉMOCRATIQUE DU CONGO', 'MINISTÈRE DE L’INTÉRIEUR, SÉCURITÉ, DÉCENTRALISATION ET AFFAIRES COUTUMIÈRES', 'DIRECTION DE SUIVI DES FINANCES LOCALES'].map(t => `<tr><th class="t sm" colspan="${n}"><div class="stk">${t}</div></th></tr>`).join('');
 const printHead = kind => '';
+const signoff = () => { const g = (DB.meta && DB.meta.sign) || {}; return `<div class="signoff"><div>Fait à ${esc(g.ville || 'Kinshasa')}, le ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div><div><b>${esc(g.titre || 'Le Directeur')}</b></div><div class="sg"></div><div><b>${esc(g.nom || '')}</b></div></div>`; };
 function pDoc(kind) {
   const desc = { 'mise-en-place': 'Secrétariat, 4 divisions et 8 bureaux. Les agents sont répartis automatiquement selon leur affectation.', cadre: 'Effectif prévu par grade et par unité, comparé aux agents en place.', liste: `Liste déclarative des agents de la Direction – année ${DB.meta.annee}.`, alpha: 'Tous les cadres et agents, classés par grade puis par ordre alphabétique.', matricules: 'Cadres et agents ayant un numéro matricule.', nu: 'Agents sans matricule (N.U) : contrôlés ou non contrôlés.' }[kind];
   const dirSel = DB.directions.length > 1 ? `<select id="tDir" aria-label="Direction"><option value="">Toutes les directions</option>${DB.directions.map(d => `<option ${d.name === ui.dir ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : '';
@@ -1350,8 +1364,8 @@ function pDoc(kind) {
   const sx = SDOCS.includes(kind) ? `<select id="tSort" aria-label="Tri"><option value="ga">Tri : grade puis alphabétique</option><option value="alpha">Tri : alphabétique</option><option value="recent">Tri : derniers enregistrés</option></select>${kind === 'nu' ? '<select id="tCtl" aria-label="Contrôle"><option value="">Tous (contrôlés ou non)</option><option value="Oui">Contrôlés (OUI)</option><option value="Non">Non contrôlés (NON)</option><option value="-">Non renseigné</option></select>' : ''}` : '';
   const search = kind !== 'cadre' ? '<input id="tq" type="search" class="wide" placeholder="Rechercher un agent…" aria-label="Rechercher">' : '';
   return `${printHead(kind)}<header class="ph"><div><h2>${DOCTITLE[kind]}</h2><p class="sub">${desc}</p></div>
-    <div class="acts noprint">${kind === 'liste' || SDOCS.includes(kind) || canPlace() ? `<a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents', alpha: 'alpha', matricules: 'matricules', nu: 'nu' }[kind]}">${ico('upload', 18)}Importer</a>` : ''}<button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
-    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}${sx}</div><div id="docbar" class="acts noprint" style="margin:10px 0"></div><div id="doc"></div>`;
+    <div class="acts noprint">${kind === 'liste' || SDOCS.includes(kind) || canPlace() ? `<a class="btn" href="#/importer/${{ 'mise-en-place': 'mise', cadre: 'cadre', liste: 'agents', alpha: 'alpha', matricules: 'matricules', nu: 'nu' }[kind]}">${ico('upload', 18)}Importer</a>` : ''}<button class="btn" data-act="exp" data-k="${kind}">${ico('download', 18)}Exporter Excel</button>${window.dflDesktop && window.dflDesktop.pdf ? `<button class="btn" data-act="pdf">${ico('print', 18)}Enregistrer en PDF</button>` : ''}${isNative() ? '' : `<button class="btn" data-act="print">${ico('print', 18)}Imprimer</button>`}</div></header>
+    ${seg(kind)}<div class="tools noprint">${search}${dirSel}${extra}${sx}</div><div id="docbar" class="acts noprint" style="margin:10px 0"></div><div id="doc"></div>${signoff()}`;
 }
 function docRows(kind) {
   if (kind === 'mise-en-place') {
@@ -1750,10 +1764,22 @@ function setupTables() {
 }
 
 /* ---------- Administration ---------- */
+const verGt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+function adminExtra() {
+  let h = '';
+  const cf = DB.meta.conflicts || [];
+  if (canPlace() && cf.length) h += `<section class="card sec2"><h3>Conflits de synchronisation <span class="badge warn">${cf.length}</span></h3><p class="sub" style="margin:6px 0 10px">Ces fiches ont été modifiées en même temps sur deux appareils. La version de <b>cet appareil</b> a été conservée ; vous pouvez appliquer la version de l’autre appareil.</p>
+    ${cf.slice().reverse().map(c => `<div class="snap"><div><b>${esc(c.name)}</b><br><span class="muted" style="font-size:12.5px">${esc(new Date(c.ts).toLocaleString('fr-FR'))}</span></div><div class="acts" style="margin:0"><button class="btn sm" data-act="confremote" data-id="${c.id}">Prendre l’autre version</button><button class="btn sm" data-act="confkeep" data-id="${c.id}">Garder la mienne</button></div></div>`).join('')}</section>`;
+  if (canPlace()) { const g = DB.meta.sign || {}; h += `<section class="card sec2"><h3>Mentions d’impression</h3><p class="sub" style="margin:6px 0 10px">Apparaissent en bas des listes imprimées ou enregistrées en PDF.</p>
+    <form data-f="sign"><div class="grid"><label>Ville<input name="ville" value="${esc(g.ville || 'Kinshasa')}"></label><label>Titre du signataire<input name="titre" value="${esc(g.titre || 'Le Directeur')}"></label></div><label>Nom du signataire<input name="nom" value="${esc(g.nom || '')}" placeholder="Nom et postnom"></label><button class="btn primary">Enregistrer</button></form></section>`; }
+  if (isOwner()) { const u = (DB.ctl && DB.ctl.update) || {}; h += `<section class="card sec2"><h3>Annoncer une nouvelle version</h3><p class="sub" style="margin:6px 0 10px">Quand vous publiez une nouvelle version, tous les appareils affichent un bandeau avec le lien de téléchargement.</p>
+    <form data-f="upd"><div class="grid"><label>Numéro de version<input name="v" value="${esc(u.v || '')}" placeholder="3.9.0" required></label><label>Lien de téléchargement (https)<input name="u" value="${esc(u.u || '')}" placeholder="https://…"></label></div><label>Message (facultatif)<input name="n" value="${esc(u.note || '')}"></label><button class="btn primary">Publier l’annonce</button></form></section>`; }
+  return h;
+}
 function pAdmin() {
   const dr = isAdm();
   const it = (r, l, i, d) => `<a class="tile" href="#/${r}"><span class="ic">${ico(i)}</span><div><b>${l}</b><span>${d}</span></div></a>`;
-  const head = `<header class="ph"><div><h2>Administration</h2><p class="sub">${ROLES[session.role] || session.role} · version ${APP_VERSION}</p></div></header>`;
+  const head = `<header class="ph"><div><h2>Administration</h2><p class="sub">${ROLES[session.role] || session.role} · version ${APP_VERSION} · <a href="#" data-act="licence">Licence</a></p></div></header>`;
   const tiles = `<div class="tiles">
     ${it('importer', 'Importer un fichier', 'upload', 'Excel, Word ou PDF : agents et cadre organique')}
     ${it('stats', 'Statistiques', 'chart', 'Effectifs, retraites à venir, contrôle qualité')}
@@ -1765,7 +1791,7 @@ function pAdmin() {
   const dirs = DB.directions.map((d, i) => `<div class="dir"><div class="dh"><b>${esc(d.name)}</b><span class="acts"><button class="btn sm" data-act="rendir" data-i="${i}">Renommer</button><button class="btn sm danger" data-act="deldir" data-i="${i}">Supprimer</button></span></div>
     <ul class="chips">${d.divisions.map((v, j) => `<li><button class="chip" data-act="rendiv" data-i="${i}" data-j="${j}" title="Renommer">${esc(v)}</button><button class="x" data-act="deldiv" data-i="${i}" data-j="${j}" aria-label="Supprimer ${esc(v)}">×</button></li>`).join('') || '<li class="muted" style="border:0">Aucune division</li>'}</ul>
     <form class="inline" data-f="adddiv" data-i="${i}"><input name="v" placeholder="Nouvelle division" required aria-label="Nouvelle division"><button class="btn">Ajouter</button></form></div>`).join('');
-  return head + tiles + `
+  return head + tiles + adminExtra() + `
   <section class="card sec2"><h3>Liste déclarative</h3><form class="inline" data-f="year" style="margin-top:10px;max-width:340px"><input name="y" type="number" min="2000" max="2100" value="${DB.meta.annee}" required aria-label="Année"><button class="btn">Enregistrer l’année</button></form></section>
   <section class="card sec2"><h3>Directions et divisions</h3><p class="sub" style="margin-bottom:12px">Touchez le nom d’une division pour la renommer. Une division qui contient des agents ne peut pas être supprimée.</p>${dirs}
     <form class="inline" data-f="adddir"><input name="v" placeholder="Nouvelle direction" required aria-label="Nouvelle direction"><button class="btn">Ajouter</button></form></section>`;
@@ -1781,6 +1807,8 @@ function route() {
   }
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (session && session.mustChange && name !== 'compte') { location.replace('#/compte'); return; }
+  if (isRO() && ['nouveau', 'importer', 'base-de-donnees', 'admin', 'proprietaire', 'sync'].includes(name)) { location.replace('#/accueil'); return; }
+  document.body.classList.toggle('ro', isRO());
   if (name === 'importer' && session && !canPlace() && !['agents', 'alpha', 'matricules', 'nu'].includes(arg) && arg) { location.hash = '#/importer/agents'; return; }
   if (name === 'login' && session) { location.replace('#/accueil'); return; }
   closeModal(false, true);
@@ -1866,6 +1894,15 @@ const A = {
   syncoff: () => { if (!confirm('Désactiver la synchronisation sur cet appareil ? Les agents déjà reçus restent ici.')) return; try { localStorage.removeItem('dfl_sync_cfg'); localStorage.removeItem('dfl_sync_st'); } catch (e) {} Sync.cfg = null; Sync.st = { init: false, last: 0, snap: {} }; Sync.tok = null; Sync.rt = ''; clearTimeout(Sync.timer); toast('Synchronisation désactivée'); route(); },
   logout: () => { audit('Déconnexion'); session = null; try { localStorage.removeItem('dfl_s'); } catch (e) {}; if (location.hash === '#/accueil' || !location.hash) route(); else location.hash = '#/accueil'; },
   fiche: t => openFiche(t.dataset.id),
+  pdf: async () => {
+    const k = curKind(); if (!DOCS.includes(k) || !window.dflDesktop || !window.dflDesktop.pdf) return;
+    const prev = ui.max; ui.max = 1e9; renderDoc(k); await new Promise(r => setTimeout(r, 80)); toast('Préparation du PDF…');
+    try { const ok = await window.dflDesktop.pdf((DOCTITLE[k] || 'document').replace(/[^\w]+/g, '_') + '_' + today()); if (ok) toast('PDF enregistré'); } catch (e) { toast('PDF impossible', true); }
+    ui.max = prev; renderDoc(k);
+  },
+  licence: (t, e) => { if (e) e.preventDefault(); openModal(`<h3 style="margin-bottom:8px">Licence du logiciel</h3><pre style="white-space:pre-wrap;font:13px/1.5 inherit;max-height:60vh;overflow:auto">${esc(LICENSE_TEXT)}</pre><div class="acts"><button class="btn primary" data-act="close">Fermer</button></div>`); },
+  confkeep: t => { if (!canPlace()) return; DB.meta.conflicts = (DB.meta.conflicts || []).filter(c => c.id !== t.dataset.id); save(); route(); },
+  confremote: t => { if (!canPlace()) return; const c = (DB.meta.conflicts || []).find(x => x.id === t.dataset.id); if (!c) return; const i = DB.agents.findIndex(a => a.id === c.id); const d = { ...c.remote, updated: Date.now() }; if (i >= 0) DB.agents[i] = d; else DB.agents.push(d); DB.meta.conflicts = DB.meta.conflicts.filter(x => x.id !== c.id); audit('Conflit résolu', fullName(d) + ' : version de l’autre appareil appliquée'); toast('Version de l’autre appareil appliquée'); route(); },
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
   snaprestore: async t => { if (!isOwner()) return; const r = await Snap.get(t.dataset.id); if (!r) return toast('Copie introuvable', true); if (!confirm(`Remplacer les données actuelles par la copie du ${new Date(r.ts).toLocaleString('fr-FR')} (${r.count} agents) ? Une copie des données actuelles sera d’abord faite.`)) return; await restoreDB(JSON.parse(r.data), 'copie du ' + new Date(r.ts).toLocaleString('fr-FR')); },
@@ -1970,6 +2007,8 @@ const A = {
 
 /* ================= Formulaires ================= */
 const F = {
+  sign(f) { if (!canPlace()) return; DB.meta.sign = { ville: f.ville.value.trim(), titre: f.titre.value.trim(), nom: f.nom.value.trim() }; save(); toast('Mentions d’impression enregistrées'); },
+  upd(f) { if (!isOwner()) return; const v = f.v.value.trim(), u = f.u.value.trim(); if (!/^\d+\.\d+\.\d+$/.test(v)) return toast('Numéro de version : 3.9.0', true); if (u && !/^https:\/\//i.test(u)) return toast('Le lien doit commencer par https://', true); DB.ctl = DB.ctl || {}; DB.ctl.update = { v, u, note: f.n.value.trim(), t: Date.now() }; audit('Nouvelle version annoncée', v); toast('Annonce publiée sur tous les appareils'); route(); },
   histo(f) {
     const a = DB.agents.find(x => x.id === f.dataset.id); if (!a) return;
     const g = n => f.elements[n].value.trim(); if (!g('detail') || !g('date')) return;
@@ -2098,10 +2137,11 @@ const F = {
   }
 };
 
-document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = A[t.dataset.act]; if (fn) fn(t, e); });
-document.addEventListener('submit', e => { const f = e.target; if (!f.dataset || !F[f.dataset.f]) return; e.preventDefault(); F[f.dataset.f](f); });
+document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = A[t.dataset.act]; if (!fn) return; if (isRO() && !RO_ACTS.has(t.dataset.act)) { e.preventDefault(); return toast('Compte en consultation seule : modification impossible', true); } fn(t, e); });
+document.addEventListener('submit', e => { const f = e.target; if (!f.dataset || !F[f.dataset.f]) return; e.preventDefault(); if (isRO() && !RO_FORMS.has(f.dataset.f)) return toast('Compte en consultation seule : modification impossible', true); F[f.dataset.f](f); });
 document.addEventListener('change', async e => {
   const t = e.target;
+  if (isRO() && t.id !== 'lockSel') { if (t.type === 'file') t.value = ''; return; }
   if (t.matches('input[data-prevu]')) {
     const v = Math.max(0, parseInt(t.value, 10) || 0), dir = t.dataset.dir, div = t.dataset.div, g = t.dataset.grade;
     const ex = DB.cadre.find(c => c.direction === dir && c.division === div && norm(canonGrade(c.grade)) === norm(g));
