@@ -2,8 +2,8 @@ LICENCE LOGICIELLE PROPRIÉTAIRE — TOUS DROITS RÉSERVÉS
 =======================================================
 
 Logiciel : « Gestion des agents DSFL » (application web, application Windows et application Android)
-Auteur et titulaire des droits : Elia Kilu Honore
-Copyright © 2026 Elia Kilu Honore. Tous droits réservés.
+Auteur et titulaire des droits : DSFL
+Copyright © 2026 DSFL. Tous droits réservés.
 
 1. PROPRIÉTÉ
    Le logiciel, son code source (HTML, JavaScript, CSS, scripts de construction et de configuration),
@@ -40,7 +40,7 @@ Copyright © 2026 Elia Kilu Honore. Tous droits réservés.
 
 PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED (summary)
 
-"Gestion des agents DSFL" — Copyright (c) 2026 Elia Kilu Honore. All rights reserved.
+"Gestion des agents DSFL" — Copyright (c) 2026 DSFL. All rights reserved.
 This software and its source code are proprietary. No permission is granted to use, copy, modify,
 merge, publish, distribute, sublicense, sell, decompile, deobfuscate or create derivative works,
 except with the prior written permission of the copyright holder. The software is provided "as is",

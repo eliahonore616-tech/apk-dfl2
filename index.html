@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  Gestion des agents DSFL — © 2026 Elia Kilu Honore. Tous droits réservés.
+  Gestion des agents DSFL — © 2026 DSFL. Tous droits réservés.
   Ce logiciel et son code source sont protégés. Toute copie, modification, diffusion ou utilisation
   sans autorisation écrite de l'auteur est interdite.
 -->
@@ -9,7 +9,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="copyright" content="© 2026 Elia Kilu Honore. Tous droits réservés.">
+<meta name="copyright" content="© 2026 DSFL. Tous droits réservés.">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#0A3C98">
@@ -316,7 +316,7 @@ details.map .grid{margin-top:12px}
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
-/*! Gestion des agents DSFL — © 2026 Elia Kilu Honore. Tous droits réservés. Voir LICENSE.txt. Copie, modification et décompilation interdites sans autorisation écrite. */
+/*! Gestion des agents DSFL — © 2026 DSFL. Tous droits réservés. Voir LICENSE.txt. Copie, modification et décompilation interdites sans autorisation écrite. */
 (() => {
 'use strict';
 
@@ -854,7 +854,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '4.0.1';
+const APP_VERSION = '4.0.2';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -945,7 +945,7 @@ function pAccueil() {
     <h1>Bienvenue à la Direction de Suivi des Finances Locales</h1>
     <p class="hdir">Ministère de l’Intérieur, Sécurité, Décentralisation et Affaires Coutumières</p>
     <p class="msg">Enregistrez les agents, consultez la liste déclarative, la mise en place du personnel et le cadre organique.</p>
-    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? homeLists() : ''}${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}<br>© 2026 Elia Kilu Honore · <a href="#" data-act="licence">Licence</a></p>`;
+    <div class="cta">${session ? '<a class="btn" href="#/nouveau">Commencer l’enregistrement</a>' : '<a class="btn" href="#/login">Se connecter</a>'}</div></section>${session ? homeLists() : ''}${session ? lastAgents() : ''}<p class="sub" style="text-align:center;margin:22px 0 6px;font-size:13px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}<br>© 2026 DSFL · <a href="#" data-act="licence">Licence</a></p>`;
 }
 
 function pSync() {
@@ -966,7 +966,7 @@ function pSync() {
     <p class="sub" style="margin-top:14px;font-size:12px">Le code de connexion contient le mot de passe du compte de synchronisation : ne le partagez qu’avec les appareils de la Direction.</p></section>`;
 }
 const canPlace = () => !!session && ['owner', 'admin', 'cd'].includes(session.role);
-const LICENSE_TEXT = "LICENCE LOGICIELLE PROPRIÉTAIRE — TOUS DROITS RÉSERVÉS\n=======================================================\n\nLogiciel : « Gestion des agents DSFL » (application web, application Windows et application Android)\nAuteur et titulaire des droits : Elia Kilu Honore\nCopyright © 2026 Elia Kilu Honore. Tous droits réservés.\n\n1. PROPRIÉTÉ\n   Le logiciel, son code source (HTML, JavaScript, CSS, scripts de construction et de configuration),\n   ses icônes, sa conception, ses textes et sa documentation sont la propriété exclusive de l'auteur.\n   Aucun droit de propriété n'est cédé par la remise d'une copie du logiciel.\n\n2. UTILISATION AUTORISÉE\n   L'utilisation du logiciel n'est permise qu'aux personnes ou organisations autorisées par l'auteur,\n   par écrit, et uniquement dans les limites de cette autorisation.\n\n3. INTERDICTIONS\n   Sans autorisation écrite préalable de l'auteur, il est interdit de :\n   a) copier, reproduire, publier ou distribuer le logiciel ou une partie de son code source ;\n   b) modifier le logiciel, en créer des œuvres dérivées ou l'intégrer à un autre produit ;\n   c) vendre, louer, prêter, sous-licencier ou mettre le logiciel à la disposition de tiers ;\n   d) décompiler, désassembler, désobfusquer ou tenter d'extraire ou de reconstituer le code source ;\n   e) supprimer ou modifier les mentions de droits d'auteur, les en-têtes et la présente licence ;\n   f) contourner les protections, les droits d'accès ou les mécanismes de verrouillage du logiciel.\n\n4. DONNÉES\n   Les données saisies dans le logiciel (agents, listes, pièces jointes) restent la propriété de\n   l'organisation qui les a saisies. La présente licence ne porte que sur le logiciel.\n\n5. ABSENCE DE GARANTIE\n   Le logiciel est fourni « tel quel », sans garantie d'aucune sorte. L'auteur ne peut être tenu\n   responsable des pertes de données ou des dommages résultant de l'utilisation du logiciel.\n   Il est recommandé de faire des sauvegardes régulières.\n\n6. SANCTIONS\n   Toute utilisation non autorisée peut donner lieu à des poursuites civiles et pénales\n   conformément à la législation applicable en République démocratique du Congo.";
+const LICENSE_TEXT = "LICENCE LOGICIELLE PROPRIÉTAIRE — TOUS DROITS RÉSERVÉS\n=======================================================\n\nLogiciel : « Gestion des agents DSFL » (application web, application Windows et application Android)\nAuteur et titulaire des droits : DSFL\nCopyright © 2026 DSFL. Tous droits réservés.\n\n1. PROPRIÉTÉ\n   Le logiciel, son code source (HTML, JavaScript, CSS, scripts de construction et de configuration),\n   ses icônes, sa conception, ses textes et sa documentation sont la propriété exclusive de l'auteur.\n   Aucun droit de propriété n'est cédé par la remise d'une copie du logiciel.\n\n2. UTILISATION AUTORISÉE\n   L'utilisation du logiciel n'est permise qu'aux personnes ou organisations autorisées par l'auteur,\n   par écrit, et uniquement dans les limites de cette autorisation.\n\n3. INTERDICTIONS\n   Sans autorisation écrite préalable de l'auteur, il est interdit de :\n   a) copier, reproduire, publier ou distribuer le logiciel ou une partie de son code source ;\n   b) modifier le logiciel, en créer des œuvres dérivées ou l'intégrer à un autre produit ;\n   c) vendre, louer, prêter, sous-licencier ou mettre le logiciel à la disposition de tiers ;\n   d) décompiler, désassembler, désobfusquer ou tenter d'extraire ou de reconstituer le code source ;\n   e) supprimer ou modifier les mentions de droits d'auteur, les en-têtes et la présente licence ;\n   f) contourner les protections, les droits d'accès ou les mécanismes de verrouillage du logiciel.\n\n4. DONNÉES\n   Les données saisies dans le logiciel (agents, listes, pièces jointes) restent la propriété de\n   l'organisation qui les a saisies. La présente licence ne porte que sur le logiciel.\n\n5. ABSENCE DE GARANTIE\n   Le logiciel est fourni « tel quel », sans garantie d'aucune sorte. L'auteur ne peut être tenu\n   responsable des pertes de données ou des dommages résultant de l'utilisation du logiciel.\n   Il est recommandé de faire des sauvegardes régulières.\n\n6. SANCTIONS\n   Toute utilisation non autorisée peut donner lieu à des poursuites civiles et pénales\n   conformément à la législation applicable en République démocratique du Congo.";
 const isRO = () => !!session && session.role === 'lecteur';
 const RO_ACTS = new Set(['close', 'exp', 'fiche', 'lbxclose', 'lbxdl', 'docview', 'lockout', 'logout', 'more', 'moreall', 'print', 'pdf', 'pw', 'gate', 'login', 'ownerlogin', 'unlock', 'openfolder', 'licence', 'tour', 'tournext', 'tourskip']);
 const RO_FORMS = new Set(['gate', 'login', 'ownerlogin', 'pw', 'unlock']);
@@ -1014,7 +1014,7 @@ function pGate() {
     <h2 style="text-align:center">Mot de passe propriétaire</h2>
     <p class="sub" style="text-align:center;margin-bottom:12px">Saisissez le mot de passe propriétaire pour ouvrir l’application.</p>
     <form data-f="gate"><label>Mot de passe propriétaire<input name="o" type="password" autocomplete="off" required></label><button class="btn primary">Ouvrir l’application</button></form>
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}<br>© 2026 Elia Kilu Honore · <a href="#" data-act="licence">Licence</a></p></section></div>`;
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Direction de Suivi des Finances Locales · Version ${APP_VERSION}<br>© 2026 DSFL · <a href="#" data-act="licence">Licence</a></p></section></div>`;
 }
 function pLogin() {
   return `<section class="card narrow"><div class="lockhead"><span class="lk">${ico('key', 26)}</span></div>
@@ -1024,7 +1024,7 @@ function pLogin() {
     <button class="btn primary">Se connecter</button></form>
     <p class="sub" style="text-align:center;margin-top:12px"><a href="#/proprietaire">Espace propriétaire</a></p>
     <p class="sub" style="margin-top:14px;text-align:center"><a href="#/activer">Première connexion ou mot de passe oublié ? Créer mon mot de passe</a></p>
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}<br>© 2026 Elia Kilu Honore · <a href="#" data-act="licence">Licence</a></p></section>`;
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">Gestion des agents — Direction de Suivi des Finances Locales · version ${APP_VERSION}<br>© 2026 DSFL · <a href="#" data-act="licence">Licence</a></p></section>`;
 }
 function pCompte() {
   if (isOwner()) return '<section class="card narrow"><h2>Mon mot de passe</h2><p class="sub">Le propriétaire modifie son mot de passe dans son <a href="#/proprietaire">Espace propriétaire</a>.</p><div class="acts" style="margin-top:16px"><button class="btn danger" data-act="logout">Se déconnecter</button></div></section>' + lockCard();
