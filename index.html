@@ -131,6 +131,13 @@ label.rd{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;
 .ro [data-act=gonew],.ro [data-act=delagent],.ro [data-act=tedit],.ro [data-act=histodel],.ro [data-act=docdel],.ro .histoform,.ro #docCat,.ro label:has(#docAdd),.ro a[href^="#/nouveau"],.ro a[href^="#/importer"]{display:none!important}
 .signoff{display:none}
 @media print{.signoff{display:block;margin-top:30px;text-align:right;font-size:13px;line-height:1.6;page-break-inside:avoid}.signoff .sg{height:64px}}
+.cbar{position:sticky;bottom:10px;z-index:30;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--card,#fff);border:1px solid var(--line,#c8d6ee);border-radius:14px;padding:10px 12px;box-shadow:0 8px 28px rgba(10,40,100,.22);margin-top:12px}
+.cgrp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.cbar select,.cbar input{width:auto;min-width:0;padding:6px 8px;font-size:13px}
+td.miss{background:rgba(255,196,0,.18)}tr.sel td{background:rgba(21,101,216,.10)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+.tbl td input[type=date],.tbl td select{width:100%;min-width:118px;padding:5px 6px;font:inherit;font-size:13px}
+.tour .dots{display:flex;gap:6px;margin:14px 0}.tour .dots span{width:8px;height:8px;border-radius:50%;background:#c8d6ee}.tour .dots span.on{background:var(--steel,#1565d8);width:22px;border-radius:6px}
+.hl summary{cursor:pointer}.hl .hb{margin-top:10px;font-size:14.5px;line-height:1.6}.hl .hb ul{padding-left:20px}.hl .hb li{margin:4px 0}
 .lockov{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 .lbx{position:fixed;inset:0;z-index:9000;background:rgba(5,12,30,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
 .lbx img{max-width:100%;max-height:78vh;border-radius:10px;background:#fff}
@@ -556,7 +563,7 @@ const defaultOrg = () => ({
 function secDefault() { return { id: 'sec', kind: 'sec', name: 'Secrétariat de Direction', cd: 'MBUFULI BOKHUAN Patrick Richard', prevu: 24, bureaux: [] }; }
 const migrate = d => {
   d.users = d.users || []; d.directions = d.directions || []; d.agents = d.agents || [];
-  d.cadre = d.cadre || []; d.meta = d.meta || {}; if (!d.meta.annee) d.meta.annee = new Date().getFullYear();
+  d.cadre = d.cadre || []; d.trash = Array.isArray(d.trash) ? d.trash : []; d.meta = d.meta || {}; if (!d.meta.annee) d.meta.annee = new Date().getFullYear();
   if (!d.directions.length) d.directions.push({ name: DIRNAME, divisions: [] });
   d.agents.forEach(a => {
     if (!a.direction) a.direction = d.directions[0].name;
@@ -847,7 +854,7 @@ function audit(action, detail) {
 const lockInfo = () => { try { return JSON.parse(localStorage.getItem('dfl_lk') || '{"n":0,"until":0}'); } catch (e) { return { n: 0, until: 0 }; } };
 const lockSet = o => { try { localStorage.setItem('dfl_lk', JSON.stringify(o)); } catch (e) {} };
 
-const APP_VERSION = '3.9.0';
+const APP_VERSION = '4.0.1';
 let session = null, nextRoute = '', formPhoto = '', afterRoute = null, imp = null;
 const ui = { dir: '', q: '', div: '', sit: '', sort: 'hier', max: 100 };
 const seed = () => migrate({
@@ -864,6 +871,7 @@ const seed = () => migrate({
 const IC = {
   home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
   users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',
   plus: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>', plusb: '<path d="M12 5v14M5 12h14"/>',
   shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
@@ -895,7 +903,7 @@ const NAV = [
   { r: 'cadre', l: 'Cadre organique', s: 'Cadre', i: 'org' },
   { r: 'admin', l: 'Administration', s: 'Admin', i: 'shield' }
 ];
-const PROTECTED = ['stats', 'nouveau', 'mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu', 'importer', 'admin', 'base-de-donnees', 'compte'];
+const PROTECTED = ['completer', 'stats', 'nouveau', 'mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu', 'importer', 'admin', 'base-de-donnees', 'compte'];
 const DOCS = ['mise-en-place', 'cadre', 'liste', 'alpha', 'matricules', 'nu'];
 const SDOCS = ['alpha', 'matricules', 'nu'];
 const DOCTITLE = { 'mise-en-place': 'Mise en place du personnel', cadre: 'Cadre organique', liste: 'Liste déclarative des agents', alpha: 'Liste des cadres et agents (ordre alphabétique et grade)', matricules: 'Agents et cadres ayant un numéro matricule', nu: 'Agents N.U contrôlés et non contrôlés' };
@@ -903,7 +911,7 @@ const SEGLBL = { 'mise-en-place': 'Mise en place', cadre: 'Cadre organique', lis
 const SEGICO = { 'mise-en-place': 'layers', cadre: 'org', liste: 'list', alpha: 'list', matricules: 'key', nu: 'check' };
 
 function shell(inner, name) {
-  const sideItems = session ? [...NAV.slice(0, 5), ...SDOCS.map(r => ({ r, l: SEGLBL[r], i: SEGICO[r] })), { r: 'stats', l: 'Statistiques', i: 'chart' }, NAV[5]] : NAV;
+  const sideItems = session ? [...NAV.slice(0, 5), ...SDOCS.map(r => ({ r, l: SEGLBL[r], i: SEGICO[r] })), { r: 'completer', l: 'Compléter / gérer', i: 'users' }, { r: 'stats', l: 'Statistiques', i: 'chart' }, { r: 'aide', l: 'Aide', i: 'info' }, NAV[5]] : NAV;
   const side = sideItems.filter(n => !isRO() || !['nouveau', 'admin'].includes(n.r)).map(n => `<a href="#/${n.r}" ${n.r === name ? 'aria-current="page"' : ''}>${ico(n.i, 20)}<span>${n.l}</span></a>`).join('');
   const who = session
     ? `<div class="who"><span class="ava">${esc(session.username[0].toUpperCase())}</span><div><b>${esc(session.username)}</b><small>${ROLES[session.role] || session.role}</small></div><button class="ib" data-act="logout" aria-label="Se déconnecter">${ico('logout', 18)}</button></div>`
@@ -914,7 +922,7 @@ function shell(inner, name) {
     banners.push(`<div class="warn">${ico('alert', 20)}<span>Aucune sauvegarde téléchargée depuis plus de 14 jours. <a href="#/base-de-donnees">Sauvegarder la base de données</a></span></div>`);
   { const up = DB.ctl && DB.ctl.update; if (session && up && up.v && verGt(up.v, APP_VERSION)) banners.push(`<div class="warn">${ico('alert', 20)}<span>Nouvelle version <b>${esc(up.v)}</b> disponible${up.note ? ' : ' + esc(up.note) : ''}. ${up.u ? `<a href="${esc(up.u)}" target="_blank" rel="noopener">Télécharger</a>` : 'Contactez le propriétaire.'}</span></div>`); }
   if (isAdm() && name !== 'stats') { const R = retraites(), k = R.passe.length + R.an.length; if (k) banners.push(`<div class="warn">${ico('alert', 20)}<span><b>${k}</b> agent(s) ont atteint ou atteindront l’âge de la retraite cette année. <a href="#/stats">Voir la liste</a></span></div>`); }
-  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a><button class="ib" data-act="logout" aria-label="Se déconnecter" title="Se déconnecter" style="color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:10px;min-width:38px;min-height:38px;display:grid;place-items:center;background:transparent">${ico('logout', 20)}</button>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
+  return `<header class="top"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a>${Sync.chip()}${session ? `<a class="ava" href="#/compte" aria-label="Mon compte">${esc(session.username[0].toUpperCase())}</a><a class="ib" href="#/aide" aria-label="Aide" title="Aide" style="color:#fff;border:1px solid rgba(255,255,255,.35);display:grid;place-items:center;font-weight:700;text-decoration:none">?</a><button class="ib" data-act="logout" aria-label="Se déconnecter" title="Se déconnecter" style="color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:10px;min-width:38px;min-height:38px;display:grid;place-items:center;background:transparent">${ico('logout', 20)}</button>` : '<a class="btn sm" href="#/login" style="min-height:34px">Connexion</a>'}</header>
   <aside class="side"><a class="brand" href="#/accueil">${MARK}<span><b>DSFL</b><small>Gestion des agents</small></span></a><nav aria-label="Navigation principale">${side}</nav>${who}</aside>
   <main>${banners.join('')}${inner}</main>${bn}`;
 }
@@ -929,7 +937,7 @@ function lastAgents() {
 function homeLists() {
   const n = { alpha: DB.agents.length, matricules: DB.agents.filter(a => isMat(a.matricule)).length, nu: DB.agents.filter(a => !isMat(a.matricule)).length };
   const d = { alpha: 'Tous les agents, par grade puis par ordre alphabétique', matricules: 'Agents ayant un numéro matricule', nu: 'Agents sans matricule, contrôlés ou non' };
-  return `<div class="tiles sec2" style="margin-top:16px">${SDOCS.map(r => `<a class="tile" href="#/${r}"><span class="ic">${ico(SEGICO[r])}</span><div><b>${DOCTITLE[r]}</b><span>${n[r]} agent${n[r] > 1 ? 's' : ''} · ${d[r]}</span></div></a>`).join('')}</div>`;
+  return `<div class="tiles sec2" style="margin-top:16px">${SDOCS.map(r => `<a class="tile" href="#/${r}"><span class="ic">${ico(SEGICO[r])}</span><div><b>${DOCTITLE[r]}</b><span>${n[r]} agent${n[r] > 1 ? 's' : ''} · ${d[r]}</span></div></a>`).join('')}${isRO() ? '' : `<a class="tile" href="#/completer"><span class="ic">${ico('users')}</span><div><b>Compléter et gérer les agents</b><span>${DB.agents.filter(a => !isoOK(a.naissance) || !a.sexe).length} fiche(s) à compléter · actions en lot, doublons</span></div></a>`}</div>`;
 }
 function pAccueil() {
   return `<section class="hero"><span class="band"></span>
@@ -960,7 +968,7 @@ function pSync() {
 const canPlace = () => !!session && ['owner', 'admin', 'cd'].includes(session.role);
 const LICENSE_TEXT = "LICENCE LOGICIELLE PROPRIÉTAIRE — TOUS DROITS RÉSERVÉS\n=======================================================\n\nLogiciel : « Gestion des agents DSFL » (application web, application Windows et application Android)\nAuteur et titulaire des droits : Elia Kilu Honore\nCopyright © 2026 Elia Kilu Honore. Tous droits réservés.\n\n1. PROPRIÉTÉ\n   Le logiciel, son code source (HTML, JavaScript, CSS, scripts de construction et de configuration),\n   ses icônes, sa conception, ses textes et sa documentation sont la propriété exclusive de l'auteur.\n   Aucun droit de propriété n'est cédé par la remise d'une copie du logiciel.\n\n2. UTILISATION AUTORISÉE\n   L'utilisation du logiciel n'est permise qu'aux personnes ou organisations autorisées par l'auteur,\n   par écrit, et uniquement dans les limites de cette autorisation.\n\n3. INTERDICTIONS\n   Sans autorisation écrite préalable de l'auteur, il est interdit de :\n   a) copier, reproduire, publier ou distribuer le logiciel ou une partie de son code source ;\n   b) modifier le logiciel, en créer des œuvres dérivées ou l'intégrer à un autre produit ;\n   c) vendre, louer, prêter, sous-licencier ou mettre le logiciel à la disposition de tiers ;\n   d) décompiler, désassembler, désobfusquer ou tenter d'extraire ou de reconstituer le code source ;\n   e) supprimer ou modifier les mentions de droits d'auteur, les en-têtes et la présente licence ;\n   f) contourner les protections, les droits d'accès ou les mécanismes de verrouillage du logiciel.\n\n4. DONNÉES\n   Les données saisies dans le logiciel (agents, listes, pièces jointes) restent la propriété de\n   l'organisation qui les a saisies. La présente licence ne porte que sur le logiciel.\n\n5. ABSENCE DE GARANTIE\n   Le logiciel est fourni « tel quel », sans garantie d'aucune sorte. L'auteur ne peut être tenu\n   responsable des pertes de données ou des dommages résultant de l'utilisation du logiciel.\n   Il est recommandé de faire des sauvegardes régulières.\n\n6. SANCTIONS\n   Toute utilisation non autorisée peut donner lieu à des poursuites civiles et pénales\n   conformément à la législation applicable en République démocratique du Congo.";
 const isRO = () => !!session && session.role === 'lecteur';
-const RO_ACTS = new Set(['close', 'exp', 'fiche', 'lbxclose', 'lbxdl', 'docview', 'lockout', 'logout', 'more', 'moreall', 'print', 'pdf', 'pw', 'gate', 'login', 'ownerlogin', 'unlock', 'openfolder', 'licence']);
+const RO_ACTS = new Set(['close', 'exp', 'fiche', 'lbxclose', 'lbxdl', 'docview', 'lockout', 'logout', 'more', 'moreall', 'print', 'pdf', 'pw', 'gate', 'login', 'ownerlogin', 'unlock', 'openfolder', 'licence', 'tour', 'tournext', 'tourskip']);
 const RO_FORMS = new Set(['gate', 'login', 'ownerlogin', 'pw', 'unlock']);
 const isOwner = () => !!session && session.role === 'owner';
 const isAdm = () => !!session && ['owner', 'admin'].includes(session.role);
@@ -1099,7 +1107,7 @@ function pBaseDeDonnees() {
       <p class="sub" style="margin-top:4px">Les documents joints aux fiches restent sur cet appareil. Exportez-les ici pour les conserver ou les copier sur un autre appareil.</p></div></div>
     <div class="acts"><button class="btn primary" data-act="docsbackup">${ico('download', 18)}Exporter les pièces jointes (.json)</button>
       <label class="btn">${ico('upload', 18)}<input type="file" id="impDocs" accept=".json,application/json" hidden>Importer des pièces jointes</label></div>
-  </section>`;
+  </section>${trashSection()}`;
 }
 
 /* ---------- Agents ---------- */
@@ -1250,14 +1258,19 @@ function retraites() {
 function quality() {
   const grp = f => { const m = new Map(); DB.agents.forEach(a => { const k = f(a); if (k) (m.get(k) || m.set(k, []).get(k)).push(a); }); return [...m.values()].filter(v => v.length > 1).flat(); };
   return [
-    { t: 'Matricules en double', d: 'Plusieurs agents portent le même numéro matricule.', L: grp(a => isMat(a.matricule) ? norm(a.matricule) : '') },
-    { t: 'Noms en double', d: 'Même nom, postnom et prénom : doublon possible (ou homonymes).', L: grp(a => norm(a.nom + a.postnom + a.prenom)) },
+    { k: 'dupmat', t: 'Matricules en double', d: 'Plusieurs agents portent le même numéro matricule.', L: grp(a => isMat(a.matricule) ? norm(a.matricule) : '') },
+    { k: 'dup', t: 'Noms en double', d: 'Même nom, postnom et prénom : doublon possible (ou homonymes).', L: grp(a => norm(a.nom + a.postnom + a.prenom)) },
     { t: 'Matricule mal formé', d: 'Le matricule contient des lettres ou des caractères inattendus.', L: DB.agents.filter(a => isMat(a.matricule) && /[^\d.\s]/.test(a.matricule)) },
-    { t: 'Date de naissance manquante ou invalide', d: 'Nécessaire pour l’âge et la retraite.', L: DB.agents.filter(a => !isoOK(a.naissance) || age(a.naissance) == null) },
-    { t: 'Sexe non renseigné', d: '', L: DB.agents.filter(a => !a.sexe) },
+    { k: 'naissance', t: 'Date de naissance manquante ou invalide', d: 'Nécessaire pour l’âge et la retraite.', L: DB.agents.filter(a => !isoOK(a.naissance) || age(a.naissance) == null) },
+    { k: 'sexe', t: 'Sexe non renseigné', d: '', L: DB.agents.filter(a => !a.sexe) },
     { t: 'Grade non renseigné', d: '', L: DB.agents.filter(a => !canonGrade(a.grade)) },
-    { t: 'Sans division', d: 'Agents non placés dans la mise en place.', L: DB.agents.filter(a => !a.division) }
+    { k: 'division', t: 'Sans division', d: 'Agents non placés dans la mise en place.', L: DB.agents.filter(a => !a.division) }
   ];
+}
+const nm = a => `<span data-act="fiche" data-id="${a.id}" style="cursor:pointer;font-weight:700">${esc(fullName(a))}</span>`;
+function statTable(L, ret) {
+  const rows = L.slice(0, 500).map((x, i) => { const a = ret ? x.a : x; return `<tr><td class="c">${i + 1}</td><td class="l">${nm(a)}</td><td class="c">${esc(isMat(a.matricule) ? a.matricule : 'N.U')}</td><td class="c">${esc(gradeAbbr(a.grade))}</td>${ret ? `<td class="c">${esc(fmtDate(a.naissance))}</td><td class="c">${esc(fmtDate(x.d.toISOString().slice(0, 10)))}</td><td class="c">${age(a.naissance)} ans</td>` : `<td class="l">${esc(a.division || '—')}</td><td class="c">${isoOK(a.naissance) ? esc(fmtDate(a.naissance)) : '—'}</td>`}</tr>`; }).join('');
+  return `<div class="xlwrap" style="max-height:none"><table class="tbl xl wrap"><thead><tr><th>N°</th><th class="l">NOMS, POSTNOM ET PRÉNOM</th><th>MATR</th><th>GRADE</th>${ret ? '<th>NAISSANCE</th><th>DATE DE RETRAITE</th><th>ÂGE</th>' : '<th class="l">DIVISION</th><th>NAISSANCE</th>'}</tr></thead><tbody>${rows}</tbody></table></div>${L.length > 500 ? `<p class="muted">… et ${L.length - 500} autres.</p>` : ''}`;
 }
 function pStats() {
   const A = DB.agents, n = A.length, m = A.filter(a => a.sexe === 'M').length, f = A.filter(a => a.sexe === 'F').length;
@@ -1269,7 +1282,7 @@ function pStats() {
   tr.push(['Âge inconnu', A.filter(a => age(a.naissance) == null).length]);
   const gOrder = GRADES.map(g => g.l);
   const R = retraites(), Q = quality();
-  const rlist = (L, empty) => L.length ? `<div class="arows">${L.slice(0, 60).map(x => `${agentRow(x.a)}<div class="rdate">Retraite : ${esc(fmtDate(x.d.toISOString().slice(0, 10)))} · ${age(x.a.naissance)} ans</div>`).join('')}${L.length > 60 ? `<p class="muted">… et ${L.length - 60} autres (affinez avec la liste déclarative).</p>` : ''}</div>` : `<p class="muted" style="font-size:13px">${empty}</p>`;
+  const rlist = (L, empty) => L.length ? statTable(L, true) : `<p class="muted" style="font-size:13px">${empty}</p>`;
   return `<header class="ph"><div><h2>Statistiques</h2><p class="sub">Vue d’ensemble des agents, retraites à venir et qualité des données.</p></div></header>
   <div class="stats">${stat('users', '', n, 'agents enregistrés')}${stat('chart', 'g', m + ' H · ' + f + ' F', 'répartition par sexe')}${stat('shield', 'y', moy + (moy === '—' ? '' : ' ans'), 'âge moyen')}</div>
   ${prevu ? `<div class="stats" style="margin-top:10px">${stat('org', '', prevu, 'postes prévus (cadre organique)')}${stat('alert', 'y', vac, 'postes vacants')}${stat('alert', 'g', sur, 'agents en surnombre')}</div>` : ''}
@@ -1283,8 +1296,149 @@ function pStats() {
     <details ${R.an.length ? 'open' : ''}><summary><b>${R.an.length}</b> agent(s) l’atteignent d’ici la fin de ${new Date().getFullYear()}</summary>${rlist(R.an, 'Aucun départ prévu cette année.')}</details>
     <details><summary><b>${R.suiv.length}</b> agent(s) l’atteignent en ${new Date().getFullYear() + 1}</summary>${rlist(R.suiv, 'Aucun départ prévu l’an prochain.')}</details></section>
   <section class="card sec2"><h3>Contrôle qualité des données</h3><p class="sub" style="margin:6px 0 10px">Anomalies à corriger pour fiabiliser les listes officielles.</p>
-    ${Q.map(q => `<details><summary>${q.L.length ? `<span class="badge warn">${q.L.length}</span>` : '<span class="badge ok">0</span>'} ${esc(q.t)}</summary>${q.d ? `<p class="muted" style="font-size:13px;margin:4px 0">${esc(q.d)}</p>` : ''}${q.L.length ? `<div class="arows">${q.L.slice(0, 40).map(agentRow).join('')}${q.L.length > 40 ? `<p class="muted">… et ${q.L.length - 40} autres.</p>` : ''}</div>` : '<p class="muted" style="font-size:13px">Rien à signaler.</p>'}</details>`).join('')}</section>`;
+    ${Q.map(q => `<details><summary>${q.L.length ? `<span class="badge warn">${q.L.length}</span>` : '<span class="badge ok">0</span>'} ${esc(q.t)}</summary>${q.d ? `<p class="muted" style="font-size:13px;margin:4px 0">${esc(q.d)}</p>` : ''}${q.k && q.k !== 'dupmat' && q.L.length && !isRO() ? `<button class="btn sm primary" data-act="gocomp" data-m="${q.k}" style="margin:4px 0 8px">Corriger dans « Compléter et gérer »</button>` : ''}${q.L.length ? statTable(q.L, false) : '<p class="muted" style="font-size:13px">Rien à signaler.</p>'}</details>`).join('')}</section>`;
 }
+
+/* ================= Corbeille ================= */
+function toTrash(ids) {
+  const set = new Set(ids), now = Date.now(), rm = DB.agents.filter(a => set.has(a.id));
+  rm.forEach(a => DB.trash.push({ ...a, deletedAt: now, deletedBy: session ? session.username : '' }));
+  DB.agents = DB.agents.filter(a => !set.has(a.id));
+  if (DB.trash.length > 500) DB.trash.splice(0, DB.trash.length - 500);
+  return rm.length;
+}
+function purgeTrash() {
+  const lim = Date.now() - 30 * 864e5, old = DB.trash.filter(a => a.deletedAt < lim); if (!old.length) return;
+  Docs.del(old.flatMap(a => (a.docs || []).map(d => d.id))); DB.trash = DB.trash.filter(a => a.deletedAt >= lim); save();
+}
+function trashSection() {
+  purgeTrash(); const L = DB.trash.slice().sort((a, b) => b.deletedAt - a.deletedAt);
+  return `<section class="card sec2"><div class="db-box"><span class="ic">${ico('db', 22)}</span><div><h3>6. Corbeille (30 jours)</h3><p class="sub" style="margin-top:4px">Les fiches supprimées restent ici 30 jours et peuvent être restaurées.</p></div></div>
+    ${L.length ? L.slice(0, 50).map(a => `<div class="snap"><div><b>${esc(fullName(a))}</b><br><span class="muted" style="font-size:12.5px">Supprimé le ${esc(new Date(a.deletedAt).toLocaleDateString('fr-FR'))} par ${esc(a.deletedBy || '—')}</span></div><button class="btn sm" data-act="trashrestore" data-id="${a.id}">Restaurer</button></div>`).join('') + (L.length > 50 ? `<p class="muted">… et ${L.length - 50} autres.</p>` : '') : '<p class="muted">La corbeille est vide.</p>'}</section>`;
+}
+function logHisto(a, type, detail, date) { a.histo = a.histo || []; a.histo.push({ id: uid(), date: date || today(), type, detail, ref: '', auto: true, by: session ? session.username : '', ts: Date.now() }); }
+
+/* ================= Compléter et gérer ================= */
+const CSORT = { nom: a => norm(a.nom + ' ' + a.postnom + ' ' + a.prenom), matricule: a => isMat(a.matricule) ? String(a.matricule).replace(/\D/g, '').padStart(9, '0') : '~', grade: a => String(gradeRank(a.grade)).padStart(5, '0'), naissance: a => isoOK(a.naissance) ? a.naissance : '~', sexe: a => a.sexe || '~', division: a => a.division || '~', situation: a => a.situation || '~' };
+const nameKey = a => norm(a.nom + a.postnom + a.prenom);
+function completerList() {
+  const q = norm(ui.cq || ''), miss = ui.cmiss || '';
+  let dup = null;
+  if (miss === 'dup') { const c = new Map(); DB.agents.forEach(a => { const k = nameKey(a); c.set(k, (c.get(k) || 0) + 1); }); dup = new Set([...c].filter(([, n]) => n > 1).map(([k]) => k)); }
+  const L = DB.agents.filter(a => (!q || norm([a.nom, a.postnom, a.prenom, a.matricule, a.fonction].join(' ')).includes(q))
+    && (!ui.cdiv || (ui.cdiv === '-' ? !a.division : a.division === ui.cdiv)) && (!ui.csit || (ui.csit === '-' ? !a.situation : a.situation === ui.csit)) && (!ui.cgrade || canonGrade(a.grade) === ui.cgrade)
+    && (!miss || (miss === 'naissance' ? !isoOK(a.naissance) : miss === 'sexe' ? !a.sexe : miss === 'division' ? !a.division : miss === 'any' ? (!isoOK(a.naissance) || !a.sexe) : dup.has(nameKey(a)))));
+  const sk = ui.csort ? ui.csort.k : (miss === 'dup' ? 'nom' : 'grade'), d = ui.csort ? ui.csort.d : 1, f = CSORT[sk];
+  const K = L.map(a => [f(a), CSORT.nom(a), a]);
+  K.sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0) * d || (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : 0));
+  return K.map(k => k[2]);
+}
+function pCompleter() {
+  ui.sel = ui.sel || new Set(); ui.cmax = ui.cmax || 50;
+  const sel = (id, opts) => `<select data-cq="${id}" aria-label="${id}">${opts}</select>`;
+  const o = (v, l, cur) => `<option value="${esc(v)}" ${v === (cur || '') ? 'selected' : ''}>${esc(l)}</option>`;
+  const divs = (DB.org.divisions || []).map(d => o(d.name, d.name, ui.cdiv)).join('');
+  return `<header class="ph"><div><h2>Compléter et gérer les agents</h2><p class="sub">Saisissez rapidement les informations manquantes, triez, filtrez et appliquez une action à plusieurs agents à la fois.</p></div></header>
+  <div id="cmeter"></div>
+  <div class="tools"><input data-cq="cq" type="search" class="wide" placeholder="Rechercher un agent…" value="${esc(ui.cq || '')}" aria-label="Rechercher">
+    ${sel('cmiss', o('', 'Tous les agents', ui.cmiss) + o('any', 'Naissance ou sexe manquant', ui.cmiss) + o('naissance', 'Sans date de naissance', ui.cmiss) + o('sexe', 'Sans sexe', ui.cmiss) + o('division', 'Sans division', ui.cmiss) + o('dup', 'Doublons de nom', ui.cmiss))}
+    ${sel('cdiv', o('', 'Toutes les divisions', ui.cdiv) + o('-', 'Sans division', ui.cdiv) + divs)}
+    ${sel('cgrade', o('', 'Tous les grades', ui.cgrade) + GRADES.map(g => o(g.l, g.a || g.l, ui.cgrade)).join(''))}
+    ${sel('csit', o('', 'Toutes les situations', ui.csit) + SITU.map(x => o(x, x, ui.csit)).join(''))}</div>
+  <div id="cbox"></div><div id="cbar"></div>`;
+}
+function renderCmeter() {
+  const m = $('#cmeter'); if (!m) return; const n = DB.agents.length || 1, c = f => DB.agents.filter(f).length;
+  const row = (l, v) => `<div class="br"><span>${l}</span><div class="bt"><i style="width:${Math.max(2, v / n * 100)}%"></i></div><b>${v}/${DB.agents.length}</b></div>`;
+  m.innerHTML = `<section class="card sec2" style="margin-top:0"><h3 style="font-size:15px">Fiches complétées</h3><div class="bars">${row('Date de naissance', c(a => isoOK(a.naissance)))}${row('Sexe', c(a => a.sexe))}${row('Division', c(a => a.division))}</div></section>`;
+}
+function renderCompleter() {
+  const box = $('#cbox'); if (!box) return; ui.sel = ui.sel || new Set(); ui.cmax = ui.cmax || 50;
+  renderCmeter();
+  const L = completerList(), shown = L.slice(0, ui.cmax), place = canPlace();
+  const th = (k, l) => `<th class="sortable" data-act="csort" data-k="${k}">${l}${ui.csort && ui.csort.k === k ? (ui.csort.d > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+  const allOn = shown.length && shown.every(a => ui.sel.has(a.id));
+  const rows = shown.map(a => `<tr${ui.sel.has(a.id) ? ' class="sel"' : ''}><td class="c"><input type="checkbox" data-sel="${a.id}" ${ui.sel.has(a.id) ? 'checked' : ''} aria-label="Sélectionner ${esc(fullName(a))}"></td>
+    <td class="l"><span data-act="fiche" data-id="${a.id}" style="cursor:pointer;font-weight:700">${esc(fullName(a))}</span></td><td class="c">${esc(isMat(a.matricule) ? a.matricule : 'N.U')}</td><td class="c">${esc(gradeAbbr(a.grade))}</td>
+    <td class="c${isoOK(a.naissance) ? '' : ' miss'}"><input type="date" data-ce="naissance" data-id="${a.id}" value="${isoOK(a.naissance) ? esc(a.naissance) : ''}" aria-label="Date de naissance"></td>
+    <td class="c${a.sexe ? '' : ' miss'}"><select data-ce="sexe" data-id="${a.id}" aria-label="Sexe"><option value=""></option><option value="M" ${a.sexe === 'M' ? 'selected' : ''}>M</option><option value="F" ${a.sexe === 'F' ? 'selected' : ''}>F</option></select></td>
+    <td class="l${a.division ? '' : ' miss'}">${place ? `<select data-ce="division" data-id="${a.id}" aria-label="Division">${divOptions(a.direction, a.division)}</select>` : esc(a.division || '—')}</td><td class="c">${esc(a.situation || '—')}</td></tr>`).join('');
+  box.innerHTML = `<p class="sub" style="margin:8px 0">${L.length} agent${L.length > 1 ? 's' : ''}${L.length !== DB.agents.length ? ' sur ' + DB.agents.length : ''} · cliquez sur un en-tête pour trier</p>
+    ${L.length ? `<div class="tw"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" data-selall ${allOn ? 'checked' : ''} aria-label="Tout sélectionner"></th>${th('nom', 'NOM')}${th('matricule', 'MATR')}${th('grade', 'GRADE')}${th('naissance', 'NAISSANCE')}${th('sexe', 'SEXE')}${th('division', 'DIVISION')}${th('situation', 'SITUATION')}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${L.length > ui.cmax ? `<div class="acts" style="justify-content:center;margin:14px 0"><button class="btn" data-act="cmore">Afficher 50 de plus</button><button class="btn" data-act="cmoreall">Tout afficher</button></div>` : ''}` : '<div class="empty">Aucun agent ne correspond à ces filtres.</div>'}`;
+  renderCbar();
+}
+function renderCbar() {
+  const bar = $('#cbar'); if (!bar) return; const n = ui.sel.size, b = ui.b = ui.b || {};
+  if (!n) { bar.innerHTML = ''; return; }
+  const place = canPlace(), tot = completerList().length;
+  bar.innerHTML = `<div class="cbar"><div class="cgrp"><b>${n} sélectionné${n > 1 ? 's' : ''}</b>${n < tot ? `<button class="btn sm" data-act="cselall">Sélectionner les ${tot} résultats</button>` : ''}<button class="btn sm" data-act="cselnone">Désélectionner</button></div>
+    ${place ? `<div class="cgrp"><select data-cb="div" aria-label="Division">${divOptions('', b.div)}</select><select data-cb="bur" aria-label="Bureau">${bureauOptions(b.div, b.bur)}</select><button class="btn sm primary" data-act="bulkplace">Placer</button></div>` : ''}
+    <div class="cgrp"><select data-cb="sit" aria-label="Situation"><option value="">Situation…</option>${SITU.map(x => `<option ${b.sit === x ? 'selected' : ''}>${x}</option>`).join('')}</select><input type="date" data-cb="sitd" value="${esc(b.sitd || '')}" aria-label="Date d’effet"><button class="btn sm primary" data-act="bulksit">Appliquer</button></div>
+    ${place ? `<div class="cgrp"><select data-cb="grade" aria-label="Grade"><option value="">Grade…</option>${GRADES.map(g => `<option ${b.grade === g.l ? 'selected' : ''}>${esc(g.l)}</option>`).join('')}</select><button class="btn sm primary" data-act="bulkgrade">Appliquer</button></div>` : ''}
+    <div class="cgrp">${place && n > 1 ? '<button class="btn sm" data-act="bulkmerge">Fusionner</button>' : ''}<button class="btn sm danger" data-act="bulkdel">Supprimer</button></div></div>`;
+}
+document.addEventListener('change', e => {
+  const t = e.target, d = t.dataset; if (!d || isRO()) return;
+  if (d.cq) { ui[d.cq] = t.value; ui.cmax = 50; renderCompleter(); return; }
+  if (d.cb) { (ui.b = ui.b || {})[d.cb] = t.value; if (d.cb === 'div') { ui.b.bur = ''; renderCbar(); } return; }
+  if (d.sel) { if (t.checked) ui.sel.add(d.sel); else ui.sel.delete(d.sel); renderCbar(); return; }
+  if (t.hasAttribute('data-selall')) { const L = completerList().slice(0, ui.cmax); L.forEach(a => t.checked ? ui.sel.add(a.id) : ui.sel.delete(a.id)); renderCompleter(); return; }
+  if (d.ce) {
+    const a = DB.agents.find(x => x.id === d.id); if (!a) return; const v = t.value, k = d.ce;
+    if (k === 'division') { if (!canPlace()) return; if ((a.division || '') !== v) { logHisto(a, 'Mutation', `Division : ${a.division || '—'} → ${v || '—'}`); a.division = v; const dv = (DB.org.divisions || []).find(x => x.name === v); if (!dv || !dv.bureaux.some(b => b.name === a.bureau)) a.bureau = ''; } }
+    else if (k === 'naissance') { a.naissance = v; const g = age(v); if (v && (g == null || g < 16 || g > 90)) toast(`Âge inhabituel : ${g} ans — vérifiez la date`, true); }
+    else a[k] = v;
+    a.updated = Date.now(); save(); const td = t.closest('td'); if (td) td.classList.toggle('miss', !v); renderCmeter();
+  }
+});
+document.addEventListener('input', e => { const t = e.target; if (t.dataset && t.dataset.cq === 'cq') { ui.cq = t.value; ui.cmax = 50; clearTimeout(ui._ct); ui._ct = setTimeout(renderCompleter, 160); } });
+
+/* ================= Aide intégrée et tutoriel ================= */
+const HELP = [
+  ['Démarrer', `<p>Sur un nouvel appareil, le propriétaire ouvre d’abord l’application avec son mot de passe. Chaque utilisateur se connecte ensuite avec son identifiant et son mot de passe (Adm1, Adm2, Adm3 ou compte Lecteur). À la première connexion, il choisit son propre mot de passe.</p><p>Une fois connecté, vous restez connecté, même si vous fermez l’application. Le bouton de déconnexion se trouve en haut à droite (ou en bas du menu sur ordinateur).</p>`],
+  ['Se déplacer dans l’application', `<p><b>Sur téléphone</b> : la barre du bas donne accès à Accueil, Formulaire, Liste déclarative, Mise en place, Cadre organique et Administration. Les autres listes (Ordre alphabétique, Matriculés, N.U contrôlés) se trouvent dans la barre d’onglets en haut des pages de documents, qui défile sur le côté.</p><p><b>Sur ordinateur</b> : tout est dans le menu de gauche. Le « ? » en haut ouvre cette aide.</p>`],
+  ['Enregistrer un agent', `<p>Ouvrez <b>Formulaire</b>, remplissez les rubriques (nom, postnom, prénom, sexe, date de naissance, grade, matricule…) puis enregistrez. Pour un agent sans matricule, laissez « N.U ». Une photo peut être ajoutée. L’agent apparaît tout de suite dans les listes, marqué « NOUVEAU ».</p><p>Pour modifier : ouvrez la fiche (touchez le nom dans une liste) puis « Modifier ».</p>`],
+  ['Importer des fichiers Excel, Word ou CSV', `<p>Dans <b>Administration → Importer un fichier</b> (ou le bouton « Importer » d’une liste), choisissez le type de document : liste déclarative, ordre alphabétique, matriculés, N.U contrôlés, mise en place ou cadre organique. Vérifiez l’aperçu et les colonnes reconnues, puis validez.</p><ul><li>Formats lus : <b>.xlsx</b>, <b>.docx</b>, .csv. Les anciens <b>.xls</b> et <b>.doc</b> doivent d’abord être ouverts dans Excel ou Word puis enregistrés en .xlsx / .docx.</li><li>Un agent déjà présent est <b>mis à jour</b> (pas de doublon), y compris quand un fichier apporte un matricule ou une date de naissance qui manquait.</li><li>Pour compléter la base : importez un fichier qui contient le nom et les colonnes « Date de naissance » et « Sexe ».</li><li>Une copie automatique est faite avant chaque import.</li></ul>`],
+  ['Les listes et la mise en place', `<p>Chaque liste est un tableau comme dans Excel, avec l’en-tête officiel. Vous pouvez la chercher, la filtrer, l’<b>exporter en Excel</b>, l’<b>imprimer</b> ou (sur ordinateur) l’<b>enregistrer en PDF</b> avec la date, la signature et les numéros de page.</p><p>Adm1 et Adm2 peuvent « Modifier le tableau » : renommer les en-têtes, ajouter ou supprimer des colonnes, et supprimer le fichier importé. La <b>Mise en place</b> classe les agents par division et bureau ; le <b>Cadre organique</b> compare les postes prévus et les agents en place.</p>`],
+  ['Compléter et gérer plusieurs agents à la fois', `<p>La page <b>Compléter et gérer</b> sert à :</p><ul><li><b>saisir vite</b> les dates de naissance, le sexe et la division directement dans le tableau (les cases jaunes sont les informations manquantes) ;</li><li><b>filtrer</b> par division, grade, situation ou information manquante, et <b>trier</b> en touchant un en-tête de colonne ;</li><li><b>cocher plusieurs agents</b> puis les placer dans une division/bureau, changer leur situation (congé, mission…) ou leur grade, ou les supprimer ;</li><li><b>fusionner les doublons</b> : filtrez « Doublons de nom », cochez les fiches de la même personne, puis « Fusionner ». La fiche la plus complète est gardée et reçoit les informations des autres.</li></ul><p>Le placement et le changement de grade sont réservés à Adm1, Adm2 et au propriétaire. Chaque changement est inscrit dans l’historique de carrière de l’agent.</p>`],
+  ['La fiche d’un agent', `<p>La fiche montre toutes les informations, l’<b>historique de carrière</b> (rempli automatiquement quand le grade, la fonction, la division ou la situation changent, et complété à la main : promotion, mutation, sanction, formation…) et les <b>pièces jointes</b> (photo ou PDF jusqu’à 4 Mo : arrêté, acte de naissance, diplôme…). Les pièces jointes restent sur l’appareil : exportez-les depuis « Base de données » pour les conserver.</p>`],
+  ['Statistiques, retraites et contrôle qualité', `<p>La page <b>Statistiques</b> montre l’effectif par grade, division, âge et situation, les postes vacants, la liste des agents qui atteignent l’âge de la retraite (réglable, 65 ans par défaut) et un <b>contrôle qualité</b> : doublons, matricules mal formés, informations manquantes. Un bouton mène directement à la correction.</p>`],
+  ['Sauvegardes et corbeille', `<p>Dans <b>Administration → Base de données</b> :</p><ul><li><b>Copies automatiques</b> : une par jour (7 jours) et avant chaque import ou suppression. Le propriétaire peut en restaurer une.</li><li><b>Archive</b> : téléchargez régulièrement un fichier de sauvegarde et gardez-le ailleurs que sur l’appareil (clé USB, e-mail). Un rappel s’affiche après 14 jours.</li><li><b>Corbeille</b> : une fiche supprimée reste 30 jours et peut être restaurée.</li></ul>`],
+  ['Synchronisation entre appareils', `<p>Quand elle est activée par le propriétaire, les modifications se partagent automatiquement entre téléphones et ordinateurs dès qu’il y a de la connexion. Sans connexion, tout fonctionne et la mise à jour se fait plus tard. Si une même fiche est modifiée en même temps sur deux appareils, la version de l’appareil est gardée et un avertissement apparaît dans Administration, où vous pouvez prendre l’autre version.</p>`],
+  ['Sécurité', `<p>Chaque utilisateur gère son mot de passe (Administration → Mon mot de passe). Après 10 essais ratés, l’accès est bloqué 2 minutes. L’application se <b>verrouille</b> après un temps d’inactivité (réglable ; 15 minutes par défaut) : retapez votre mot de passe pour continuer. Ne communiquez jamais votre mot de passe.</p>`],
+  ['Rôles et droits', `<div class="tw"><table class="tbl"><thead><tr><th>Rôle</th><th>Peut faire</th></tr></thead><tbody>
+    <tr><td class="l"><b>Propriétaire</b></td><td class="l">Tout : comptes, mots de passe, blocage, journal, synchronisation, restauration, annonce de version.</td></tr>
+    <tr><td class="l"><b>Adm1 — Directeur</b></td><td class="l">Gérer les agents, placer, modifier les tableaux, importer, supprimer, sauvegarder.</td></tr>
+    <tr><td class="l"><b>Adm2 — Chef de division</b></td><td class="l">Comme Adm1 pour les agents, le placement, les tableaux et les fichiers importés.</td></tr>
+    <tr><td class="l"><b>Adm3 — Secrétaire / Chef de bureau</b></td><td class="l">Enregistrer, modifier, importer et supprimer des agents ; ne place pas dans une division ou un bureau.</td></tr>
+    <tr><td class="l"><b>Lecteur</b></td><td class="l">Consulter les listes, fiches, statistiques et exporter ; aucune modification.</td></tr></tbody></table></div>`],
+  ['Problèmes fréquents', `<ul><li><b>Mot de passe oublié</b> : demandez au propriétaire de le réinitialiser.</li><li><b>Un fichier .xls ou .doc est refusé</b> : enregistrez-le en .xlsx / .docx depuis Excel ou Word.</li><li><b>Je ne vois pas les modifications d’un collègue</b> : vérifiez que la synchronisation est active et que l’appareil est en ligne.</li><li><b>L’écran est verrouillé</b> : retapez votre mot de passe.</li><li><b>J’ai supprimé une fiche par erreur</b> : Base de données → Corbeille → Restaurer.</li><li><b>Tout a disparu après un import</b> : Base de données → Copies automatiques → « Avant import ».</li></ul>`]
+];
+function pAide() {
+  return `<header class="ph"><div><h2>Aide et guide d’utilisation</h2><p class="sub">Version ${APP_VERSION} · <a href="#" data-act="tour">Revoir le tutoriel</a> · <a href="#" data-act="licence">Licence</a></p></div></header>
+  <div class="tools"><input id="hq" type="search" class="wide" placeholder="Rechercher dans l’aide…" aria-label="Rechercher dans l’aide"></div>
+  <div id="helpbody">${HELP.map(([t, h], i) => `<details class="card sec2 hl" ${i === 0 ? 'open' : ''}><summary><b>${esc(t)}</b></summary><div class="hb">${h}</div></details>`).join('')}</div>`;
+}
+document.addEventListener('input', e => { if (e.target.id !== 'hq') return; const q = norm(e.target.value); $$('#helpbody .hl').forEach(d => { const ok = !q || norm(d.textContent).includes(q); d.style.display = ok ? '' : 'none'; if (q && ok) d.open = true; }); });
+const TOUR = [
+  ['Bienvenue', 'Cette application sert à gérer les agents de la Direction de Suivi des Finances Locales. Elle fonctionne sans connexion : vos données restent sur l’appareil et se partagent entre appareils quand la synchronisation est activée.'],
+  ['Se déplacer', 'Sur téléphone, utilisez la barre du bas ; les autres listes sont dans les onglets en haut des pages de documents. Sur ordinateur, tout est dans le menu de gauche. Le « ? » en haut ouvre l’aide.'],
+  ['Enregistrer ou importer', 'Le Formulaire enregistre un agent. Pour aller plus vite, importez vos fichiers Excel ou Word depuis Administration → Importer un fichier : les agents déjà présents sont mis à jour, sans doublon.'],
+  ['Compléter et gérer', 'La page « Compléter et gérer » permet de saisir rapidement les dates de naissance et le sexe, de filtrer, de trier, de placer plusieurs agents d’un coup et de fusionner les doublons.'],
+  ['Protéger vos données', 'Téléchargez régulièrement une archive (Administration → Base de données). L’application garde aussi des copies automatiques et une corbeille de 30 jours. Elle se verrouille seule après un temps d’inactivité.']
+];
+const Tour = {
+  i: 0,
+  key() { return 'dfl_tour_' + (session ? session.username : ''); },
+  maybe() { if (!session) return; try { if (localStorage.getItem(this.key())) return; localStorage.setItem(this.key(), '1'); } catch (e) { return; } setTimeout(() => this.show(0), 600); },
+  show(i) {
+    this.i = i; const [t, x] = TOUR[i], last = i === TOUR.length - 1;
+    openModal(`<div class="tour"><small class="muted">Tutoriel · ${i + 1} / ${TOUR.length}</small><h3 style="margin:6px 0 8px">${esc(t)}</h3><p>${esc(x)}${isRO() && i === 0 ? ' Votre compte est en consultation seule.' : ''}</p>
+      <div class="dots">${TOUR.map((_, k) => `<span class="${k === i ? 'on' : ''}"></span>`).join('')}</div>
+      <div class="acts" style="justify-content:flex-end"><button class="btn" data-act="tourskip">${last ? 'Fermer' : 'Passer'}</button>${last ? '' : '<button class="btn primary" data-act="tournext">Suivant</button>'}</div></div>`);
+  }
+};
 
 /* ---------- Formulaire ---------- */
 function divOptions(dir, sel) {
@@ -1782,7 +1936,9 @@ function pAdmin() {
   const head = `<header class="ph"><div><h2>Administration</h2><p class="sub">${ROLES[session.role] || session.role} · version ${APP_VERSION} · <a href="#" data-act="licence">Licence</a></p></div></header>`;
   const tiles = `<div class="tiles">
     ${it('importer', 'Importer un fichier', 'upload', 'Excel, Word ou PDF : agents et cadre organique')}
+    ${it('completer', 'Compléter et gérer', 'users', 'Saisie rapide, filtres, actions en lot, doublons')}
     ${it('stats', 'Statistiques', 'chart', 'Effectifs, retraites à venir, contrôle qualité')}
+    ${it('aide', 'Aide et guide', 'info', 'Mode d’emploi, rôles et droits, problèmes fréquents')}
     ${it('base-de-donnees', 'Base de données', 'db', 'Sauvegarde, copie Cloud et archive')}
     ${it('compte', 'Mon mot de passe', 'key', 'Modifier mon accès')}
     ${it('sync', 'Synchronisation', 'db', 'État de la synchronisation entre appareils')}
@@ -1807,14 +1963,14 @@ function route() {
   }
   if (PROTECTED.includes(name) && !session) { nextRoute = h; location.hash = '#/login'; return; }
   if (session && session.mustChange && name !== 'compte') { location.replace('#/compte'); return; }
-  if (isRO() && ['nouveau', 'importer', 'base-de-donnees', 'admin', 'proprietaire', 'sync'].includes(name)) { location.replace('#/accueil'); return; }
+  if (isRO() && ['completer', 'nouveau', 'importer', 'base-de-donnees', 'admin', 'proprietaire', 'sync'].includes(name)) { location.replace('#/accueil'); return; }
   document.body.classList.toggle('ro', isRO());
   if (name === 'importer' && session && !canPlace() && !['agents', 'alpha', 'matricules', 'nu'].includes(arg) && arg) { location.hash = '#/importer/agents'; return; }
   if (name === 'login' && session) { location.replace('#/accueil'); return; }
   closeModal(false, true);
-  const pages = { stats: pStats, accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, activer: pActivate, 'base-de-donnees': pBaseDeDonnees };
+  const pages = { completer: pCompleter, aide: pAide, stats: pStats, accueil: pAccueil, login: pLogin, compte: pCompte, nouveau: () => pForm(arg), importer: () => pImport(arg), admin: pAdmin, sync: pSync, proprietaire: pProprio, activer: pActivate, 'base-de-donnees': pBaseDeDonnees };
   DOCS.forEach(d => pages[d] = () => pDoc(d));
-  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ stats: 'stats', importer: 'admin', 'base-de-donnees': 'admin', proprietaire: 'admin', sync: 'admin' }[name] || name) : 'accueil');
+  $('#app').innerHTML = shell((pages[name] || pAccueil)(), pages[name] ? ({ completer: 'completer', aide: 'aide', stats: 'stats', importer: 'admin', 'base-de-donnees': 'admin', proprietaire: 'admin', sync: 'admin' }[name] || name) : 'accueil');
   window.scrollTo(0, 0);
   if (DOCS.includes(name)) {
     fillTDiv(); if (ui.nextSort && $('#tSort')) { $('#tSort').value = ui.nextSort; ui.nextSort = ''; } ui.max = 100; ui.edit = false; $('#doc').addEventListener('change', onDocEdit); let tm = null; const rd = () => renderDoc(name);
@@ -1830,6 +1986,9 @@ function route() {
     $('#phIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { formPhoto = await resizeImg(f); $('#phPrev').innerHTML = `<img src="${formPhoto}" alt="">`; } catch (err) { toast('Image illisible. Essayez une autre photo.', true); } });
   }
   if (name === 'importer') imp = { tables: [], src: SDOCS.includes(arg) ? arg : '', mode: arg === 'cadre' ? 'cadre' : arg === 'mise' ? 'mise' : 'agents', dir: DB.directions[0].name, sheetAsDiv: false };
+  if (name === 'completer') renderCompleter();
+  if (name === 'aide') { }
+  if (session && name === 'accueil') Tour.maybe();
   if (name === 'base-de-donnees') fillSnaps();
   if (name === 'base-de-donnees') Store.where().then(w => { const e = $('#whereDb'); if (e) e.textContent = w; });
   if (afterRoute) { const f = afterRoute; afterRoute = null; f(); }
@@ -1905,6 +2064,49 @@ const A = {
   confremote: t => { if (!canPlace()) return; const c = (DB.meta.conflicts || []).find(x => x.id === t.dataset.id); if (!c) return; const i = DB.agents.findIndex(a => a.id === c.id); const d = { ...c.remote, updated: Date.now() }; if (i >= 0) DB.agents[i] = d; else DB.agents.push(d); DB.meta.conflicts = DB.meta.conflicts.filter(x => x.id !== c.id); audit('Conflit résolu', fullName(d) + ' : version de l’autre appareil appliquée'); toast('Version de l’autre appareil appliquée'); route(); },
   print: () => { if ($('.mb')) document.body.classList.add('printing'); window.print(); },
   rmphoto: () => { formPhoto = ''; $('#phPrev').textContent = '+'; $('#phIn').value = ''; },
+  csort: t => { const k = t.dataset.k; ui.csort = ui.csort && ui.csort.k === k ? { k, d: -ui.csort.d } : { k, d: 1 }; renderCompleter(); },
+  cmore: () => { ui.cmax += 50; renderCompleter(); },
+  cmoreall: () => { ui.cmax = 1e9; renderCompleter(); },
+  cselall: () => { completerList().forEach(a => ui.sel.add(a.id)); renderCompleter(); },
+  cselnone: () => { ui.sel.clear(); renderCompleter(); },
+  gocomp: t => { ui.cmiss = t.dataset.m || ''; ui.cmax = 50; ui.sel = new Set(); ui.cq = ''; ui.cdiv = ''; ui.csit = ''; ui.cgrade = ''; ui.csort = null; location.hash = '#/completer'; },
+  bulkplace: () => {
+    if (!canPlace()) return; const b = ui.b || {}; if (!b.div) return toast('Choisissez une division', true);
+    const n0 = ui.sel.size; if (!confirm(`Placer ${n0} agent(s) dans « ${b.div} »${b.bur ? ' / ' + b.bur : ''} ?`)) return;
+    Snap.put('Avant placement en lot'); let n = 0, now = Date.now();
+    DB.agents.forEach(a => { if (!ui.sel.has(a.id)) return; if (a.division !== b.div || (a.bureau || '') !== (b.bur || '')) logHisto(a, 'Mutation', `Affectation : ${a.division || '—'}${a.bureau ? ' / ' + a.bureau : ''} → ${b.div}${b.bur ? ' / ' + b.bur : ''}`); a.division = b.div; a.bureau = b.bur || ''; a.updated = now; n++; });
+    save(); audit('Placement en lot', n + ' agent(s) → ' + b.div); toast(n + ' agent(s) placé(s)'); renderCompleter();
+  },
+  bulksit: () => {
+    const b = ui.b || {}; if (!b.sit) return toast('Choisissez une situation', true);
+    if (!confirm(`Appliquer « ${b.sit} » à ${ui.sel.size} agent(s) ?`)) return; Snap.put('Avant changement de situation en lot'); let n = 0, now = Date.now();
+    DB.agents.forEach(a => { if (!ui.sel.has(a.id)) return; if (a.situation !== b.sit) logHisto(a, 'Situation', `Situation : ${a.situation || '—'} → ${b.sit}`, b.sitd || today()); a.situation = b.sit; if (b.sitd) a.sit_debut = b.sitd; a.updated = now; n++; });
+    save(); audit('Situation en lot', n + ' agent(s) → ' + b.sit); toast(n + ' agent(s) mis à jour'); renderCompleter();
+  },
+  bulkgrade: () => {
+    if (!canPlace()) return; const b = ui.b || {}; if (!b.grade) return toast('Choisissez un grade', true);
+    if (!confirm(`Attribuer le grade « ${b.grade} » à ${ui.sel.size} agent(s) ?`)) return; Snap.put('Avant changement de grade en lot'); let n = 0, now = Date.now();
+    DB.agents.forEach(a => { if (!ui.sel.has(a.id)) return; if (canonGrade(a.grade) !== b.grade) logHisto(a, 'Promotion', `Grade : ${canonGrade(a.grade) || '—'} → ${b.grade}`); a.grade = b.grade; a.updated = now; n++; });
+    save(); audit('Grade en lot', n + ' agent(s) → ' + b.grade); toast(n + ' agent(s) mis à jour'); renderCompleter();
+  },
+  bulkdel: () => {
+    const n = ui.sel.size; if (!n || !confirm(`Supprimer ${n} agent(s) ? Ils iront dans la corbeille et pourront être restaurés pendant 30 jours.`)) return;
+    const c = toTrash([...ui.sel]); ui.sel.clear(); audit('Suppression en lot', c + ' agent(s) → corbeille'); toast(c + ' agent(s) mis à la corbeille'); renderCompleter();
+  },
+  bulkmerge: () => {
+    if (!canPlace()) return; const L = DB.agents.filter(a => ui.sel.has(a.id)); if (L.length < 2) return toast('Cochez au moins 2 fiches', true);
+    const keys = ['naissance', 'sexe', 'grade', 'fonction', 'division', 'bureau', 'diplome', 'etat_civil', 'photo', 'engagement', 'acte', 'observation'];
+    const score = a => keys.filter(k => a[k]).length * 2 + (isMat(a.matricule) ? 6 : 0) + (a.docs || []).length + (a.histo || []).length * 0.1 + (a.updated || 0) / 1e14;
+    const M = L.slice().sort((x, y) => score(y) - score(x))[0], rest = L.filter(a => a !== M);
+    if (!confirm(`Fusionner ${L.length} fiches en une seule ?\n\nFiche conservée : ${fullName(M)} (${isMat(M.matricule) ? M.matricule : 'N.U'}).\nLes ${rest.length} autre(s) fiche(s) iront dans la corbeille ; leurs informations manquantes et leur historique seront ajoutés à la fiche conservée.`)) return;
+    Snap.put('Avant fusion de fiches');
+    rest.forEach(o => { Object.keys(o).forEach(k => { if (['id', 'created', 'updated', 'histo', 'docs', 'x'].includes(k)) return; if (!M[k] && o[k]) M[k] = o[k]; }); M.histo = [...(M.histo || []), ...(o.histo || [])]; M.docs = [...(M.docs || []), ...(o.docs || [])]; if (o.x) M.x = { ...o.x, ...(M.x || {}) }; logHisto(M, 'Autre', `Fusion avec une fiche en double (${fullName(o)}${isMat(o.matricule) ? ', matricule ' + o.matricule : ''})`); });
+    M.updated = Date.now(); toTrash(rest.map(a => a.id)); ui.sel.clear(); audit('Fiches fusionnées', fullName(M) + ' (' + L.length + ' → 1)'); toast('Fiches fusionnées'); renderCompleter();
+  },
+  trashrestore: t => { const i = DB.trash.findIndex(a => a.id === t.dataset.id); if (i < 0) return; const a = { ...DB.trash[i] }; delete a.deletedAt; delete a.deletedBy; a.updated = Date.now(); if (!DB.agents.some(x => x.id === a.id)) DB.agents.push(a); DB.trash.splice(i, 1); audit('Fiche restaurée', fullName(a)); toast('Fiche restaurée'); route(); },
+  tour: (t, e) => { if (e) e.preventDefault(); Tour.show(0); },
+  tournext: () => Tour.show(Math.min(TOUR.length - 1, Tour.i + 1)),
+  tourskip: () => closeModal(),
   snaprestore: async t => { if (!isOwner()) return; const r = await Snap.get(t.dataset.id); if (!r) return toast('Copie introuvable', true); if (!confirm(`Remplacer les données actuelles par la copie du ${new Date(r.ts).toLocaleString('fr-FR')} (${r.count} agents) ? Une copie des données actuelles sera d’abord faite.`)) return; await restoreDB(JSON.parse(r.data), 'copie du ' + new Date(r.ts).toLocaleString('fr-FR')); },
   snapdl: async t => { const r = await Snap.get(t.dataset.id); if (!r) return; await saveFile(`copie_DFL_${new Date(r.ts).toISOString().slice(0, 10)}.json`, r.data, 'application/json'); toast('Copie enregistrée'); },
   histodel: t => { if (!canPlace()) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (!a || !confirm('Supprimer cet événement de l’historique ?')) return; a.histo = (a.histo || []).filter(h => h.id !== t.dataset.h); a.updated = Date.now(); save(); audit('Historique modifié', fullName(a)); openFiche(a.id); },
@@ -1919,7 +2121,7 @@ const A = {
   docdel: async t => { if (!canPlace()) return; const a = DB.agents.find(x => x.id === t.dataset.id), m = a && (a.docs || []).find(d => d.id === t.dataset.d); if (!m || !confirm(`Supprimer « ${m.name} » ?`)) return; await Docs.del([m.id]); a.docs = a.docs.filter(d => d.id !== m.id); a.updated = Date.now(); save(); audit('Pièce jointe supprimée', fullName(a)); openFiche(a.id); },
   docsbackup: async () => { const all = await Docs.all(); if (!all.length) return toast('Aucune pièce jointe à exporter'); toast('Préparation…'); const files = []; for (const r of all) files.push({ id: r.id, agent: r.agent, name: r.name, type: r.type, b64: await blobB64(r.blob) }); await saveFile(`pieces_jointes_DFL_${today()}.json`, JSON.stringify({ v: 1, files }), 'application/json'); toast(`${files.length} pièce(s) exportée(s)`); },
   lockout: e => { AutoLock.off(); A.logout(); },
-  delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { Snap.put('Avant suppression d’une fiche'); Docs.del((a.docs || []).map(d => d.id)); DB.agents = DB.agents.filter(x => x.id !== a.id); audit('Fiche supprimée', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
+  delagent: t => { if (!session) return; const a = DB.agents.find(x => x.id === t.dataset.id); if (a && confirm(`Supprimer définitivement la fiche de ${fullName(a)} ?`)) { toTrash([a.id]); audit('Fiche supprimée (corbeille 30 jours)', fullName(a)); closeModal(); toast('Fiche supprimée'); route(); } },
   resetpw: t => { if (!isOwner()) return; const u = DB.users.find(x => x.id === t.dataset.id); if (!u) return;
     if (!confirm(`Réinitialiser le mot de passe de « ${u.username} » ? Il devra créer un nouveau mot de passe à sa prochaine connexion.`)) return;
     u.pass = ''; u.tmp = false; u.mustChange = false; audit('Mot de passe réinitialisé', u.username); toast('Mot de passe réinitialisé : ' + u.username + ' crée un nouveau mot de passe à sa prochaine connexion'); route(); },
@@ -1989,7 +2191,7 @@ const A = {
         let d = dcache.get(dk); if (!d) { d = dirOf(c.direction); dcache.set(dk, d); }
         c.direction = d.name; if (c.division) { c.division = matchDivision(c.division, d.divisions); if (!d.divisions.includes(c.division)) d.divisions.push(c.division); }
         let ex = byKey.get(agentKey(c));
-        if (!ex) { const hom = (byName.get(nk(c)) || []).filter(a => isMat(a.matricule) !== isMat(c.matricule)); if (hom.length === 1) ex = hom[0]; }
+        if (!ex) { const hom = (byName.get(nk(c)) || []).filter(a => isMat(a.matricule) !== isMat(c.matricule) || (!isoOK(a.naissance) && isoOK(c.naissance))); if (hom.length === 1) ex = hom[0]; }
         if (ex && !isMat(c.matricule) && isMat(ex.matricule)) delete c.matricule;
         if (ex) { for (const k in c) if (c[k]) ex[k] = c[k]; ex.updated = now; up++; } else { const na = { id: uid(), photo: '', created: now, updated: now, ...c, situation: c.situation || 'Actif' }; DB.agents.push(na); idx(na); nw++; }
       });
