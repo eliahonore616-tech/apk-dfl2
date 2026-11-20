@@ -1,5 +1,5 @@
 /*
- * Gestion des agents DSFL — Copyright © 2026 Elia Kilu Honore. Tous droits réservés.
+ * Gestion des agents DSFL — Copyright © 2026 Direction de Suivi des Finances Locales. Tous droits réservés.
  * Logiciel propriétaire : copie, modification, diffusion et décompilation interdites
  * sans autorisation écrite de l'auteur. Voir LICENSE.txt.
  */
@@ -26,7 +26,7 @@ try {
   }).getObfuscatedCode();
   new Function(out); // vérifie seulement que le code obtenu est valide (ne l'exécute pas)
   const safe = out.replace(/<\/script/gi, '<\\/script');
-  const banner = '/* © 2026 Elia Kilu Honore. Tous droits réservés. Copie et modification interdites. */';
+  const banner = '/* © 2026 Direction de Suivi des Finances Locales. Tous droits réservés. Copie et modification interdites. */';
   fs.writeFileSync(file, html.replace(re, () => '<script>' + banner + safe + '</script>'));
   console.log('Code protégé :', Math.round(m[1].length / 1024), 'Ko ->', Math.round(safe.length / 1024), 'Ko');
 } catch (e) { console.log('ATTENTION : protection impossible (' + e.message + '), application NON protégée'); }
